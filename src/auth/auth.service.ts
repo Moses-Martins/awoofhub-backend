@@ -29,7 +29,7 @@ export class AuthService {
                     await this.jwtService.signAsync
                         ({
                             sub: safeUser.id,
-                            username: safeUser.username,
+                            email: safeUser.email,
                         });
                 return {
                     message: 'Login successful',

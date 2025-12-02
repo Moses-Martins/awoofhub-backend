@@ -1,4 +1,4 @@
-// src/users/dto/create-user.dto.ts
+import { ApiProperty } from '@nestjs/swagger';
 import {
     IsEmail,
     IsString,
@@ -6,9 +6,19 @@ import {
     Length
 } from 'class-validator';
 
+
 export class CreateUserDto {
+    @ApiProperty({
+        description: 'The username of the user',
+        example: 'johndoe123',
+    })
     @IsString()
     username: string;
+
+    @ApiProperty({
+        description: 'The password of the user',
+        example: 'StrongP@ssw0rd!',
+    })
     @IsString()
     @Length(8, 20)
     @IsStrongPassword(
@@ -24,7 +34,11 @@ export class CreateUserDto {
         },
     )
     password: string;
-    
+
+    @ApiProperty({
+        description: 'The email of the user',
+        example: 'john.doe@example.com',
+    })
     @IsEmail()
     email: string;
 }
