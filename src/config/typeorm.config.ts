@@ -5,7 +5,6 @@ config();
 
 const configService = new ConfigService();
 
-
 const AppDataSource = new DataSource({
     type: 'postgres',
     host: configService.get<string>('DB_HOST', 'localhost'),
@@ -18,6 +17,6 @@ const AppDataSource = new DataSource({
     migrations: ['dist/database/migrations/*.js'], 
     migrationsRun: false,
     logging: true,
-}); 
+});
 
 export default AppDataSource;

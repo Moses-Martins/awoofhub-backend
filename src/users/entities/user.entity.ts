@@ -45,8 +45,9 @@ export class User {
   @Column({ type: 'boolean', default: false })
   is_admin: boolean;
 
+  @Exclude({ toPlainOnly: true })
   @Column({ default: false })
-  is_email_confirmed: boolean;
+  is_email_verified: boolean;
 
   @CreateDateColumn()
   created_at: Date;

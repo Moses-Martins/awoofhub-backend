@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { CommonModule } from './common/common.module';
 import AppDataSource from './config/typeorm.config';
+import { MailModule } from './mail/mail.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -13,12 +14,13 @@ import { UsersModule } from './users/users.module';
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({
       useFactory: async () => AppDataSource.options,
-    }), 
+    }),
     UsersModule,
     AuthModule,
     CommonModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

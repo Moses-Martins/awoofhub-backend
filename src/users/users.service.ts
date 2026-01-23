@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -16,16 +16,26 @@ export class UsersService {
             const newUser = this.userRepository.create(user);
             await this.userRepository.save(newUser);
 
-            return {
-                message: "Account created successfully",
-                newUser
-            };
+            return newUser
+            
         } catch (error) {
-            if (error.code === '23505') {
-                throw new ConflictException('Email already exists');
-            }
-
             throw new InternalServerErrorException('Failed to create user');
+        }
+    }
+
+    async updateEmailVerification(id: string) {
+        try {
+            const user = await this.getUserById(id);
+            if (!user) {
+                throw new InternalServerErrorException('User not found');
+            }
+            user.is_email_verified = true; 
+
+            // Save the changes back to the database
+            return await this.userRepository.save(user);
+            
+        } catch (error) {
+            throw new InternalServerErrorException('Failed to verify email');
         }
     }
 

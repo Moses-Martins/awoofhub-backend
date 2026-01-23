@@ -1,0 +1,20 @@
+doctype html
+html
+  head
+    meta(charset="UTF-8")
+    title Verify your email
+  body
+    h2 Hello #{name},
+
+    p Welcome! Please verify your email by clicking the button below:
+
+     - const verificationUrl = `http://localhost:8000/auth/verifyemail?token=${token}`
+
+    a(
+      href=verificationUrl
+      style="display:inline-block;padding:12px 20px;background-color:#4f46e5;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;"
+    )
+
+      | Verify Email
+
+    p If you didn’t create this account, you can safely ignore this email.
