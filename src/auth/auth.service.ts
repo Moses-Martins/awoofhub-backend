@@ -24,17 +24,16 @@ export class AuthService {
                 user.password
             )) {
                 // Remove the password field before returning the user object to avoid exposing sensitive information
-                const { password, ...safeUser } = user;
                 const accessToken =
                     await this.jwtService.signAsync
                         ({
-                            sub: safeUser.id,
-                            email: safeUser.email,
+                            sub: user.id,
+                            email: user.email,
                         });
                 return {
                     message: 'Login successful',
                     data: {
-                        ...safeUser,
+                        ...user,
                         accessToken,
                     },
                 };
@@ -53,6 +52,7 @@ export class AuthService {
                 ...createUserDto,
                 password: hashedPassword,
             };
+            
             return await this.userService.create(newUser);
         } catch (error) {
             throw error;

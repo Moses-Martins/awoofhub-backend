@@ -18,6 +18,6 @@ const AppDataSource = new DataSource({
     migrations: ['dist/database/migrations/*.js'], 
     migrationsRun: false,
     logging: true,
-});
+}); 
 
 export default AppDataSource;

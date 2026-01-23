@@ -1,62 +1,57 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { Exclude } from 'class-transformer';
+import { MinLength } from 'class-validator';
 import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn,
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 
 export enum UserRole {
   ADMIN = 'admin',
   USER = 'user',
-  MERCHANT = 'merchant',
+  BUSINESS = 'business',
 }
 
 @Entity('users')
 export class User {
-  @ApiProperty({ example: 'uuid', description: 'User ID' })
+
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ApiProperty({ example: 'john@example.com', description: 'Email address' })
   @Column({ unique: true })
   email: string;
 
-  @ApiProperty({ example: 'john_doe', description: 'Username of the user' })
-  @Column({ unique: true })
-  username: string;
+  @Column()
+  name: string;
 
-  @ApiProperty({
-    example: 'StrongP@ssword1',
-    description: 'Hashed password of the user',
-  })
+  @Exclude({ toPlainOnly: true })
+  @MinLength(6)
   @Column()
   password: string;
 
-  @ApiProperty({
-    example: UserRole.USER,
-    description: 'Role of the user',
-    enum: UserRole,
-  })
+  @Column({ nullable: true })
+  profile_image_url?: string;
+
   @Column({
     type: 'enum',
     enum: UserRole,
     default: UserRole.USER,
   })
   role: UserRole;
+  
+  @Exclude({ toPlainOnly: true })
+  @Column({ type: 'boolean', default: false })
+  is_admin: boolean;
 
-  @ApiProperty({
-    example: '2025-12-01T13:30:00Z',
-    description: 'Date when the user was created',
-  })
+  @Column({ default: false })
+  is_email_confirmed: boolean;
+
   @CreateDateColumn()
   created_at: Date;
 
-  @ApiProperty({
-    example: '2025-12-01T14:00:00Z',
-    description: 'Date when the user was last updated',
-  })
   @UpdateDateColumn()
   updated_at: Date;
+
 }

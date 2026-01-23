@@ -16,14 +16,16 @@ export class UsersService {
             const newUser = this.userRepository.create(user);
             await this.userRepository.save(newUser);
 
-            return newUser;
+            return {
+                message: "Account created successfully",
+                newUser
+            };
         } catch (error) {
             if (error.code === '23505') {
                 throw new ConflictException('Email already exists');
             }
 
             throw new InternalServerErrorException('Failed to create user');
-
         }
     }
 
@@ -36,12 +38,6 @@ export class UsersService {
     async getUserByEmail(email: string) {
         return await this.userRepository.findOne({
             where: { email },
-        });
-    }
-
-    async getUserByUsername(username: string) {
-        return await this.userRepository.findOne({
-            where: { username },
         });
     }
 

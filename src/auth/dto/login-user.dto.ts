@@ -5,4 +5,5 @@ import {
 export class LoginUserDto extends PickType(CreateUserDto, [
     'email',
     'password',
+    'role'
 ] as const) {}

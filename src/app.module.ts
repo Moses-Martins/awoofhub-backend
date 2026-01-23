@@ -13,7 +13,7 @@ import { UsersModule } from './users/users.module';
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({
       useFactory: async () => AppDataSource.options,
-    }),
+    }), 
     UsersModule,
     AuthModule,
     CommonModule,
