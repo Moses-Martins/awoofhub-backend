@@ -1,9 +1,13 @@
 import { Exclude } from 'class-transformer';
 import { MinLength } from 'class-validator';
+import { Offer } from 'src/offers/entities/offer.entity';
+import { Review } from 'src/reviews/entities/review.entity';
+import { Wishlist } from 'src/wishlist/entities/wishlist.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -12,6 +16,13 @@ export enum UserRole {
   ADMIN = 'admin',
   USER = 'user',
   BUSINESS = 'business',
+}
+
+export enum BusinessCategory {
+  TECH = 'Tech',
+  FOOD = 'Food',
+  EVENTS = 'Events',
+  SERVICES = 'Services'
 }
 
 @Entity('users')
@@ -40,14 +51,37 @@ export class User {
     default: UserRole.USER,
   })
   role: UserRole;
-  
-  @Exclude({ toPlainOnly: true })
-  @Column({ type: 'boolean', default: false })
-  is_admin: boolean;
 
   @Exclude({ toPlainOnly: true })
   @Column({ default: false })
   is_email_verified: boolean;
+
+  @Column({ type: 'text', nullable: true })
+  businessDescription?: string;
+
+  @Column({ type: 'json', nullable: true })
+  socialLinks?: string[];
+
+  @Column({ type: 'text', nullable: true })
+  businessAddress?: string;
+
+  @Column({ type: 'text', nullable: true })
+  businessEmail?: string;
+
+  @Column({ type: 'enum', enum: BusinessCategory, nullable: true })
+  businessCategory?: BusinessCategory;
+
+  @OneToMany(() => Offer, offer => offer.business)
+  offers: Offer[];
+
+  @OneToMany(() => Offer, offer => offer.approved_by)
+  approvals: Offer[];
+
+  @OneToMany(() => Review, review => review.user)
+  reviews: Review[];
+
+  @OneToMany(() => Wishlist, (wishlist) => wishlist.user, { cascade: true })
+  wishlist: Wishlist[];
 
   @CreateDateColumn()
   created_at: Date;

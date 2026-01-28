@@ -17,7 +17,7 @@ export class UsersService {
             await this.userRepository.save(newUser);
 
             return newUser
-            
+
         } catch (error) {
             throw new InternalServerErrorException('Failed to create user');
         }
@@ -29,12 +29,16 @@ export class UsersService {
             if (!user) {
                 throw new InternalServerErrorException('User not found');
             }
-            user.is_email_verified = true; 
+            user.is_email_verified = true;
 
             // Save the changes back to the database
             return await this.userRepository.save(user);
-            
+
         } catch (error) {
+            if (error instanceof InternalServerErrorException) {
+                throw error;
+            }
+
             throw new InternalServerErrorException('Failed to verify email');
         }
     }

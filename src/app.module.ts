@@ -7,7 +7,11 @@ import { AuthModule } from './auth/auth.module';
 import { CommonModule } from './common/common.module';
 import AppDataSource from './config/typeorm.config';
 import { MailModule } from './mail/mail.module';
+import { OffersModule } from './offers/offers.module';
 import { UsersModule } from './users/users.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { WishlistModule } from './wishlist/wishlist.module';
+
 
 @Module({
   imports: [
@@ -19,6 +23,9 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     CommonModule,
     MailModule,
+    OffersModule,
+    ReviewsModule,
+    WishlistModule,
   ],
   controllers: [AppController],
   providers: [AppService],

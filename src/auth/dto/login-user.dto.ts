@@ -7,3 +7,7 @@ export class LoginUserDto extends PickType(CreateUserDto, [
     'password',
     'role'
 ] as const) {}
+
+export class ResendVerificationMailDto extends PickType(CreateUserDto, [
+    'email',
+] as const) {}

@@ -148,16 +148,23 @@ export class OffersService {
 
   async filter(category?: string, minPrice?: number, maxPrice?: number, minRating?: number, page = 1, limit = 10) {
 
-    let queryBuilder = this.offersRepository.createQueryBuilder('offer')
-      .leftJoin("offer.reviews", "review") 
+    let queryBuilder = this.offersRepository
+      .createQueryBuilder('offer')
+      .leftJoin('offer.reviews', 'review')
       .leftJoin('offer.business', 'business')
       .leftJoin('offer.category', 'category')
       .select([
         'offer',
-        'review',
-        'business.id', 'business.name', 'business.email',
-        'category.id', 'category.name',
+        'business.id',
+        'business.name',
+        'business.email',
+        'category.id',
+        'category.name',
       ])
+      .addSelect('AVG(review.rating)', 'avgRating')
+      .groupBy('offer.id')
+      .addGroupBy('business.id')
+      .addGroupBy('category.id')
       .skip((page - 1) * limit)
       .take(limit);
 
@@ -174,16 +181,21 @@ export class OffersService {
 
     if (maxPrice) {
       queryBuilder = queryBuilder.andWhere('offer.price <= :maxPrice', { maxPrice });
-    } 
- 
+    }
+
     if (minRating) {
-      queryBuilder = queryBuilder.andWhere('review.rating >= :minRating', { minRating });
+      queryBuilder.having('AVG(review.rating) >= :minRating', { minRating });
     }
 
     const total = await queryBuilder.clone().getCount();
     const meta = this.paginationService.getPaginationMeta(page, limit, total);
 
-    const results = await queryBuilder.getMany()
+    const { entities, raw } = await queryBuilder.getRawAndEntities();
+
+    const results = entities.map((offer, index) => ({
+      ...offer,
+      avgRating: Number(raw[index].avgRating),
+    }));
 
     return {
       data: results,

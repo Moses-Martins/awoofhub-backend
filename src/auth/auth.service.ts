@@ -1,11 +1,12 @@
 import { BadRequestException, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { instanceToPlain } from 'class-transformer';
 import { MailService } from 'src/mail/mail.service';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { User } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
-import { LoginUserDto } from './dto/login-user.dto';
+import { LoginUserDto, ResendVerificationMailDto } from './dto/login-user.dto';
 
 interface VerificationTokenPayload {
     email: string;
@@ -36,6 +37,10 @@ export class AuthService {
                 throw new UnauthorizedException('Invalid email or password');
             }
 
+            if (user.role !== loginUser.role) {
+                throw new UnauthorizedException('Invalid role for this user');
+            }
+
             // Don't let unverified users log in
             if (!user.is_email_verified) {
                 throw new UnauthorizedException(
@@ -48,7 +53,7 @@ export class AuthService {
             return {
                 message: 'Login successful',
                 data: {
-                    ...user,
+                    ...instanceToPlain(user), // convert class instance to plain object so @Exclude() works, then safely spread
                     accessToken,
                 },
             };
@@ -94,7 +99,9 @@ export class AuthService {
     }
 
 
-    async resendVerificationMail(email: string) {
+    async resendVerificationMail(dto: ResendVerificationMailDto) {
+        const { email } = dto;
+
         const user = await this.userService.getUserByEmail(email);
 
         // Security: do not reveal whether email exists
@@ -153,7 +160,11 @@ export class AuthService {
             const accessToken = await this.createAccessToken(updatedUser);
 
             return { token: accessToken, user: updatedUser };
-        } catch {
+        } catch (error) {
+            if (error instanceof UnauthorizedException || error instanceof BadRequestException) {
+                throw error;
+            }
+
             throw new UnauthorizedException('Invalid or expired verification token');
         }
     }

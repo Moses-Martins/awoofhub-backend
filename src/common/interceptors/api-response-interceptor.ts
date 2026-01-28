@@ -13,6 +13,7 @@ export class APIResponseInterceptor
         return handler.handle().pipe(
             map((data): APIResponse => {
                 const message = data && data.message? data.message :'Request successful';
+                const meta = data.meta
 
                 if (data?.message) delete data.message;
 
@@ -24,6 +25,7 @@ export class APIResponseInterceptor
                     data: data_,
                     error: data instanceof Error ? data : null,
                     message,
+                    meta
                 };
             }),
         );
