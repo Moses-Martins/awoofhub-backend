@@ -1,3 +1,4 @@
+import { ApprovalStatus } from 'src/common/types/enums';
 import { Review } from 'src/reviews/entities/review.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Wishlist } from 'src/wishlist/entities/wishlist.entity';
@@ -10,12 +11,6 @@ import {
     PrimaryGeneratedColumn
 } from 'typeorm';
 import { Category } from './category.entity';
-
-export enum ApprovalStatus {
-    PENDING = 'pending',
-    APPROVED = 'approved',
-    REJECTED = 'rejected',
-}
 
 @Entity('offers')
 export class Offer {

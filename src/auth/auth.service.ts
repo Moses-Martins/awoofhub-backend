@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable, UnauthorizedExcept
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { instanceToPlain } from 'class-transformer';
+import { UserRole } from 'src/common/types/enums';
 import { MailService } from 'src/mail/mail.service';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { User } from 'src/users/entities/user.entity';
@@ -63,16 +64,20 @@ export class AuthService {
         }
     }
 
-    async signup(createUserDto: CreateUserDto) {
+    async signup(createUser: CreateUserDto) {
         try {
-            const existingUser = await this.userService.getUserByEmail(createUserDto.email);
+            if (createUser.role === UserRole.ADMIN) {
+                throw new BadRequestException('Cannot assign admin role via signup');
+            }
+
+            const existingUser = await this.userService.getUserByEmail(createUser.email);
             if (existingUser) {
                 throw new BadRequestException('Email already in use');
             }
 
-            const hashedPassword = this.hashPassword(createUserDto.password);
+            const hashedPassword = this.hashPassword(createUser.password);
             const newUser: CreateUserDto = {
-                ...createUserDto,
+                ...createUser,
                 password: hashedPassword,
             };
 
@@ -183,7 +188,7 @@ export class AuthService {
     }
 
     private createAccessToken(user: User): Promise<string> {
-        const payload = { email: user.email, sub: user.id };
+        const payload = { email: user.email, sub: user.id, role: user.role };
         return this.jwtService.signAsync(payload);
     }
 

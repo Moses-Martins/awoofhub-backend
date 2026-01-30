@@ -1,5 +1,6 @@
 import { Exclude } from 'class-transformer';
 import { MinLength } from 'class-validator';
+import { BusinessCategory, UserRole } from 'src/common/types/enums';
 import { Offer } from 'src/offers/entities/offer.entity';
 import { Review } from 'src/reviews/entities/review.entity';
 import { Wishlist } from 'src/wishlist/entities/wishlist.entity';
@@ -12,18 +13,6 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-export enum UserRole {
-  ADMIN = 'admin',
-  USER = 'user',
-  BUSINESS = 'business',
-}
-
-export enum BusinessCategory {
-  TECH = 'Tech',
-  FOOD = 'Food',
-  EVENTS = 'Events',
-  SERVICES = 'Services'
-}
 
 @Entity('users')
 export class User {

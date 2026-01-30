@@ -10,7 +10,7 @@ export class UsersController {
 
   @Get('me')
   @UseGuards(AuthGuard)
-  viewWishlist(@CurrentUser() user) {
+  getMe(@CurrentUser() user) {
     return this.usersService.getUserById(user.id);
   }
 

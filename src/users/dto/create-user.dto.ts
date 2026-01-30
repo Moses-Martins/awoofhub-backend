@@ -5,7 +5,7 @@ import {
     IsStrongPassword,
     Length
 } from 'class-validator';
-import { UserRole } from '../entities/user.entity';
+import { UserRole } from 'src/common/types/enums';
 
 
 export class CreateUserDto {
