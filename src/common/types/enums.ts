@@ -16,3 +16,8 @@ export enum ApprovalStatus {
     APPROVED = 'approved',
     REJECTED = 'rejected',
 }
+
+export enum TokenPurpose {
+  EMAIL_VERIFICATION = 'email_verification',
+  PASSWORD_RESET = 'password_reset',
+}

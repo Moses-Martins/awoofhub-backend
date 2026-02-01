@@ -23,7 +23,10 @@ export class MailService {
         to: params.to,
         subject: params.subject,
         template: params.template,
-        context: params.context,
+        context: {
+          EMAIL_URL: this.configService.get('EMAIL_URL'),
+          ...params.context
+        },
       };
       const response = await this.mailerService.sendMail(sendMailParams);
       this.logger.log(

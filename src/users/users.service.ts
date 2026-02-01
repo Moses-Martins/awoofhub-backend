@@ -55,4 +55,8 @@ export class UsersService {
         });
     }
 
+    async save(user: User) {
+        return this.userRepository.save(user);
+    }
+
 }
