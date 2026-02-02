@@ -1,5 +1,6 @@
 import { Exclude } from 'class-transformer';
 import { MinLength } from 'class-validator';
+import { RefreshToken } from 'src/auth/entities/refresh-token.entity';
 import { BusinessCategory, UserRole } from 'src/common/types/enums';
 import { Offer } from 'src/offers/entities/offer.entity';
 import { Review } from 'src/reviews/entities/review.entity';
@@ -71,6 +72,9 @@ export class User {
 
   @OneToMany(() => Wishlist, (wishlist) => wishlist.user, { cascade: true })
   wishlist: Wishlist[];
+
+  @OneToMany(() => RefreshToken, (refreshToken) => refreshToken.user)
+  refreshTokens: RefreshToken[]
 
   @CreateDateColumn()
   created_at: Date;

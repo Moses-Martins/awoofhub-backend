@@ -1,18 +1,24 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import { TokenPurpose, UserRole } from 'src/common/types/enums';
 import { MailService } from 'src/mail/mail.service';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { User } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
+import { Repository } from 'typeorm';
 import { EmailDto, LoginUserDto } from './dto/login-user.dto';
+import { RefreshToken } from './entities/refresh-token.entity';
 
 
 @Injectable()
 export class AuthService {
     constructor(
         private readonly userService: UsersService,
+        @InjectRepository(RefreshToken)
+        private readonly refreshTokenRepository: Repository<RefreshToken>,
         private jwtService: JwtService,
         private mailService: MailService,
     ) { }
@@ -45,7 +51,7 @@ export class AuthService {
             }
 
             const accessToken = await this.createAccessToken(user)
-            const refreshToken = await this.createRefreshToken(user);
+            const refreshToken = await this.createRefreshToken(user.id);
 
             return { user, accessToken, refreshToken };
 
@@ -68,7 +74,7 @@ export class AuthService {
             const hashedPassword = this.hashPassword(createUser.password);
             const newUser: CreateUserDto = {
                 ...createUser,
-                password: hashedPassword,
+                password: await hashedPassword,
             };
 
             const user = await this.userService.create(newUser);
@@ -147,8 +153,10 @@ export class AuthService {
             const updatedUser = await this.userService.updateEmailVerification(user.id);
 
             const accessToken = await this.createAccessToken(updatedUser);
+            const refreshToken = await this.createRefreshToken(user.id);
 
-            return { updatedUser, accessToken };
+
+            return { updatedUser, accessToken, refreshToken };
 
         } catch (error) {
             if (error instanceof UnauthorizedException || error instanceof BadRequestException) {
@@ -160,17 +168,38 @@ export class AuthService {
     }
 
 
-    async verifyRefreshToken(token: string) {
-        try {
-            const payload = await this.jwtService.verifyAsync(token);
+    async refreshToken(token: string) {
+        const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+        const refreshTokenEntity = await this.refreshTokenRepository.findOne({
+            where: {
+                tokenHash,
+                revoked: false,
+            },
+            relations: ['user'],
+        });
 
-            if (payload.tokenType !== 'refresh') {
-                throw new UnauthorizedException('Invalid refresh token');
-            }
+        if (!refreshTokenEntity) {
+            throw new UnauthorizedException('Invalid refresh token')
+        }
 
-            return payload;
-        } catch {
-            throw new UnauthorizedException('Invalid or expired refresh token');
+        if (refreshTokenEntity.expiresAt < new Date()) {
+            throw new UnauthorizedException('Refresh token expired');
+        }
+
+        refreshTokenEntity.revoked = true
+        await this.refreshTokenRepository.save(refreshTokenEntity)
+
+        const user = await this.userService.getUserById(refreshTokenEntity.user.id);
+        if (!user) {
+            throw new UnauthorizedException('User not found');
+        }
+
+        const accessToken = await this.createAccessToken(user);
+        const refreshToken = await this.createRefreshToken(user.id);
+
+        return {
+            accessToken,
+            refreshToken
         }
     }
 
@@ -208,19 +237,18 @@ export class AuthService {
             throw new ForbiddenException('User not found');
         }
 
-        user.password = this.hashPassword(password);
+        user.password = await this.hashPassword(password);
 
         await this.userService.save(user);
 
-        return { 
-            message: 'Password reset successful' 
+        return {
+            message: 'Password reset successful'
         };
 
     }
 
-
     hashPassword(password: string) {
-        return bcrypt.hashSync(password, 10);
+        return bcrypt.hash(password, 10);
     }
 
     async verifyPassword(
@@ -239,13 +267,37 @@ export class AuthService {
         });
     }
 
+    private async createRefreshToken(userId: string): Promise<string> {
+        const user = await this.userService.getUserById(userId);
+        if (!user) {
+            throw new UnauthorizedException('User not found');
+        }
 
-    private createRefreshToken(user: User): Promise<string> {
-        const payload = { sub: user.id, tokenType: 'refresh' }
+        const token = crypto.randomBytes(32).toString('hex')
+        const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
 
-        return this.jwtService.signAsync(payload, {
-            expiresIn: '7d'
-        });
+        const refreshTokenEntity = this.refreshTokenRepository.create({
+            user,
+            tokenHash,
+            expiresAt,
+        })
+
+        await this.refreshTokenRepository.save(refreshTokenEntity)
+
+        return token
+    }
+
+    async revokeRefreshToken(token: string): Promise<void> {
+        const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+        const refreshTokenEntity = await this.refreshTokenRepository.findOne({
+            where: { tokenHash: tokenHash },
+        })
+
+        if (refreshTokenEntity) {
+            refreshTokenEntity.revoked = true
+            await this.refreshTokenRepository.save(refreshTokenEntity)
+        }
     }
 
     private createToken(user: User, purpose: TokenPurpose): Promise<string> {
