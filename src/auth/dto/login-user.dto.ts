@@ -14,7 +14,7 @@ export class EmailDto extends PickType(CreateUserDto, [
 ] as const) { }
 
 export class ResetPasswordDto {
-    @IsJWT()
+    @IsString()
     token: string;
 
     @IsString()
@@ -34,6 +34,8 @@ export class ResetPasswordDto {
     password: string;
 }
 
-export class VerifyEmailDto  extends PickType(ResetPasswordDto, [
-    'token',
-] as const) { }
+export class VerifyEmailDto {
+    @IsJWT()
+    token: string;
+}
+

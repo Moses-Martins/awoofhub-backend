@@ -5,7 +5,7 @@ import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 @Entity()
 export class RefreshToken {
     @PrimaryGeneratedColumn('uuid')
-    id: number
+    id: string
 
     @Column()
     tokenHash: string

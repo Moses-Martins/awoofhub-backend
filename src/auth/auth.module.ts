@@ -6,11 +6,12 @@ import { MailModule } from 'src/mail/mail.module';
 import { UsersModule } from 'src/users/users.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([RefreshToken]),
+    TypeOrmModule.forFeature([RefreshToken, PasswordResetToken]),
     MailModule,
     UsersModule,
     JwtModule.registerAsync({

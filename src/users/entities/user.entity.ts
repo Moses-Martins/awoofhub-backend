@@ -1,5 +1,6 @@
 import { Exclude } from 'class-transformer';
 import { MinLength } from 'class-validator';
+import { PasswordResetToken } from 'src/auth/entities/password-reset-token.entity';
 import { RefreshToken } from 'src/auth/entities/refresh-token.entity';
 import { BusinessCategory, UserRole } from 'src/common/types/enums';
 import { Offer } from 'src/offers/entities/offer.entity';
@@ -75,6 +76,9 @@ export class User {
 
   @OneToMany(() => RefreshToken, (refreshToken) => refreshToken.user)
   refreshTokens: RefreshToken[]
+
+  @OneToMany(() => PasswordResetToken, (token) => token.user)
+  passwordResetTokens: PasswordResetToken[];
 
   @CreateDateColumn()
   created_at: Date;

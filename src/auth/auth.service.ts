@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
@@ -8,19 +8,24 @@ import { MailService } from 'src/mail/mail.service';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { User } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { EmailDto, LoginUserDto } from './dto/login-user.dto';
+import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
 
 
 @Injectable()
 export class AuthService {
     constructor(
+        private jwtService: JwtService,
+        private mailService: MailService,
+        private dataSource: DataSource,
         private readonly userService: UsersService,
         @InjectRepository(RefreshToken)
         private readonly refreshTokenRepository: Repository<RefreshToken>,
-        private jwtService: JwtService,
-        private mailService: MailService,
+        @InjectRepository(PasswordResetToken)
+        private readonly passwordResetTokenRepository: Repository<PasswordResetToken>,
+
     ) { }
     async login(loginUser: LoginUserDto) {
         try {
@@ -183,19 +188,26 @@ export class AuthService {
         }
 
         if (refreshTokenEntity.expiresAt < new Date()) {
+            refreshTokenEntity.revoked = true;
+            await this.refreshTokenRepository.save(refreshTokenEntity);
             throw new UnauthorizedException('Refresh token expired');
         }
 
-        refreshTokenEntity.revoked = true
-        await this.refreshTokenRepository.save(refreshTokenEntity)
-
-        const user = await this.userService.getUserById(refreshTokenEntity.user.id);
+        const user = refreshTokenEntity.user;
         if (!user) {
             throw new UnauthorizedException('User not found');
         }
 
-        const accessToken = await this.createAccessToken(user);
-        const refreshToken = await this.createRefreshToken(user.id);
+        const { accessToken, refreshToken } =
+            await this.dataSource.transaction(async (manager) => {
+                refreshTokenEntity.revoked = true;
+                await manager.save(refreshTokenEntity);
+
+                const accessToken = await this.createAccessToken(user);
+                const refreshToken = await this.createRefreshToken(user.id);
+
+                return { accessToken, refreshToken };
+            });
 
         return {
             accessToken,
@@ -206,21 +218,22 @@ export class AuthService {
     async forgotPassword(dto: EmailDto) {
         const { email } = dto
         const user = await this.userService.getUserByEmail(email);
-        if (!user) {
-            throw new NotFoundException("If the email exists, a reset link has been sent.");
-        }
 
-        const resetToken = await this.createToken(user, TokenPurpose.PASSWORD_RESET);
+        if (user) {
+            
+            const resetToken = await this.createPasswordResetToken(user.id);
 
-        await this.mailService.sendEmail({
-            to: user.email,
-            subject: `Reset password`,
-            template: 'password-reset-mail',
-            context: {
-                name: user.name,
-                token: resetToken,
-            },
-        });
+            await this.mailService.sendEmail({
+                to: user.email,
+                subject: `Reset password`,
+                template: 'password-reset-mail',
+                context: {
+                    name: user.name,
+                    token: resetToken,
+                },
+            });
+
+        } 
 
         return {
             message: 'If the email exists, a reset link has been sent.',
@@ -230,21 +243,51 @@ export class AuthService {
 
     async resetPassword(token: string, password: string) {
 
-        const decoded = await this.verifyToken(token, TokenPurpose.PASSWORD_RESET);
+        const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+        const passwordResetToken = await this.passwordResetTokenRepository.findOne({
+            where: {
+                tokenHash,
+                used: false,
+            },
+            relations: ['user'],
+        });
 
-        const user = await this.userService.getUserByEmail(decoded.email);
+        if (!passwordResetToken) {
+            throw new UnauthorizedException('Invalid password reset token')
+        }
+
+        if (passwordResetToken.expiresAt < new Date()) {
+            passwordResetToken.used = true;
+            await this.passwordResetTokenRepository.save(passwordResetToken);
+            throw new UnauthorizedException('Password reset token expired');
+        }
+
+        const user = passwordResetToken.user;
         if (!user) {
             throw new ForbiddenException('User not found');
         }
 
-        user.password = await this.hashPassword(password);
+        await this.dataSource.transaction(async (manager) => {
+            // mark all tokens as used
+            await manager.update(
+                PasswordResetToken,
+                { user: { id: user.id }, used: false },
+                { used: true }
+            );
 
-        await this.userService.save(user);
+            user.password = await this.hashPassword(password);
+            await manager.save(user);
+        });
+
+        await this.refreshTokenRepository.update(
+            { user: { id: user.id }, revoked: false },
+            { revoked: true }
+        );
 
         return {
             message: 'Password reset successful'
         };
-
+ 
     }
 
     hashPassword(password: string) {
@@ -284,6 +327,27 @@ export class AuthService {
         })
 
         await this.refreshTokenRepository.save(refreshTokenEntity)
+
+        return token
+    }
+
+    private async createPasswordResetToken(userId: string): Promise<string> {
+        const user = await this.userService.getUserById(userId);
+        if (!user) {
+            throw new UnauthorizedException('User not found');
+        }
+
+        const token = crypto.randomBytes(32).toString('hex')
+        const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000) // 15 minutes
+
+        const resetPasswordTokenEntity = this.passwordResetTokenRepository.create({
+            user,
+            tokenHash,
+            expiresAt,
+        })
+
+        await this.passwordResetTokenRepository.save(resetPasswordTokenEntity)
 
         return token
     }
