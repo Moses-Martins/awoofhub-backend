@@ -21,3 +21,8 @@ export enum TokenPurpose {
   EMAIL_VERIFICATION = 'email_verification',
   EMAIL_CHANGE = 'email_change',
 }
+
+export enum AuthProvider {
+  GOOGLE = "google",
+  LOCAL = "local",
+}

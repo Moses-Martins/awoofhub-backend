@@ -25,11 +25,14 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+  }));
   app.useGlobalInterceptors(
     new APIResponseInterceptor(),
     new ClassSerializerInterceptor(app.get(Reflector)),
-);
+  );
   app.useGlobalFilters(new HttpExceptionFilter());
   await app.listen(process.env.PORT ?? 8000);
 }

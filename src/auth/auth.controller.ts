@@ -1,6 +1,9 @@
-import { Body, Controller, HttpCode, Post, Req, Res, UnauthorizedException } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Post, Query, Req, Res, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { instanceToPlain } from 'class-transformer';
 import type { Request, Response } from 'express';
+import passport from 'passport';
+import { UserRole } from 'src/common/types/enums';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { AuthService } from './auth.service';
 import { EmailDto, LoginUserDto, ResetPasswordDto, VerifyEmailDto } from './dto/login-user.dto';
@@ -38,9 +41,59 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-
+ 
     return {
       message: 'Login successful',
+      data: {
+        ...instanceToPlain(user),
+      },
+    }
+  }
+
+  @Get('google/business')
+  async googleAuthBusiness(@Req() req, @Res() res) {
+    return passport.authenticate('google', {
+      state: 'business'
+    })(req, res);
+  }
+
+  @Get('google/user')
+  async googleAuthUser(@Req() req, @Res() res) {
+    return passport.authenticate('google', {
+      state: 'user'
+    })(req, res);
+  }
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleAuthRedirect(@Query('state') state: string, @Req() req: Request & { user: any }, @Res({ passthrough: true }) res: Response) {
+    let requestedRole: UserRole = UserRole.USER;
+
+    if (state === UserRole.BUSINESS) {
+      requestedRole = UserRole.BUSINESS;
+    }
+
+    const { user, accessToken, refreshToken } = await this.authService.googleLogin(req.user, requestedRole);
+
+    res.cookie('access_token', accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+      signed: true,
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
+
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+      // path: '/auth/refresh',
+      signed: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+
+    return {
       data: {
         ...instanceToPlain(user),
       },
@@ -111,7 +164,7 @@ export class AuthController {
     if (token) {
       this.authService.revokeRefreshToken(token)
     }
-    
+
     res.clearCookie('access_token');
     res.clearCookie('refresh_token');
 

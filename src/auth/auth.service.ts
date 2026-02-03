@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import crypto from 'crypto';
-import { TokenPurpose, UserRole } from 'src/common/types/enums';
+import { AuthProvider, TokenPurpose, UserRole } from 'src/common/types/enums';
 import { MailService } from 'src/mail/mail.service';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { User } from 'src/users/entities/user.entity';
@@ -35,9 +35,15 @@ export class AuthService {
                 throw new ForbiddenException('User not found');
             }
 
+            if (user.auth_provider !== 'local') {
+                throw new UnauthorizedException(
+                    'This account uses Google login.'
+                );
+            }
+
             const isPasswordValid = await this.verifyPassword(
                 loginUser.password,
-                user.password
+                user.password!
             )
 
             if (!isPasswordValid) {
@@ -102,6 +108,45 @@ export class AuthService {
         } catch (error) {
             throw error;
         }
+    }
+
+    async googleLogin(googleUser: any, requestedRole: UserRole) {
+        if (!googleUser) {
+            throw new BadRequestException('Unauthenticated');
+        }
+
+        const { email, firstName, lastName, picture } = googleUser;
+
+
+        let user = await this.userService.getUserByEmail(email);
+
+        if (!user) {
+            user = await this.userService.createGoogleUser({
+                email,
+                name: `${firstName} ${lastName}`,
+                role: requestedRole,
+                is_email_verified: true,
+                profile_image_url: picture,
+                auth_provider: AuthProvider.GOOGLE,
+            });
+        }
+
+        if (user.role !== requestedRole) {
+            throw new UnauthorizedException('This account is registered as a different role');
+        }
+
+        if (!user.is_email_verified) {
+            user = await this.userService.updateEmailVerification(user.id);
+        }
+
+        const accessToken = await this.createAccessToken(user);
+        const refreshToken = await this.createRefreshToken(user.id);
+
+        return {
+            user,
+            accessToken,
+            refreshToken,
+        };
     }
 
 
@@ -220,7 +265,7 @@ export class AuthService {
         const user = await this.userService.getUserByEmail(email);
 
         if (user) {
-            
+
             const resetToken = await this.createPasswordResetToken(user.id);
 
             await this.mailService.sendEmail({
@@ -233,7 +278,7 @@ export class AuthService {
                 },
             });
 
-        } 
+        }
 
         return {
             message: 'If the email exists, a reset link has been sent.',
@@ -287,7 +332,7 @@ export class AuthService {
         return {
             message: 'Password reset successful'
         };
- 
+
     }
 
     hashPassword(password: string) {

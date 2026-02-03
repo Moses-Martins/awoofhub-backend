@@ -2,7 +2,7 @@ import { Exclude } from 'class-transformer';
 import { MinLength } from 'class-validator';
 import { PasswordResetToken } from 'src/auth/entities/password-reset-token.entity';
 import { RefreshToken } from 'src/auth/entities/refresh-token.entity';
-import { BusinessCategory, UserRole } from 'src/common/types/enums';
+import { AuthProvider, BusinessCategory, UserRole } from 'src/common/types/enums';
 import { Offer } from 'src/offers/entities/offer.entity';
 import { Review } from 'src/reviews/entities/review.entity';
 import { Wishlist } from 'src/wishlist/entities/wishlist.entity';
@@ -30,8 +30,8 @@ export class User {
 
   @Exclude({ toPlainOnly: true })
   @MinLength(6)
-  @Column()
-  password: string;
+  @Column({ nullable: true })
+  password?: string;
 
   @Column({ nullable: true })
   profile_image_url?: string;
@@ -47,20 +47,28 @@ export class User {
   @Column({ default: false })
   is_email_verified: boolean;
 
+  @Exclude({ toPlainOnly: true })
+  @Column({
+    type: 'enum',
+    enum: AuthProvider,
+    default: AuthProvider.LOCAL,
+  })
+  auth_provider: AuthProvider;
+
   @Column({ type: 'text', nullable: true })
-  businessDescription?: string;
+  address?: string;
+
+  @Column({ type: 'text', nullable: true })
+  business_description?: string;
 
   @Column({ type: 'json', nullable: true })
-  socialLinks?: string[];
+  social_links?: string[];
 
   @Column({ type: 'text', nullable: true })
-  businessAddress?: string;
-
-  @Column({ type: 'text', nullable: true })
-  businessEmail?: string;
+  business_email?: string;
 
   @Column({ type: 'enum', enum: BusinessCategory, nullable: true })
-  businessCategory?: BusinessCategory;
+  business_category?: BusinessCategory;
 
   @OneToMany(() => Offer, offer => offer.business)
   offers: Offer[];

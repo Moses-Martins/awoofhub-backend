@@ -23,6 +23,11 @@ export class UsersService {
         }
     }
 
+    async createGoogleUser(data: Partial<User>) {
+        const user = this.userRepository.create(data);
+        return this.userRepository.save(user);
+    }
+
     async updateEmailVerification(id: string) {
         try {
             const user = await this.getUserById(id);
