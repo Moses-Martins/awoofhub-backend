@@ -24,6 +24,8 @@
     "migration:revert": "npx ts-node -P ./tsconfig.json -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert -d ./src/config/typeorm.config.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.982.0",
+    "@aws-sdk/lib-storage": "^3.982.0",
     "@nestjs-modules/mailer": "^2.0.2",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
@@ -31,7 +33,7 @@
     "@nestjs/jwt": "^11.0.1",
     "@nestjs/mapped-types": "*",
     "@nestjs/passport": "^11.0.5",
-    "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/platform-express": "^11.1.13",
     "@nestjs/swagger": "^11.2.3",
     "@nestjs/typeorm": "^11.0.0",
     "bcrypt": "^6.0.0",
@@ -39,6 +41,7 @@
     "class-validator": "^0.14.3",
     "cookie-parser": "^1.4.7",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
     "nodemailer": "^7.0.12",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
@@ -59,6 +62,7 @@
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
+    "@types/multer": "^2.0.0",
     "@types/node": "^22.10.7",
     "@types/passport-google-oauth20": "^2.0.17",
     "@types/supertest": "^6.0.2",

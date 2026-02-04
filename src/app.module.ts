@@ -11,6 +11,7 @@ import { OffersModule } from './offers/offers.module';
 import { UsersModule } from './users/users.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { WishlistModule } from './wishlist/wishlist.module';
+import { FilesModule } from './files/files.module';
 
 
 @Module({
@@ -26,6 +27,7 @@ import { WishlistModule } from './wishlist/wishlist.module';
     OffersModule,
     ReviewsModule,
     WishlistModule,
+    FilesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
