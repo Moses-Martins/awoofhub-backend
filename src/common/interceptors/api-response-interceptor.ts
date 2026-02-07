@@ -13,7 +13,7 @@ export class APIResponseInterceptor
         return handler.handle().pipe(
             map((data): APIResponse => {
                 const message = data && data.message? data.message :'Request successful';
-                const meta = data.meta || {}
+                const meta = data && data.meta ? data.meta : undefined
 
                 if (data?.message) delete data.message;
 

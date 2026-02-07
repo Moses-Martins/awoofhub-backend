@@ -12,6 +12,7 @@ import { UsersModule } from './users/users.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { WishlistModule } from './wishlist/wishlist.module';
 import { FilesModule } from './files/files.module';
+import { ChatModule } from './chat/chat.module';
 
 
 @Module({
@@ -28,6 +29,7 @@ import { FilesModule } from './files/files.module';
     ReviewsModule,
     WishlistModule,
     FilesModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],

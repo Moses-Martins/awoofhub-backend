@@ -41,7 +41,7 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
- 
+
     return {
       message: 'Login successful',
       data: {
@@ -77,8 +77,10 @@ export class AuthController {
 
     res.cookie('access_token', accessToken, {
       httpOnly: true,
+      // secure: true,
+      // sameSite: 'strict',
       secure: true,
-      sameSite: 'strict',
+      sameSite: 'none',
       signed: true,
       maxAge: 15 * 60 * 1000, // 15 minutes
     });

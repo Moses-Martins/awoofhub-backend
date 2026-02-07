@@ -2,6 +2,8 @@ import { Exclude } from 'class-transformer';
 import { MinLength } from 'class-validator';
 import { PasswordResetToken } from 'src/auth/entities/password-reset-token.entity';
 import { RefreshToken } from 'src/auth/entities/refresh-token.entity';
+import { Conversation } from 'src/chat/entities/conversation.entity';
+import { Message } from 'src/chat/entities/message.entity';
 import { AuthProvider, BusinessCategory, UserRole } from 'src/common/types/enums';
 import { Offer } from 'src/offers/entities/offer.entity';
 import { Review } from 'src/reviews/entities/review.entity';
@@ -87,6 +89,15 @@ export class User {
 
   @OneToMany(() => PasswordResetToken, (token) => token.user)
   passwordResetTokens: PasswordResetToken[];
+
+  @OneToMany(() => Conversation, c => c.initiator)
+  startedConversations: Conversation[];
+
+  @OneToMany(() => Conversation, c => c.participant)
+  joinedConversations: Conversation[];
+
+  @OneToMany(() => Message, m => m.sender)
+  sentMessages: Message[];
 
   @CreateDateColumn()
   created_at: Date;
