@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { UserRole } from 'src/common/types/enums';
 import { UsersService } from 'src/users/users.service';
 import { Repository } from 'typeorm';
 import { Conversation } from './entities/conversation.entity';
@@ -17,6 +18,7 @@ export class ChatService {
 
 
   async getOrCreateConversation(initiatorId: string, participantId: string) {
+    
     const initiatorUser = await this.userService.getUserById(initiatorId);
     if (!initiatorUser) {
       throw new NotFoundException('Initiator not found');
@@ -27,6 +29,9 @@ export class ChatService {
       throw new NotFoundException('Participant not found');
     }
 
+    if (initiatorId === participantId) {
+      throw new BadRequestException('Cannot create conversation with yourself');
+    }
 
     let conversation = await this.conversationRepo.findOne({
       where: [
@@ -43,6 +48,11 @@ export class ChatService {
     });
 
     if (!conversation) {
+      if (initiatorUser.role === UserRole.BUSINESS) {
+        throw new ForbiddenException(
+          'Business accounts are not allowed to start conversations',
+        );
+      }
       conversation = this.conversationRepo.create({
         initiator: { id: initiatorUser.id },
         participant: { id: participantUser.id },
@@ -89,7 +99,7 @@ export class ChatService {
     if (!conversation) {
       throw new NotFoundException('Conversation not found');
     }
-     
+
     return this.messageRepo.find({
       where: { conversation: { id: conversation.id } },
       relations: ['sender'],

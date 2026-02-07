@@ -1,4 +1,7 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { AuthGuard } from 'src/auth/guards/auth.guard';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { User } from 'src/users/entities/user.entity';
 import { ChatService } from './chat.service';
 import { StartConversationDto } from './dto/start-conversation.dto';
 
@@ -12,10 +15,12 @@ export class ChatController {
   }
 
   @Post('conversation')
+  @UseGuards(AuthGuard)
   async getOrCreateConversation(
     @Body() dto: StartConversationDto,
+    @CurrentUser() user: User,
   ) {
-    return this.chatService.getOrCreateConversation(dto.initiatorId, dto.participantId);
+    return this.chatService.getOrCreateConversation(user.id, dto.participantId);
   }
 
 }
