@@ -2,7 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserRole } from 'src/common/types/enums';
 import { UsersService } from 'src/users/users.service';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { Conversation } from './entities/conversation.entity';
 import { Message } from './entities/message.entity';
 
@@ -18,7 +18,7 @@ export class ChatService {
 
 
   async getOrCreateConversation(initiatorId: string, participantId: string) {
-    
+
     const initiatorUser = await this.userService.getUserById(initiatorId);
     if (!initiatorUser) {
       throw new NotFoundException('Initiator not found');
@@ -71,30 +71,30 @@ export class ChatService {
   }
 
   async sendMessage(conversationId: string, senderId: string, content: string) {
-    const conversation = await this.conversationRepo.findOne({
-      where: { id: conversationId },
-    });
+    const conversation = await this.findConversationById(conversationId);
     if (!conversation) {
       throw new NotFoundException('Conversation not found');
     }
 
-    const sender = await this.userService.getUserById(senderId);
-    if (!sender) {
-      throw new NotFoundException('Sender not found');
+    if (conversation.initiator.id !== senderId && conversation.participant.id !== senderId) {
+      throw new ForbiddenException('You are not a participant in this conversation');
     }
 
     const message = this.messageRepo.create({
       conversation,
-      sender,
+      sender: { id: senderId },
       content,
     });
 
     return this.messageRepo.save(message);
   }
 
-  async getMessages(conversationId: string) {
+  async getMessages(conversationId: string, userId: string) {
     const conversation = await this.conversationRepo.findOne({
-      where: { id: conversationId },
+      where: [
+        { id: conversationId, initiator: { id: userId } },
+        { id: conversationId, participant: { id: userId } },
+      ],
     });
     if (!conversation) {
       throw new NotFoundException('Conversation not found');
@@ -105,6 +105,27 @@ export class ChatService {
       relations: ['sender'],
       order: { createdAt: 'ASC' },
     });
+  }
+
+  async markAsRead(conversationId: string, userId: string) {
+    const conversation = await this.findConversationById(conversationId);
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found');
+    }
+
+    if (conversation.initiator.id !== userId && conversation.participant.id !== userId) {
+      throw new ForbiddenException('You are not a participant in this conversation');
+    }
+
+    await this.messageRepo.update(
+      {
+        conversation: { id: conversation.id },
+        sender: { id: Not(userId) },
+        isRead: false
+      },
+
+      { isRead: true }
+    );
   }
 
 }

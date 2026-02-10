@@ -103,7 +103,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             throw new WsException('Not allowed');
         }
 
-        const messages = await this.chatService.getMessages(conversationId);
+        const messages = await this.chatService.getMessages(conversationId, user.id);
 
         return messages;
     }

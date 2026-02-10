@@ -10,8 +10,12 @@ export class ChatController {
   constructor(private readonly chatService: ChatService) { }
 
   @Get('conversation/:id/messages')
-  async getMessages(@Param('id') conversationId: string) {
-    return this.chatService.getMessages(conversationId);
+  @UseGuards(AuthGuard)
+  async getMessages(
+    @Param('id') conversationId: string,
+    @CurrentUser() user: User,
+  ) {
+    return this.chatService.getMessages(conversationId, user.id);
   }
 
   @Post('conversation')
