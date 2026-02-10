@@ -1,6 +1,7 @@
 import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaginationService } from 'src/common/pagination/pagination.service';
+import { NotificationsService } from 'src/notifications/notifications.service';
 import { UsersService } from 'src/users/users.service';
 import { Repository } from 'typeorm';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -16,6 +17,7 @@ export class OffersService {
     @InjectRepository(Category)
     private categoriesRepository: Repository<Category>,
     private readonly paginationService: PaginationService,
+    private readonly notificationService: NotificationsService,
     private readonly userService: UsersService,
   ) { }
 
@@ -35,6 +37,8 @@ export class OffersService {
 
       const offer = this.offersRepository.create({ ...rest, category: { id: existing.id }, end_date: new Date(end_date), business: { id: user.id } });
       await this.offersRepository.save(offer);
+
+      this.notificationService.create(offer.business.id, "Created Offer", "You just created an offer")
 
       return {
         message: 'Offer created successfully',

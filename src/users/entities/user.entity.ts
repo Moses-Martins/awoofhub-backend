@@ -5,6 +5,7 @@ import { RefreshToken } from 'src/auth/entities/refresh-token.entity';
 import { Conversation } from 'src/chat/entities/conversation.entity';
 import { Message } from 'src/chat/entities/message.entity';
 import { AuthProvider, BusinessCategory, UserRole } from 'src/common/types/enums';
+import { Notification } from 'src/notifications/entities/notification.entity';
 import { Offer } from 'src/offers/entities/offer.entity';
 import { Review } from 'src/reviews/entities/review.entity';
 import { Wishlist } from 'src/wishlist/entities/wishlist.entity';
@@ -80,6 +81,9 @@ export class User {
 
   @OneToMany(() => Review, review => review.user)
   reviews: Review[];
+
+  @OneToMany(() => Notification, notification => notification.user)
+  notifications: Notification[];
 
   @OneToMany(() => Wishlist, (wishlist) => wishlist.user, { cascade: true })
   wishlist: Wishlist[];
