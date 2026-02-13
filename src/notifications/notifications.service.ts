@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
+import { NotificationType } from 'src/common/types/enums';
 import { UsersService } from 'src/users/users.service';
 import { Repository } from 'typeorm';
 import { Notification } from './entities/notification.entity';
@@ -14,13 +15,9 @@ export class NotificationsService {
     private eventEmitter: EventEmitter2,
   ) { }
 
-  async create(userId: string, title: string, message: string) {
-    const user = await this.userService.getUserById(userId);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+  async create(userId: string, title: string, message: string, type: NotificationType, entityId?: string) {
 
-    const notification = this.notificationRepo.create({ user: { id: user.id }, title, message });
+    const notification = this.notificationRepo.create({ user: { id: userId }, title, message, type, entityId });
 
     await this.notificationRepo.save(notification);
     this.eventEmitter.emit('notification.created', notification);

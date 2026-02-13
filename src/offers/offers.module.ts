@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AlertModule } from 'src/alert/alert.module';
 import { CommonModule } from 'src/common/common.module';
 import { NotificationsModule } from 'src/notifications/notifications.module';
 import { UsersModule } from 'src/users/users.module';
@@ -15,6 +16,7 @@ import { OffersService } from './offers.service';
     JwtModule.register({}),
     CommonModule,
     UsersModule,
+    AlertModule,
     NotificationsModule,
   ],
   controllers: [OffersController],

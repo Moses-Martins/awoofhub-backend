@@ -15,6 +15,7 @@ import { OffersModule } from './offers/offers.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { UsersModule } from './users/users.module';
 import { WishlistModule } from './wishlist/wishlist.module';
+import { AlertModule } from './alert/alert.module';
 
 
 @Module({
@@ -42,6 +43,7 @@ import { WishlistModule } from './wishlist/wishlist.module';
       verboseMemoryLeak: false,
       ignoreErrors: false,
     }),
+    AlertModule,
   ],
   controllers: [AppController],
   providers: [AppService],

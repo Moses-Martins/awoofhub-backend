@@ -1,6 +1,8 @@
 import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { AlertService } from 'src/alert/alert.service';
 import { PaginationService } from 'src/common/pagination/pagination.service';
+import { NotificationType } from 'src/common/types/enums';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { UsersService } from 'src/users/users.service';
 import { Repository } from 'typeorm';
@@ -19,6 +21,7 @@ export class OffersService {
     private readonly paginationService: PaginationService,
     private readonly notificationService: NotificationsService,
     private readonly userService: UsersService,
+    private readonly alertService: AlertService,
   ) { }
 
   async create(createOfferDto: CreateOfferDto, id: string) {
@@ -38,7 +41,22 @@ export class OffersService {
       const offer = this.offersRepository.create({ ...rest, category: { id: existing.id }, end_date: new Date(end_date), business: { id: user.id } });
       await this.offersRepository.save(offer);
 
-      this.notificationService.create(offer.business.id, "Created Offer", "You just created an offer")
+      const subscribers = await this.alertService.getSubscribersForBusiness(user.id);
+
+      const notificationPromises = subscribers.map(sub =>
+        this.notificationService.create(
+          sub.id,
+          'New Offer',
+          `${user.name} posted a new offer`,
+          NotificationType.OFFER_CREATED,
+          offer.id,
+        )
+      );
+
+      // Fire them all at once!
+      await Promise.all(notificationPromises);
+
+      await this.notificationService.create(offer.business.id, "Created Offer", "You just created an offer", NotificationType.OFFER_CREATED, offer.id)
 
       return {
         message: 'Offer created successfully',

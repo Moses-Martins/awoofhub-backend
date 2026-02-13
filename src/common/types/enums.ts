@@ -12,9 +12,9 @@ export enum BusinessCategory {
 }
 
 export enum ApprovalStatus {
-    PENDING = 'pending',
-    APPROVED = 'approved',
-    REJECTED = 'rejected',
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
 }
 
 export enum TokenPurpose {
@@ -25,4 +25,13 @@ export enum TokenPurpose {
 export enum AuthProvider {
   GOOGLE = "google",
   LOCAL = "local",
+}
+
+export enum NotificationType {
+  PROFILE_UPDATED = "PROFILE_UPDATED",
+  OFFER_CREATED = "OFFER_CREATED",
+  PASSWORD_CHANGED = "PASSWORD_CHANGED",
+  NEW_MESSAGE = "NEW_MESSAGE",
+  OFFER_APPROVED = "OFFER_APPROVED",
+  OFFER_REJECTED = "OFFER_REJECTED",
 }

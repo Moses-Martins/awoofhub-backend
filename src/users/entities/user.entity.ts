@@ -1,5 +1,6 @@
 import { Exclude } from 'class-transformer';
 import { MinLength } from 'class-validator';
+import { Alert } from 'src/alert/entities/alert.entity';
 import { PasswordResetToken } from 'src/auth/entities/password-reset-token.entity';
 import { RefreshToken } from 'src/auth/entities/refresh-token.entity';
 import { Conversation } from 'src/chat/entities/conversation.entity';
@@ -78,6 +79,12 @@ export class User {
 
   @OneToMany(() => Offer, offer => offer.approved_by)
   approvals: Offer[];
+
+  @OneToMany(() => Alert, (alert) => alert.user)
+  createdAlerts: Alert[];
+
+  @OneToMany(() => Alert, (alert) => alert.business)
+  receivedAlerts: Alert[];
 
   @OneToMany(() => Review, review => review.user)
   reviews: Review[];
