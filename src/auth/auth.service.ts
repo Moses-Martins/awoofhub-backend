@@ -50,10 +50,6 @@ export class AuthService {
                 throw new UnauthorizedException('Invalid email or password');
             }
 
-            if (user.role !== loginUser.role) {
-                throw new UnauthorizedException('Invalid role for this user');
-            }
-
             // Don't let unverified users log in
             if (!user.is_email_verified) {
                 throw new UnauthorizedException(
@@ -129,10 +125,6 @@ export class AuthService {
                 profile_image_url: picture,
                 auth_provider: AuthProvider.GOOGLE,
             });
-        }
-
-        if (user.role !== requestedRole) {
-            throw new UnauthorizedException('This account is registered as a different role');
         }
 
         if (!user.is_email_verified) {
