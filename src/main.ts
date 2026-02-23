@@ -9,6 +9,8 @@ import { APIResponseInterceptor } from './common/interceptors/api-response-inter
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+    
+  app.setGlobalPrefix('api');
 
   const cookieSecret = process.env.COOKIE_SECRET;
   if (!cookieSecret) {
