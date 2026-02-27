@@ -98,7 +98,7 @@ export class OffersService {
   }
 
   async findAll(page = 1, limit = 10) {
-    const offers = await this.offersRepository
+    const [offers, total] = await this.offersRepository
       .createQueryBuilder('offer')
       .leftJoin('offer.business', 'business')
       .leftJoin('offer.category', 'category')
@@ -109,10 +109,8 @@ export class OffersService {
       ])
       .skip((page - 1) * limit)
       .take(limit)
-      .getMany();
+      .getManyAndCount();
 
-
-    const total = await this.offersRepository.count();
     const meta = this.paginationService.getPaginationMeta(page, limit, total);
 
     return {
@@ -222,6 +220,46 @@ export class OffersService {
     return {
       data: results,
       meta
+    };
+  }
+
+  async getRandomOffers(page = 1, limit = 10) {
+
+    const randomIds = await this.offersRepository
+      .createQueryBuilder('offer')
+      .select('offer.id')
+      .orderBy('RANDOM()')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getRawMany();
+
+    const ids = randomIds.map(r => r.offer_id);
+
+    if (!ids.length) {
+      return {
+        data: [],
+        meta: this.paginationService.getPaginationMeta(page, limit, 0),
+      };
+    }
+
+    const offers = await this.offersRepository
+      .createQueryBuilder('offer')
+      .leftJoin('offer.business', 'business')
+      .leftJoin('offer.category', 'category')
+      .select([
+        'offer',
+        'business.id', 'business.name', 'business.email',
+        'category.id', 'category.name',
+      ])
+      .whereInIds(ids)
+      .getMany();
+
+    const total = await this.offersRepository.count();
+    const meta = this.paginationService.getPaginationMeta(page, limit, total);
+
+    return {
+      data: offers,
+      meta,
     };
   }
 

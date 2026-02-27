@@ -47,6 +47,11 @@ export class OffersController {
     return this.offersService.createCategory(createCategoryDto);
   }
 
+  @Get('random')
+  getRandom(@Query('page') page: number, @Query('limit') limit: number) {
+    return this.offersService.getRandomOffers(page, limit);
+  }
+
   @Get(':id')
   findOfferById(@Param('id') id: string) {
     return this.offersService.findById(id);
