@@ -21,7 +21,7 @@ export class UpdateOfferDto extends PartialType(CreateOfferDto) {
 
     @IsOptional()
     @IsString()
-    image_url?: string;
+    imageUrl?: string;
 
     @IsOptional()
     @IsString()

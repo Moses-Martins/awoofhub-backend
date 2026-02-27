@@ -35,7 +35,7 @@ export class AuthService {
                 throw new ForbiddenException('User not found');
             }
 
-            if (user.auth_provider !== 'local') {
+            if (user.authProvider !== 'local') {
                 throw new UnauthorizedException(
                     'This account uses Google login.'
                 );
@@ -51,7 +51,7 @@ export class AuthService {
             }
 
             // Don't let unverified users log in
-            if (!user.is_email_verified) {
+            if (!user.isEmailVerified) {
                 throw new UnauthorizedException(
                     'Email not verified. Please verify your email before logging in.',
                 );
@@ -121,13 +121,13 @@ export class AuthService {
                 email,
                 name: `${firstName} ${lastName}`,
                 role: requestedRole,
-                is_email_verified: true,
-                profile_image_url: picture,
-                auth_provider: AuthProvider.GOOGLE,
+                isEmailVerified: true,
+                profileImageUrl: picture,
+                authProvider: AuthProvider.GOOGLE,
             });
         }
 
-        if (!user.is_email_verified) {
+        if (!user.isEmailVerified) {
             user = await this.userService.updateEmailVerification(user.id);
         }
 
@@ -154,7 +154,7 @@ export class AuthService {
             };
         }
 
-        if (user.is_email_verified) {
+        if (user.isEmailVerified) {
             throw new BadRequestException('Email already verified');
         }
 
@@ -187,7 +187,7 @@ export class AuthService {
             }
 
             // Check if already verified
-            if (user.is_email_verified) {
+            if (user.isEmailVerified) {
                 throw new BadRequestException('Email already verified');
             }
 

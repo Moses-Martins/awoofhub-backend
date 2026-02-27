@@ -28,7 +28,7 @@ export class Offer {
     price: number;
 
     @Column({ nullable: true })
-    image_url?: string;
+    imageUrl?: string;
 
     @ManyToOne(() => User, (business) => business.offers, { onDelete: 'CASCADE' })
     business: User;
@@ -47,13 +47,13 @@ export class Offer {
     approvalStatus: ApprovalStatus;
 
     @Column({ type: 'text', nullable: true, })
-    admin_note?: string;
+    adminNote?: string;
 
     @Column({ type: 'timestamp', nullable: true })
-    approved_at?: Date;
+    approvedAt?: Date;
 
     @ManyToOne(() => User, (admin) => admin.approvals)
-    approved_by?: User;
+    approvedBy?: User;
 
     @OneToMany(() => Review, review => review.offer)
     reviews: Review[];
@@ -62,9 +62,9 @@ export class Offer {
     wishlists: Wishlist[];
 
     @CreateDateColumn()
-    created_at: Date;
+    createdAt: Date;
 
     @Column({ type: 'timestamp' })
-    end_date: Date;
+    endDate: Date;
 
 }

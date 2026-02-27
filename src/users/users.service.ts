@@ -34,7 +34,7 @@ export class UsersService {
             if (!user) {
                 throw new InternalServerErrorException('User not found');
             }
-            user.is_email_verified = true;
+            user.isEmailVerified = true;
 
             // Save the changes back to the database
             return await this.userRepository.save(user);

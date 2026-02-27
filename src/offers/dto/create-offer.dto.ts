@@ -19,7 +19,7 @@ export class CreateOfferDto {
 
     @IsOptional()
     @IsString()
-    image_url?: string;
+    imageUrl?: string;
 
     @IsOptional()
     @IsString()
@@ -27,6 +27,6 @@ export class CreateOfferDto {
 
     @IsNotEmpty()
     @IsDateString()
-    end_date: string;
+    endDate: string;
 
 }

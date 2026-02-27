@@ -5,7 +5,7 @@ import { PasswordResetToken } from 'src/auth/entities/password-reset-token.entit
 import { RefreshToken } from 'src/auth/entities/refresh-token.entity';
 import { Conversation } from 'src/chat/entities/conversation.entity';
 import { Message } from 'src/chat/entities/message.entity';
-import { AuthProvider, BusinessCategory, UserRole } from 'src/common/types/enums';
+import { AuthProvider, UserRole } from 'src/common/types/enums';
 import { Notification } from 'src/notifications/entities/notification.entity';
 import { Offer } from 'src/offers/entities/offer.entity';
 import { Review } from 'src/reviews/entities/review.entity';
@@ -38,7 +38,7 @@ export class User {
   password?: string;
 
   @Column({ nullable: true })
-  profile_image_url?: string;
+  profileImageUrl?: string;
 
   @Column({
     type: 'enum',
@@ -49,7 +49,7 @@ export class User {
 
   @Exclude({ toPlainOnly: true })
   @Column({ default: false })
-  is_email_verified: boolean;
+  isEmailVerified: boolean;
 
   @Exclude({ toPlainOnly: true })
   @Column({
@@ -57,27 +57,21 @@ export class User {
     enum: AuthProvider,
     default: AuthProvider.LOCAL,
   })
-  auth_provider: AuthProvider;
+  authProvider: AuthProvider;
+
+  @Column({ type: 'text', nullable: true })
+  bio?: string;
 
   @Column({ type: 'text', nullable: true })
   address?: string;
 
-  @Column({ type: 'text', nullable: true })
-  business_description?: string;
-
   @Column({ type: 'json', nullable: true })
-  social_links?: string[];
-
-  @Column({ type: 'text', nullable: true })
-  business_email?: string;
-
-  @Column({ type: 'enum', enum: BusinessCategory, nullable: true })
-  business_category?: BusinessCategory;
+  website?: string;
 
   @OneToMany(() => Offer, offer => offer.business)
   offers: Offer[];
 
-  @OneToMany(() => Offer, offer => offer.approved_by)
+  @OneToMany(() => Offer, offer => offer.approvedBy)
   approvals: Offer[];
 
   @OneToMany(() => Alert, (alert) => alert.user)
@@ -111,9 +105,9 @@ export class User {
   sentMessages: Message[];
 
   @CreateDateColumn()
-  created_at: Date;
+  createdAt: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updatedAt: Date;
 
 }

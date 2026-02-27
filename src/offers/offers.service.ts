@@ -27,7 +27,7 @@ export class OffersService {
   async create(createOfferDto: CreateOfferDto, id: string) {
     try {
 
-      const { category, end_date, ...rest } = createOfferDto;
+      const { category, endDate, ...rest } = createOfferDto;
       const existing = await this.categoriesRepository.findOneBy({ name: category.trim().toLowerCase() });
       if (!existing) {
         throw new NotFoundException('Category not found');
@@ -38,7 +38,7 @@ export class OffersService {
         throw new NotFoundException('User not found');
       }
 
-      const offer = this.offersRepository.create({ ...rest, category: { id: existing.id }, end_date: new Date(end_date), business: { id: user.id } });
+      const offer = this.offersRepository.create({ ...rest, category: { id: existing.id }, endDate: new Date(endDate), business: { id: user.id } });
       await this.offersRepository.save(offer);
 
       const subscribers = await this.alertService.getSubscribersForBusiness(user.id);
