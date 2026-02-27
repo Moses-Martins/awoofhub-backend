@@ -1,7 +1,7 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min } from "class-validator";
+import { IsNumber, IsOptional, IsString, Max, Min } from "class-validator";
 
 export class CreateReviewDto {
-    @IsNotEmpty()
+    @IsOptional()
     @IsNumber()
     @Min(1)
     @Max(5)
