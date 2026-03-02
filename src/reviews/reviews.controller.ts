@@ -11,6 +11,11 @@ import { ReviewsService } from "./reviews.service";
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) { }
 
+  @Get('offer/:offerId')
+  getofferReviews(@Param('offerId') offerId: string, @Query('page') page: number, @Query('limit') limit: number) {
+    return this.reviewsService.getofferReviews(offerId, page, limit);
+  }
+
   @Post(':offerId')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.USER)
@@ -18,8 +23,4 @@ export class ReviewsController {
     return this.reviewsService.addReview(user.id, offerId, createReviewDto);
   }
 
-  @Get('offer/:offerId')
-  getofferReviews(@Param('offerId') offerId: string, @Query('page') page: number, @Query('limit') limit: number) {
-    return this.reviewsService.getofferReviews(offerId, page, limit);
-  }
 }

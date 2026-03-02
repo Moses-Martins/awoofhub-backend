@@ -2,18 +2,19 @@ import { Offer } from "src/offers/entities/offer.entity";
 import { User } from "src/users/entities/user.entity";
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
-@Entity('reviews')
-export class Review {
+@Entity('comments')
+export class Comment {
+
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
     @Column()
-    rating: number;
+    comment: string;
 
-    @ManyToOne(() => User, user => user.reviews)
+    @ManyToOne(() => User, user => user.comments)
     user: User;
 
-    @ManyToOne(() => Offer, offer => offer.reviews)
+    @ManyToOne(() => Offer, offer => offer.comments)
     offer: Offer;
 
 }

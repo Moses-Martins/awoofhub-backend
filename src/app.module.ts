@@ -2,10 +2,12 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AlertModule } from './alert/alert.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { ChatModule } from './chat/chat.module';
+import { CommentsModule } from './comments/comments.module';
 import { CommonModule } from './common/common.module';
 import AppDataSource from './config/typeorm.config';
 import { FilesModule } from './files/files.module';
@@ -15,7 +17,6 @@ import { OffersModule } from './offers/offers.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { UsersModule } from './users/users.module';
 import { WishlistModule } from './wishlist/wishlist.module';
-import { AlertModule } from './alert/alert.module';
 
 
 @Module({
@@ -44,6 +45,7 @@ import { AlertModule } from './alert/alert.module';
       ignoreErrors: false,
     }),
     AlertModule,
+    CommentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

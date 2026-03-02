@@ -16,13 +16,13 @@ export class ReviewsService {
     private offersService: OffersService,
     private readonly paginationService: PaginationService,
   ) { }
-  async addReview(userId: string, OfferId: string, createReviewDto: CreateReviewDto): Promise<Review> {
+  async addReview(userId: string, offerId: string, createReviewDto: CreateReviewDto): Promise<Review> {
     const user = await this.usersService.getUserById(userId);
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    const offer = await this.offersService.findById(OfferId);
+    const offer = await this.offersService.findById(offerId);
     if (!offer) {
       throw new NotFoundException('Offer not found');
     }
@@ -43,13 +43,17 @@ export class ReviewsService {
   }
 
   async getofferReviews(offerId: string, page = 1, limit = 10) {
+    const offer = await this.offersService.findById(offerId);
+    if (!offer) {
+      throw new NotFoundException('Offer not found');
+    }
 
     const reviews = await this.reviewsRepository
       .createQueryBuilder('review')
       .leftJoin('review.user', 'user')
       .select([
         'review',
-        'user.id', 'user.name', 'user.profile_image_url',
+        'user.id', 'user.name', 'user.profileImageUrl',
       ])
       .skip((page - 1) * limit)
       .take(limit)
@@ -59,8 +63,6 @@ export class ReviewsService {
 
     const total = await this.reviewsRepository.count();
     const meta = this.paginationService.getPaginationMeta(page, limit, total);
-
-
 
     return {
       data: reviews,

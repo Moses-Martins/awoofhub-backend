@@ -1,3 +1,4 @@
+import { Comment } from 'src/comments/entities/comment.entity';
 import { ApprovalStatus } from 'src/common/types/enums';
 import { Review } from 'src/reviews/entities/review.entity';
 import { User } from 'src/users/entities/user.entity';
@@ -57,6 +58,9 @@ export class Offer {
 
     @OneToMany(() => Review, review => review.offer)
     reviews: Review[];
+
+    @OneToMany(() => Comment, comment => comment.offer)
+    comments: Comment[];
 
     @OneToMany(() => Wishlist, (wishlist) => wishlist.offer, { cascade: true })
     wishlists: Wishlist[];
