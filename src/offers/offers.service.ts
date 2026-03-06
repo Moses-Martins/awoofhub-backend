@@ -114,6 +114,27 @@ export class OffersService {
     return offer;
   }
 
+  async findByCategoryId(id: string): Promise<Offer[]> {
+
+    const category = await this.categoryService.findById(id)
+
+    const offer = await this.offersRepository
+      .createQueryBuilder('offer')
+      .leftJoin('offer.business', 'business')
+      .leftJoin('offer.category', 'category')
+      .addSelect([
+        'business.id',
+        'business.name',
+        'business.email',
+        'category.id',
+        'category.name',
+      ])
+      .where('category.id = :id', { id: category.id })
+      .getMany();
+
+    return offer;
+  }
+
   async searchOffers(query: string, page = 1, limit = 10) {
     const results = await this.offersRepository
       .createQueryBuilder('offer')
