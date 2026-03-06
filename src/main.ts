@@ -9,6 +9,12 @@ import { APIResponseInterceptor } from './common/interceptors/api-response-inter
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.enableCors({
+    origin: process.env.FRONTEND_URL || true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+  });
     
   app.setGlobalPrefix('api');
 
