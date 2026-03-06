@@ -1,14 +1,13 @@
-import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AlertService } from 'src/alert/alert.service';
+import { CategoryService } from 'src/category/category.service';
 import { PaginationService } from 'src/common/pagination/pagination.service';
 import { NotificationType } from 'src/common/types/enums';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { UsersService } from 'src/users/users.service';
 import { Repository } from 'typeorm';
-import { CreateCategoryDto } from './dto/create-category.dto';
 import { CreateOfferDto } from './dto/create-offer.dto';
-import { Category } from './entities/category.entity';
 import { Offer } from './entities/offer.entity';
 
 @Injectable()
@@ -16,19 +15,18 @@ export class OffersService {
   constructor(
     @InjectRepository(Offer)
     private offersRepository: Repository<Offer>,
-    @InjectRepository(Category)
-    private categoriesRepository: Repository<Category>,
     private readonly paginationService: PaginationService,
     private readonly notificationService: NotificationsService,
     private readonly userService: UsersService,
     private readonly alertService: AlertService,
+    private readonly categoryService: CategoryService,
   ) { }
 
   async create(createOfferDto: CreateOfferDto, id: string) {
     try {
 
       const { category, endDate, ...rest } = createOfferDto;
-      const existing = await this.categoriesRepository.findOneBy({ name: category.trim().toLowerCase() });
+      const existing = await this.categoryService.findByName(category.trim().toLowerCase());
       if (!existing) {
         throw new NotFoundException('Category not found');
       }
@@ -70,31 +68,6 @@ export class OffersService {
 
       throw new InternalServerErrorException('Failed to create offer');
     }
-  }
-
-  async createCategory(
-    createCategoryDto: CreateCategoryDto,
-  ): Promise<Category> {
-
-
-    const name = createCategoryDto.name.trim().toLowerCase();
-
-    const existingCategory = await this.categoriesRepository.findOne({
-      where: { name },
-    });
-
-    if (existingCategory) {
-      throw new ConflictException(`Category '${name}' already exists`);
-    }
-
-    const category = this.categoriesRepository.create({ name });
-    try {
-      return this.categoriesRepository.save(category);
-
-    } catch (error) {
-      throw new InternalServerErrorException('Failed to create category');
-    }
-
   }
 
   async findAll(page = 1, limit = 10) {
@@ -189,7 +162,7 @@ export class OffersService {
       .take(limit);
 
     if (category) {
-      const existing = await this.categoriesRepository.findOneBy({ name: category });
+      const existing = await this.categoryService.findByName(category);
       if (existing) {
         queryBuilder = queryBuilder.andWhere('offer.categoryId = :categoryId', { categoryId: existing.id });
       }

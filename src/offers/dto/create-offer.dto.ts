@@ -1,4 +1,4 @@
-import { IsDateString, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsDateString, IsNotEmpty, IsOptional, IsString } from "class-validator";
 
 export class CreateOfferDto {
     @IsNotEmpty()
@@ -7,15 +7,15 @@ export class CreateOfferDto {
 
     @IsNotEmpty()
     @IsString()
+    highlight: string;
+
+    @IsNotEmpty()
+    @IsString()
     description: string;
 
     @IsNotEmpty()
     @IsString()
     category: string;
-
-    @IsOptional()
-    @IsNumber()
-    price?: number;
 
     @IsOptional()
     @IsString()

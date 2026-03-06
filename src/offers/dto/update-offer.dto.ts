@@ -9,15 +9,15 @@ export class UpdateOfferDto extends PartialType(CreateOfferDto) {
 
     @IsOptional()
     @IsString()
+    highlight?: string;
+
+    @IsOptional()
+    @IsString()
     description?: string;
 
     @IsOptional()
     @IsString()
     category?: string;
-
-    @IsOptional()
-    @IsString()
-    price?: number;
 
     @IsOptional()
     @IsString()

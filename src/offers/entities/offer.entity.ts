@@ -1,3 +1,4 @@
+import { Category } from 'src/category/entities/category.entity';
 import { Comment } from 'src/comments/entities/comment.entity';
 import { ApprovalStatus } from 'src/common/types/enums';
 import { Review } from 'src/reviews/entities/review.entity';
@@ -11,7 +12,7 @@ import {
     OneToMany,
     PrimaryGeneratedColumn
 } from 'typeorm';
-import { Category } from './category.entity';
+
 
 @Entity('offers')
 export class Offer {
@@ -23,10 +24,10 @@ export class Offer {
     title: string;
 
     @Column('text')
-    description: string;
+    highlight: string;
 
-    @Column('decimal', { default: 0.0 })
-    price: number;
+    @Column('text')
+    description: string;
 
     @Column({ nullable: true })
     imageUrl?: string;

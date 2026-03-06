@@ -5,7 +5,6 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { UserRole } from 'src/common/types/enums';
 import { User } from 'src/users/entities/user.entity';
-import { CreateCategoryDto } from './dto/create-category.dto';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { OffersService } from './offers.service';
 
@@ -40,11 +39,6 @@ export class OffersController {
     @Query('minRating') minRating?: number,
   ) {
     return this.offersService.filter(category, minPrice, maxPrice, minRating, page, limit);
-  }
-
-  @Post('categories')
-  createCategory(@Body() createCategoryDto: CreateCategoryDto) {
-    return this.offersService.createCategory(createCategoryDto);
   }
 
   @Get('random')
