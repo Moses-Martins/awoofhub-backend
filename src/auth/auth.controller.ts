@@ -2,7 +2,6 @@ import { Body, Controller, Get, HttpCode, Post, Query, Req, Res, UnauthorizedExc
 import { AuthGuard } from '@nestjs/passport';
 import { instanceToPlain } from 'class-transformer';
 import type { Request, Response } from 'express';
-import passport from 'passport';
 import { UserRole } from 'src/common/types/enums';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { AuthService } from './auth.service';
@@ -50,19 +49,11 @@ export class AuthController {
     }
   }
 
-  @Get('google/business')
-  async googleAuthBusiness(@Req() req, @Res() res) {
-    return passport.authenticate('google', {
-      state: 'business'
-    })(req, res);
-  }
-
-  @Get('google/user')
-  async googleAuthUser(@Req() req, @Res() res) {
-    return passport.authenticate('google', {
-      state: 'user'
-    })(req, res);
-  }
+  @Get('google/')
+  @UseGuards(AuthGuard('google'))
+  async googleAuth(@Req() req) {
+  	return;
+   }
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
