@@ -26,7 +26,7 @@ export class AuthController {
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: true,
-      sameSite: 'strict',
+      sameSite: 'none',
       signed: true,
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
@@ -34,7 +34,7 @@ export class AuthController {
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: true,
-      sameSite: 'strict',
+      sameSite: 'none',
       // path: '/auth/refresh',
       signed: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -68,8 +68,6 @@ export class AuthController {
 
     res.cookie('access_token', accessToken, {
       httpOnly: true,
-      // secure: true,
-      // sameSite: 'strict',
       secure: true,
       sameSite: 'none',
       signed: true,
@@ -80,7 +78,6 @@ export class AuthController {
       httpOnly: true,
       secure: true,
       sameSite: 'strict',
-      // path: '/auth/refresh',
       signed: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -99,7 +96,7 @@ export class AuthController {
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: true,
-      sameSite: 'strict',
+      sameSite: 'none',
       signed: true,
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
@@ -107,7 +104,7 @@ export class AuthController {
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: true,
-      sameSite: 'strict',
+      sameSite: 'none',
       signed: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -134,7 +131,7 @@ export class AuthController {
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: true,
-      sameSite: 'strict',
+      sameSite: 'none',
       signed: true,
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
@@ -142,7 +139,7 @@ export class AuthController {
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: true,
-      sameSite: 'strict',
+      sameSite: 'none',
       signed: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
