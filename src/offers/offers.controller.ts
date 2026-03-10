@@ -46,9 +46,14 @@ export class OffersController {
     return this.offersService.getRandomOffers(page, limit);
   }
 
-  @Get('category/:id')
-  findByCategoryId(@Param('id') id: string) {
-    return this.offersService.findByCategoryId(id);
+  @Get('category/slug/:slug')
+  findByCategorySlug(@Param('slug') slug: string, @Query('page') page: number, @Query('limit') limit: number) {
+    return this.offersService.findByCategorySlug(slug, page, limit);
+  }
+
+  @Get('category/id/:id')
+  findByCategoryId(@Param('id') id: string, @Query('page') page: number, @Query('limit') limit: number) {
+    return this.offersService.findByCategoryId(id, page, limit);
   }
 
   @Get(':id')

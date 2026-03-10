@@ -13,7 +13,7 @@ export class CategoryService {
 
   async create(createCategoryDto: CreateCategoryDto): Promise<Category> {
 
-    const name = createCategoryDto.name.trim().toLowerCase();
+    const name = createCategoryDto.name.trim();
 
     const existingCategory = await this.categoriesRepository.findOne({
       where: { name },
@@ -52,13 +52,23 @@ export class CategoryService {
     return category;
   }
 
-  async findByName(name: string): Promise<Category> {
-    const category = await this.categoriesRepository.findOneBy({ name });
-    
+  async findBySlug(slug: string): Promise<Category> {
+    const category = await this.categoriesRepository.findOneBy({ slug });
+
     if (!category) {
       throw new NotFoundException('Category not found');
     }
-    
+
+    return category;
+  }
+
+  async findByName(name: string): Promise<Category> {
+    const category = await this.categoriesRepository.findOneBy({ name });
+
+    if (!category) {
+      throw new NotFoundException('Category not found');
+    }
+
     return category;
   }
 

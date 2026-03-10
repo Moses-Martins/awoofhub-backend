@@ -9,6 +9,9 @@ export class Category {
     @Column({ unique: true })
     name: string;
 
+    @Column({ unique: true })
+    slug: string;
+
     @OneToMany(() => Offer, offer => offer.category)
     offers: Offer[];
 
@@ -17,9 +20,12 @@ export class Category {
 
     @BeforeInsert()
     @BeforeUpdate()
-    normalizeName() {
+    normalizeSlug() {
         if (this.name) {
-            this.name = this.name.trim().toLowerCase();
+            this.slug = this.name.trim().toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-');
         }
     }
 }

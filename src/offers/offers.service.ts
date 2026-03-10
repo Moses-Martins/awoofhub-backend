@@ -26,7 +26,7 @@ export class OffersService {
     try {
 
       const { category, endDate, ...rest } = createOfferDto;
-      const existing = await this.categoryService.findByName(category.trim().toLowerCase());
+      const existing = await this.categoryService.findByName(category.trim());
       if (!existing) {
         throw new NotFoundException('Category not found');
       }
@@ -114,11 +114,11 @@ export class OffersService {
     return offer;
   }
 
-  async findByCategoryId(id: string): Promise<Offer[]> {
+  async findByCategoryId(id: string, page = 1, limit = 10) {
 
     const category = await this.categoryService.findById(id)
 
-    const offer = await this.offersRepository
+    const [offers, total] = await this.offersRepository
       .createQueryBuilder('offer')
       .leftJoin('offer.business', 'business')
       .leftJoin('offer.category', 'category')
@@ -128,11 +128,48 @@ export class OffersService {
         'business.email',
         'category.id',
         'category.name',
+        'category.slug',
       ])
       .where('category.id = :id', { id: category.id })
-      .getMany();
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
 
-    return offer;
+    const meta = this.paginationService.getPaginationMeta(page, limit, total);
+
+    return {
+      data: offers,
+      meta
+    }
+  }
+
+  async findByCategorySlug(slug: string, page = 1, limit = 10) {
+
+    const category = await this.categoryService.findBySlug(slug)
+
+    const [offers, total] = await this.offersRepository
+      .createQueryBuilder('offer')
+      .leftJoin('offer.business', 'business')
+      .leftJoin('offer.category', 'category')
+      .addSelect([
+        'business.id',
+        'business.name',
+        'business.email', 
+        'category.id',
+        'category.name',
+        'category.slug',
+      ])
+      .where('category.slug = :slug', { slug: category.slug })
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    const meta = this.paginationService.getPaginationMeta(page, limit, total);
+
+    return {
+      data: offers,
+      meta
+    }
   }
 
   async searchOffers(query: string, page = 1, limit = 10) {
