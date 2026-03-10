@@ -5,6 +5,8 @@ config();
 
 const configService = new ConfigService();
 
+const isProduction = configService.get<string>("NODE_ENV") === "production";
+
 const AppDataSource = new DataSource({
     type: 'postgres',
     host: configService.get<string>('DB_HOST', 'localhost'),
@@ -12,9 +14,10 @@ const AppDataSource = new DataSource({
     username: configService.get<string>('DB_USERNAME'),
     password: configService.get<string>('DB_PASSWORD'),
     database: configService.get<string>('DB_DATABASE'),
+    ssl: isProduction ? { rejectUnauthorized: false } : false,
     synchronize: false,
     entities: ['dist/**/*.entity.js'],
-    migrations: ['dist/database/migrations/*.js'], 
+    migrations: ['dist/database/migrations/*.js'],
     migrationsRun: false,
     logging: true,
 });
