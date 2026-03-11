@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { PaginationService } from 'src/common/pagination/pagination.service';
 import { OffersService } from 'src/offers/offers.service';
 import { UsersService } from 'src/users/users.service';
 import { Repository } from 'typeorm';
@@ -13,7 +12,6 @@ export class WishlistService {
     private wishlistRepository: Repository<Wishlist>,
     private usersService: UsersService,
     private offersService: OffersService,
-    private readonly paginationService: PaginationService,
   ) { }
 
   async addToWishlist(userId: string, offerId: string): Promise<Wishlist> {
@@ -43,7 +41,7 @@ export class WishlistService {
   }
 
 
-  async viewWishlist(userId: string, page = 1, limit = 10) {
+  async viewWishlist(userId: string) {
 
     const user = await this.usersService.getUserById(userId);
     if (!user) {
@@ -56,23 +54,33 @@ export class WishlistService {
       .leftJoin('wishlist.offer', 'offer')
       .select([
         'wishlist',
-        'user.id', 'user.name', 'user.profile_image_url',
+        'user.id', 'user.name', 'user.profileImageUrl',
         'offer.id', 'offer.title', 'offer.description',
       ])
       .where('user.id = :userId', { userId: user.id })
       .orderBy('wishlist.id', 'ASC')
-      .skip((page - 1) * limit)
-      .take(limit)
       .getMany();
 
+    return wishlists
 
-    const total = await this.wishlistRepository.count();
-    const meta = this.paginationService.getPaginationMeta(page, limit, total);
-
-    return {
-      data: wishlists,
-      meta
-    };
   }
+
+
+  async removeFromWishlist(userId: string, offerId: string) {
+
+    const result = await this.wishlistRepository.delete({
+      offer: { id: offerId },
+      user: { id: userId }
+    });
+
+    if (result.affected === 0) {
+      throw new NotFoundException("Offer not found in wishlist");
+    }
+
+    return {}
+    
+  }
+
+
 }
 

@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, Param, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { Roles } from 'src/common/decorators/roles.decorator';
@@ -19,8 +19,15 @@ export class WishlistController {
 
   @Get()
   @UseGuards(AuthGuard)
-  viewWishlist(@CurrentUser() user, @Query('page') page: number, @Query('limit') limit: number) {
-    return this.wishlistService.viewWishlist(user.id, page, limit);
+  viewWishlist(@CurrentUser() user) {
+    return this.wishlistService.viewWishlist(user.id);
+  }
+
+  @Delete(':offerId')
+  @HttpCode(200)
+  @UseGuards(AuthGuard)
+  remove(@CurrentUser() user, @Param('offerId') offerId: string) {
+    return this.wishlistService.removeFromWishlist(user.id, offerId);
   }
 }
 
