@@ -55,7 +55,7 @@ export class WishlistService {
       .select([
         'wishlist',
         'user.id', 'user.name', 'user.profileImageUrl',
-        'offer.id', 'offer.title', 'offer.description',
+        'offer',
       ])
       .where('user.id = :userId', { userId: user.id })
       .orderBy('wishlist.id', 'ASC')
