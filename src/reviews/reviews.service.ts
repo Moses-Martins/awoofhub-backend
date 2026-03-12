@@ -1,6 +1,5 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { PaginationService } from 'src/common/pagination/pagination.service';
 import { OffersService } from 'src/offers/offers.service';
 import { UsersService } from 'src/users/users.service';
 import { Repository } from 'typeorm';
@@ -13,8 +12,8 @@ export class ReviewsService {
     @InjectRepository(Review)
     private reviewsRepository: Repository<Review>,
     private usersService: UsersService,
+    @Inject(forwardRef(() => OffersService))
     private offersService: OffersService,
-    private readonly paginationService: PaginationService,
   ) { }
   async addReview(userId: string, offerId: string, createReviewDto: CreateReviewDto): Promise<Review> {
     const user = await this.usersService.getUserById(userId);
@@ -42,31 +41,33 @@ export class ReviewsService {
     return this.reviewsRepository.save(review);
   }
 
-  async getofferReviews(offerId: string, page = 1, limit = 10) {
-    const offer = await this.offersService.findById(offerId);
-    if (!offer) {
-      throw new NotFoundException('Offer not found');
-    }
 
-    const reviews = await this.reviewsRepository
+  async getReviews(offerId: string) {
+
+    const overall = await this.reviewsRepository
       .createQueryBuilder('review')
-      .leftJoin('review.user', 'user')
-      .select([
-        'review',
-        'user.id', 'user.name', 'user.profileImageUrl',
-      ])
-      .skip((page - 1) * limit)
-      .take(limit)
-      .where('review.offer = :offerId', { offerId })
-      .getMany();
+      .select('COALESCE(AVG(review.rating),0)', 'avgRating')
+      .addSelect('COUNT(review.id)', 'reviewCount')
+      .where('review.offerId = :offerId', { offerId })
+      .getRawOne();
 
+    const distributionRaw = await this.reviewsRepository
+      .createQueryBuilder('review')
+      .select('review.rating', 'rating')
+      .addSelect('COUNT(review.id)', 'count')
+      .where('review.offerId = :offerId', { offerId })
+      .groupBy('review.rating')
+      .getRawMany();
 
-    const total = await this.reviewsRepository.count();
-    const meta = this.paginationService.getPaginationMeta(page, limit, total);
+    const ratingDistribution = { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 };
+    distributionRaw.forEach(d => {
+      ratingDistribution[d.rating] = Number(d.count);
+    });
 
     return {
-      data: reviews,
-      meta
+      avgRating: Number(overall.avgRating),
+      reviewCount: Number(overall.reviewCount),
+      ratingDistribution
     };
   }
 

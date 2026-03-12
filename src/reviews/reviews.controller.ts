@@ -13,7 +13,7 @@ export class ReviewsController {
 
   @Get('offer/:offerId')
   getofferReviews(@Param('offerId') offerId: string, @Query('page') page: number, @Query('limit') limit: number) {
-    return this.reviewsService.getofferReviews(offerId, page, limit);
+    return this.reviewsService.getReviews(offerId);
   }
 
   @Post(':offerId')

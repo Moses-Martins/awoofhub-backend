@@ -34,11 +34,9 @@ export class OffersController {
     @Query('page') page: number,
     @Query('limit') limit: number,
     @Query('category') category?: string,
-    @Query('minPrice') minPrice?: number,
-    @Query('maxPrice') maxPrice?: number,
     @Query('minRating') minRating?: number,
   ) {
-    return this.offersService.filter(category, minPrice, maxPrice, minRating, page, limit);
+    return this.offersService.filter(category, minRating, page, limit);
   }
 
   @Get('random')
