@@ -38,8 +38,20 @@ export class Offer {
     @ManyToOne(() => Category, category => category.offers)
     category: Category;
 
-    @Column({ nullable: true })
+    @Column('text')
     location: string;
+
+    @Column('text')
+    termsAndConditions: string;
+
+    @Column('text')
+    value: string;
+
+    @Column('text')
+    dealUrl: string;
+
+    @Column({ nullable: true })
+    couponCode?: string;
 
     @Column({
         type: 'enum',

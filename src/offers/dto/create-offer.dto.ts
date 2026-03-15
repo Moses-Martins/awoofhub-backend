@@ -21,9 +21,25 @@ export class CreateOfferDto {
     @IsString()
     imageUrl?: string;
 
+    @IsNotEmpty()
+    @IsString()
+    location: string;
+
+    @IsNotEmpty()
+    @IsString()
+    termsAndConditions: string;
+
+    @IsNotEmpty()
+    @IsString()
+    value: string;
+
+    @IsNotEmpty()
+    @IsString()
+    dealUrl: string;
+
     @IsOptional()
     @IsString()
-    location?: string;
+    couponCode?: string;
 
     @IsNotEmpty()
     @IsDateString()

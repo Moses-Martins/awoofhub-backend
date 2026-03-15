@@ -26,4 +26,21 @@ export class UpdateOfferDto extends PartialType(CreateOfferDto) {
     @IsOptional()
     @IsString()
     location?: string;
+
+    @IsOptional()
+    @IsString()
+    termsAndConditions?: string;
+
+    @IsOptional()
+    @IsString()
+    value?: string;
+
+    @IsOptional()
+    @IsString()
+    dealUrl?: string;
+
+    @IsOptional()
+    @IsString()
+    couponCode?: string;
+
 }

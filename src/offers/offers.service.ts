@@ -123,6 +123,7 @@ export class OffersService {
         'business.email',
         'category.id',
         'category.name',
+        'category.slug',
       ])
       .where('offer.id = :id', { id })
       .getOne();
