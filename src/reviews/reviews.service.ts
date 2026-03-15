@@ -1,4 +1,4 @@
-import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { OffersService } from 'src/offers/offers.service';
 import { UsersService } from 'src/users/users.service';
@@ -15,7 +15,7 @@ export class ReviewsService {
     @Inject(forwardRef(() => OffersService))
     private offersService: OffersService,
   ) { }
-  async addReview(userId: string, offerId: string, createReviewDto: CreateReviewDto): Promise<Review> {
+  async upsertReview(userId: string, offerId: string, createReviewDto: CreateReviewDto): Promise<Review> {
     const user = await this.usersService.getUserById(userId);
     if (!user) {
       throw new NotFoundException('User not found');
@@ -26,19 +26,46 @@ export class ReviewsService {
       throw new NotFoundException('Offer not found');
     }
 
-    const alreadyReviewed = await this.reviewsRepository.findOne({
+    const existingReview = await this.reviewsRepository.findOne({
       where: {
         offer: { id: offer.id },
         user: { id: user.id }   // filter by the current user too
       },
     });
 
-    if (alreadyReviewed) {
-      throw new BadRequestException('Offer already reviewed!');
+    if (existingReview) {
+      const updatedReview = this.reviewsRepository.merge(
+        existingReview,
+        createReviewDto
+      );
+
+      return this.reviewsRepository.save(updatedReview);
     }
 
     const review = this.reviewsRepository.create({ ...createReviewDto, user: { id: user.id }, offer: { id: offer.id } });
     return this.reviewsRepository.save(review);
+  }
+
+
+  async getUserReview(userId: string, offerId: string) {
+    const user = await this.usersService.getUserById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const offer = await this.offersService.findById(offerId);
+    if (!offer) {
+      throw new NotFoundException('Offer not found');
+    }
+
+    const review = await this.reviewsRepository.findOne({
+      where: {
+        offer: { id: offer.id },
+        user: { id: user.id }
+      },
+    });
+
+    return review
   }
 
 
