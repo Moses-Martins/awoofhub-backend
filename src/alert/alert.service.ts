@@ -12,7 +12,7 @@ export class AlertService {
     private userService: UsersService,
   ) { }
 
-  async subscribe(userId: string, businessId: string) {
+  async setAlert(userId: string, businessId: string) {
     if (userId === businessId) {
       throw new BadRequestException('You cannot subscribe to your own business alerts');
     }
@@ -42,6 +42,30 @@ export class AlertService {
     });
 
     return await this.alertRepo.save(subscription);
+  }
+
+  async removeAlert(userId: string, businessId: string) {
+
+     const result = await this.alertRepo.delete({
+          business: { id: businessId },
+          user: { id: userId }
+        });
+    
+        if (result.affected === 0) {
+          throw new NotFoundException("Alert not set for business");
+        }
+    
+        return {}
+
+  }
+
+  async getBusinessAlert(userId: string, businessId: string) {
+    const result = await this.alertRepo.findOne({
+      where: { user: { id: userId }, business: { id: businessId } }
+    });
+
+    return result
+
   }
 
   async getSubscribersForBusiness(businessId: string) {

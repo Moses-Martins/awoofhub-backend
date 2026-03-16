@@ -18,7 +18,7 @@ export class APIResponseInterceptor
                 if (data?.message) delete data.message;
 
                 const data_ = data instanceof Error ? null : data?.data ? data.data : data;
-                const success = !(data instanceof Error) && data_ !== null;
+                const success = !(data instanceof Error);
                 
                 return {
                     success,

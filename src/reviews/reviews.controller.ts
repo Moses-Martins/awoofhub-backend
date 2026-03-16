@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
 import { AuthGuard } from "src/auth/guards/auth.guard";
 import { CurrentUser } from "src/common/decorators/current-user.decorator";
 import { Roles } from "src/common/decorators/roles.decorator";
@@ -12,7 +12,7 @@ export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) { }
 
   @Get('offer/:offerId')
-  getofferReviews(@Param('offerId') offerId: string, @Query('page') page: number, @Query('limit') limit: number) {
+  getofferReviews(@Param('offerId') offerId: string) {
     return this.reviewsService.getReviews(offerId);
   }
 
