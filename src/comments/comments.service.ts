@@ -47,6 +47,7 @@ export class CommentsService {
         'user.id', 'user.name', 'user.profileImageUrl',
       ])
       .where('comment.offer = :offerId', { offerId })
+      .orderBy('comment.createdAt', 'DESC')
       .getMany();
 
     return comments

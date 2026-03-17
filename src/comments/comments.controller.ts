@@ -8,7 +8,7 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 export class CommentsController {
   constructor(private readonly commentsService: CommentsService) { }
 
-  @Get('offer/:offerId')
+  @Get(':offerId')
   findAll(@Param('offerId') offerId: string) {
     return this.commentsService.findAll(offerId);
   }

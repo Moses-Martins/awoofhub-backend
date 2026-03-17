@@ -1,6 +1,6 @@
 import { Offer } from "src/offers/entities/offer.entity";
 import { User } from "src/users/entities/user.entity";
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity('comments')
 export class Comment {
@@ -16,5 +16,8 @@ export class Comment {
 
     @ManyToOne(() => Offer, offer => offer.comments)
     offer: Offer;
+
+    @CreateDateColumn()
+    createdAt: Date;
 
 }
