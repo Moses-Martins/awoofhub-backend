@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ChatModule } from 'src/chat/chat.module';
 import { MailModule } from 'src/mail/mail.module';
 import { UsersModule } from 'src/users/users.module';
 import { AuthController } from './auth.controller';
@@ -16,6 +17,7 @@ import { GoogleStrategy } from './strategy/google.strategy';
     TypeOrmModule.forFeature([RefreshToken, PasswordResetToken]),
     MailModule,
     UsersModule,
+    ChatModule,
     PassportModule,
     JwtModule.registerAsync({
       inject: [ConfigService],

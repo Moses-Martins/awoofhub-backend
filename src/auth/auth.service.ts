@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import crypto from 'crypto';
+import { ChatService } from 'src/chat/chat.service';
 import { AuthProvider, TokenPurpose, UserRole } from 'src/common/types/enums';
 import { MailService } from 'src/mail/mail.service';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
@@ -19,6 +20,7 @@ export class AuthService {
     constructor(
         private jwtService: JwtService,
         private mailService: MailService,
+        private chatService: ChatService,
         private dataSource: DataSource,
         private readonly userService: UsersService,
         @InjectRepository(RefreshToken)
@@ -56,6 +58,13 @@ export class AuthService {
                     'Email not verified. Please verify your email before logging in.',
                 );
             }
+
+            await this.chatService.syncUser({
+                id: user.id,
+                name: user.name,
+                image: user.profileImageUrl,
+
+            });
 
             const accessToken = await this.createAccessToken(user)
             const refreshToken = await this.createRefreshToken(user.id);
@@ -130,6 +139,14 @@ export class AuthService {
         if (!user.isEmailVerified) {
             user = await this.userService.updateEmailVerification(user.id);
         }
+
+        await this.chatService.syncUser({
+            id: user.id,
+            name: user.name,
+            image: user.profileImageUrl,
+
+        });
+
 
         const accessToken = await this.createAccessToken(user);
         const refreshToken = await this.createRefreshToken(user.id);
@@ -221,18 +238,18 @@ export class AuthService {
         });
 
         if (!refreshTokenEntity) {
-            throw new UnauthorizedException('Invalid refresh token')
+            throw new BadRequestException('Invalid refresh token')
         }
 
         if (refreshTokenEntity.expiresAt < new Date()) {
             refreshTokenEntity.revoked = true;
             await this.refreshTokenRepository.save(refreshTokenEntity);
-            throw new UnauthorizedException('Refresh token expired');
+            throw new BadRequestException('Refresh token expired');
         }
 
         const user = refreshTokenEntity.user;
         if (!user) {
-            throw new UnauthorizedException('User not found');
+            throw new BadRequestException('User not found');
         }
 
         const { accessToken, refreshToken } =

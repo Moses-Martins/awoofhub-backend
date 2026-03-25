@@ -18,7 +18,7 @@ export class UsersController {
   @HttpCode(200)
   @UseGuards(AuthGuard)
   findOne(@Param('id') id: string) {
-    return this.usersService.getUserById(id);
+    return this.usersService.getUserById(id); 
   }
 
 }
