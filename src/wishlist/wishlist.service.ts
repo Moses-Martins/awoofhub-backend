@@ -48,20 +48,35 @@ export class WishlistService {
       throw new NotFoundException('User not found');
     }
 
-    const wishlists = await this.wishlistRepository
+    const { entities, raw } = await this.wishlistRepository
       .createQueryBuilder('wishlist')
       .leftJoin('wishlist.user', 'user')
       .leftJoin('wishlist.offer', 'offer')
+      .leftJoin('offer.reviews', 'review')
       .select([
         'wishlist',
         'user.id', 'user.name', 'user.profileImageUrl',
         'offer',
       ])
+      .addSelect('COALESCE(AVG(review.rating), 0)', 'avgRating')
+      .addSelect('COUNT(review.id)', 'reviewCount')
       .where('user.id = :userId', { userId: user.id })
+      .groupBy('wishlist.id')
+      .addGroupBy('user.id')
+      .addGroupBy('offer.id')
       .orderBy('wishlist.id', 'ASC')
-      .getMany();
+      .getRawAndEntities();
 
-    return wishlists
+    const results = entities.map((item, index) => ({
+      ...item,
+      offer: {
+        ...item.offer,
+        avgRating: Number(raw[index].avgRating),
+        reviewCount: Number(raw[index].reviewCount),
+      },
+    }));
+
+    return results
 
   }
 
@@ -78,7 +93,7 @@ export class WishlistService {
     }
 
     return {}
-    
+
   }
 
 
