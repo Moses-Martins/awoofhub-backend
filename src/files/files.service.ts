@@ -9,15 +9,18 @@ import { extname } from 'path';
 export class FilesService {
   private readonly s3Client: S3Client;
   private readonly bucketName: string;
+  private readonly publicUrl: string; 
 
   constructor(private readonly configService: ConfigService) {
-    this.bucketName = this.configService.getOrThrow('AWS_BUCKET_NAME');
+    this.bucketName = this.configService.getOrThrow('R2_BUCKET_NAME');
+    this.publicUrl = this.configService.getOrThrow('R2_PUBLIC_URL'); 
 
     this.s3Client = new S3Client({
-      region: this.configService.getOrThrow('AWS_REGION'),
+      region: 'auto', 
+      endpoint: this.configService.getOrThrow('R2_ENDPOINT'), 
       credentials: {
-        accessKeyId: this.configService.getOrThrow('AWS_ACCESS_KEY_ID'),
-        secretAccessKey: this.configService.getOrThrow('AWS_SECRET_ACCESS_KEY'),
+        accessKeyId: this.configService.getOrThrow('R2_ACCESS_KEY_ID'),
+        secretAccessKey: this.configService.getOrThrow('R2_SECRET_ACCESS_KEY'),
       },
     });
   }
@@ -42,8 +45,7 @@ export class FilesService {
 
     await parallelUploads3.done();
 
-    const region = this.configService.getOrThrow('AWS_REGION');
-    return `https://${this.bucketName}.s3.${region}.amazonaws.com/${key}`;
+    return `${this.publicUrl}/${key}`;
   }
 
   async uploadSingleFile(file: Express.Multer.File) {
