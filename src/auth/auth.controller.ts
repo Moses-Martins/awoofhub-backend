@@ -34,7 +34,6 @@ export class AuthController {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
-      // path: '/auth/refresh',
       signed: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });

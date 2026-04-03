@@ -126,9 +126,11 @@ export class AuthService {
         let user = await this.userService.getUserByEmail(email);
 
         if (!user) {
+            const fullName = `${firstName ?? ''} ${lastName ?? ''}`.trim()
+            
             user = await this.userService.createGoogleUser({
                 email,
-                name: `${firstName} ${lastName}`,
+                name: fullName,
                 role: UserRole.USER,
                 isEmailVerified: true,
                 profileImageUrl: picture,
