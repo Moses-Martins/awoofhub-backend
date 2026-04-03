@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, HttpCode, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Post, Req, Res, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { instanceToPlain } from 'class-transformer';
 import type { Request, Response } from 'express';
@@ -114,7 +114,7 @@ export class AuthController {
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const token = req.signedCookies?.refresh_token;
     if (!token) {
-      throw new BadRequestException('No refresh token');
+      throw new UnauthorizedException('No refresh token');
     }
 
     const { accessToken, refreshToken } = await this.authService.refreshToken(token);

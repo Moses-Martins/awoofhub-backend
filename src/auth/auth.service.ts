@@ -238,18 +238,18 @@ export class AuthService {
         });
 
         if (!refreshTokenEntity) {
-            throw new BadRequestException('Invalid refresh token')
+            throw new UnauthorizedException('Invalid refresh token')
         }
 
         if (refreshTokenEntity.expiresAt < new Date()) {
             refreshTokenEntity.revoked = true;
             await this.refreshTokenRepository.save(refreshTokenEntity);
-            throw new BadRequestException('Refresh token expired');
+            throw new UnauthorizedException('Refresh token expired');
         }
 
         const user = refreshTokenEntity.user;
         if (!user) {
-            throw new BadRequestException('User not found');
+            throw new UnauthorizedException('User not found');
         }
 
         const { accessToken, refreshToken } =

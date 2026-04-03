@@ -24,9 +24,6 @@ export class Offer {
     title: string;
 
     @Column('text')
-    highlight: string;
-
-    @Column('text')
     description: string;
 
     @Column({ nullable: true })
