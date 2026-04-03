@@ -15,6 +15,7 @@ import { MailService } from './mail.service';
           host: configService.get('EMAIL_HOST'),
           port: +configService.get<number>('EMAIL_PORT', 587),
           secure: false,
+          requireTLS: true, 
           auth: {
             user: configService.get('EMAIL_HOST_USER'),
             pass: configService.get('EMAIL_HOST_PASSWORD'),

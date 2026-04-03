@@ -115,7 +115,7 @@ export class AuthService {
         }
     }
 
-    async googleLogin(googleUser: any, requestedRole: UserRole) {
+    async googleLogin(googleUser: any) {
         if (!googleUser) {
             throw new BadRequestException('Unauthenticated');
         }
@@ -129,7 +129,7 @@ export class AuthService {
             user = await this.userService.createGoogleUser({
                 email,
                 name: `${firstName} ${lastName}`,
-                role: requestedRole,
+                role: UserRole.USER,
                 isEmailVerified: true,
                 profileImageUrl: picture,
                 authProvider: AuthProvider.GOOGLE,

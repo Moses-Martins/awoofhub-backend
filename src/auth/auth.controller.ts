@@ -1,8 +1,7 @@
-import { BadRequestException, Body, Controller, Get, HttpCode, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, HttpCode, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { instanceToPlain } from 'class-transformer';
 import type { Request, Response } from 'express';
-import { UserRole } from 'src/common/types/enums';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { AuthService } from './auth.service';
 import { EmailDto, LoginUserDto, ResetPasswordDto, VerifyEmailDto } from './dto/login-user.dto';
@@ -52,19 +51,14 @@ export class AuthController {
   @Get('google/')
   @UseGuards(AuthGuard('google'))
   async googleAuth(@Req() req) {
-  	return;
-   }
+    return;
+  }
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  async googleAuthRedirect(@Query('state') state: string, @Req() req: Request & { user: any }, @Res({ passthrough: true }) res: Response) {
-    let requestedRole: UserRole = UserRole.USER;
+  async googleAuthRedirect(@Req() req: Request & { user: any }, @Res() res: Response) {
 
-    if (state === UserRole.BUSINESS) {
-      requestedRole = UserRole.BUSINESS;
-    }
-
-    const { user, accessToken, refreshToken } = await this.authService.googleLogin(req.user, requestedRole);
+    const { accessToken, refreshToken } = await this.authService.googleLogin(req.user);
 
     res.cookie('access_token', accessToken, {
       httpOnly: true,
@@ -82,12 +76,9 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    return res.redirect(frontendUrl);
 
-    return {
-      data: {
-        ...instanceToPlain(user),
-      },
-    }
   }
 
   @Post('verify-email')

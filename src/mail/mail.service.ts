@@ -24,7 +24,7 @@ export class MailService {
         subject: params.subject,
         template: params.template,
         context: {
-          EMAIL_URL: this.configService.get('EMAIL_URL'),
+          FRONTEND_URL: this.configService.get('FRONTEND_URL') || 'http://localhost:3000',
           ...params.context
         },
       };
