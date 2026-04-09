@@ -153,8 +153,19 @@ export class AuthController {
       this.authService.revokeRefreshToken(token)
     }
 
-    res.clearCookie('access_token');
-    res.clearCookie('refresh_token');
+    res.clearCookie('access_token', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      domain: process.env.NODE_ENV === 'production' ? '.mosesmartins.com' : undefined,
+    });
+    
+    res.clearCookie('refresh_token', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      domain: process.env.NODE_ENV === 'production' ? '.mosesmartins.com' : undefined,
+    });
 
     return {
       message: 'Logged out successfully'
