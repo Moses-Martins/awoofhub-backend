@@ -27,6 +27,7 @@ export class AuthController {
       secure: true,
       sameSite: 'none',
       signed: true,
+      domain: process.env.NODE_ENV === 'production' ? '.mosesmartins.com' : undefined,
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
@@ -35,6 +36,7 @@ export class AuthController {
       secure: true,
       sameSite: 'none',
       signed: true,
+      domain: process.env.NODE_ENV === 'production' ? '.mosesmartins.com' : undefined,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -64,6 +66,7 @@ export class AuthController {
       secure: true,
       sameSite: 'none',
       signed: true,
+      domain: process.env.NODE_ENV === 'production' ? '.mosesmartins.com' : undefined,
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
@@ -72,6 +75,7 @@ export class AuthController {
       secure: true,
       sameSite: 'none',
       signed: true,
+      domain: process.env.NODE_ENV === 'production' ? '.mosesmartins.com' : undefined,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -88,6 +92,7 @@ export class AuthController {
       secure: true,
       sameSite: 'none',
       signed: true,
+      domain: process.env.NODE_ENV === 'production' ? '.mosesmartins.com' : undefined,
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
@@ -96,6 +101,7 @@ export class AuthController {
       secure: true,
       sameSite: 'none',
       signed: true,
+      domain: process.env.NODE_ENV === 'production' ? '.mosesmartins.com' : undefined,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -123,6 +129,7 @@ export class AuthController {
       secure: true,
       sameSite: 'none',
       signed: true,
+      domain: process.env.NODE_ENV === 'production' ? '.mosesmartins.com' : undefined,
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
@@ -131,6 +138,7 @@ export class AuthController {
       secure: true,
       sameSite: 'none',
       signed: true,
+      domain: process.env.NODE_ENV === 'production' ? '.mosesmartins.com' : undefined,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
