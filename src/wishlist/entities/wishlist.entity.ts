@@ -11,7 +11,7 @@ export class Wishlist {
     @ManyToOne(() => User, user => user.wishlist)
     user: User;
 
-    @ManyToOne(() => Offer, offer => offer.wishlists)
-    offer: Offer;
+    @ManyToOne(() => Offer, offer => offer.wishlists) 
+    offer: Offer; 
 }
 
