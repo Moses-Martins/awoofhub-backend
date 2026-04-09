@@ -11,7 +11,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
   ) { }
- 
+
   @Post('signup')
   @HttpCode(201)
   signup(@Body() createUserDto: CreateUserDto) {
@@ -24,16 +24,16 @@ export class AuthController {
     const { user, accessToken, refreshToken } = await this.authService.login(loginUser);
     res.cookie('access_token', accessToken, {
       httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
       signed: true,
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
       signed: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -61,16 +61,16 @@ export class AuthController {
 
     res.cookie('access_token', accessToken, {
       httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
       signed: true,
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
       signed: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -85,16 +85,16 @@ export class AuthController {
     const { updatedUser, accessToken, refreshToken } = await this.authService.verifyEmail(dto.token);
     res.cookie('access_token', accessToken, {
       httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
       signed: true,
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
       signed: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -120,16 +120,16 @@ export class AuthController {
 
     res.cookie('access_token', accessToken, {
       httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
       signed: true,
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
       signed: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
