@@ -54,6 +54,11 @@ export class OffersController {
     return this.offersService.findByCategoryId(id, page, limit);
   }
 
+  @Get('user/id/:id')
+  findByUserId(@Param('id') id: string, @Query('page') page: number, @Query('limit') limit: number) {
+    return this.offersService.findByUserId(id, page, limit);
+  }
+
   @Get(':id')
   findOfferById(@Param('id') id: string) {
     return this.offersService.findById(id);

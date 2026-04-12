@@ -183,6 +183,54 @@ export class OffersService {
     };
   }
 
+
+  async findByUserId(userId: string, page = 1, limit = 10) {
+
+    const user = await this.userService.getUserById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const queryBuilder = this.offersRepository
+      .createQueryBuilder('offer')
+      .leftJoin('offer.reviews', 'review')
+      .leftJoin('offer.business', 'business')
+      .leftJoin('offer.category', 'category')
+      .addSelect([
+        'business.id',
+        'business.name',
+        'business.email',
+        'category.id',
+        'category.name',
+        'category.slug',
+      ])
+      .where('business.id = :id', { id: user.id })
+      .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
+      .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
+      .groupBy('offer.id')
+      .addGroupBy('business.id')
+      .addGroupBy('category.id')
+      .skip((page - 1) * limit)
+      .take(limit)
+
+    const total = await queryBuilder.clone().getCount();
+    const meta = this.paginationService.getPaginationMeta(page, limit, total);
+
+    const { entities, raw } = await queryBuilder.getRawAndEntities();
+
+    const results = entities.map((offer, index) => ({
+      ...offer,
+      avgRating: Number(raw[index].avgRating),
+      reviewCount: Number(raw[index].reviewCount)
+    }));
+
+    return {
+      data: results,
+      meta
+    };
+  }
+
+
   async findByCategorySlug(slug: string, page = 1, limit = 10) {
 
     const category = await this.categoryService.findBySlug(slug)
