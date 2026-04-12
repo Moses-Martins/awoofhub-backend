@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Patch, UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { UpdateUserDto } from 'src/users/dto/update-user.dto';
@@ -9,7 +9,7 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
-  @Post('update')
+  @Patch('update')
   @UseGuards(AuthGuard)
   update(@CurrentUser() user, @Body() UpdateUserDto: UpdateUserDto) {
     return this.usersService.update(user.id, UpdateUserDto);

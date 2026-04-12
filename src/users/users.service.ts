@@ -1,5 +1,6 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { UserRole } from 'src/common/types/enums';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -26,10 +27,14 @@ export class UsersService {
 
     async update(userId: string, dto: UpdateUserDto) {
         try {
+            if (dto.role === UserRole.ADMIN) {
+                throw new BadRequestException('Cannot assign admin role');
+            }
 
             const user = await this.userRepository.findOne({
                 where: { id: userId },
             });
+
 
             if (!user) {
                 throw new NotFoundException("User not found");
