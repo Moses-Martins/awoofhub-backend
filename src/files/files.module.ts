@@ -1,4 +1,5 @@
 import { BadRequestException, Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
 import { MulterModule } from '@nestjs/platform-express';
 import { FilesController } from './files.controller';
 import { FilesService } from './files.service';
@@ -16,6 +17,7 @@ import { FilesService } from './files.service';
       }
 
     }),
+    JwtModule.register({}),
   ],
   controllers: [FilesController],
   providers: [FilesService],
