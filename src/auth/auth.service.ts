@@ -127,7 +127,7 @@ export class AuthService {
 
         if (!user) {
             const fullName = `${firstName ?? ''} ${lastName ?? ''}`.trim()
-            
+
             user = await this.userService.createGoogleUser({
                 email,
                 name: fullName,
@@ -253,6 +253,13 @@ export class AuthService {
         if (!user) {
             throw new UnauthorizedException('User not found');
         }
+
+        await this.chatService.syncUser({
+            id: user.id,
+            name: user.name,
+            image: user.profileImageUrl,
+
+        });
 
         const { accessToken, refreshToken } =
             await this.dataSource.transaction(async (manager) => {
