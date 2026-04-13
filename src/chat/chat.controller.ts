@@ -14,4 +14,10 @@ export class ChatController {
     return this.chatService.generateStreamToken(user.id);
   }
 
+  @Get('stats')
+  @UseGuards(AuthGuard)
+  async getStats(@CurrentUser() user: User) {
+    return this.chatService.getUnreadCount(user.id);
+  }
+
 }

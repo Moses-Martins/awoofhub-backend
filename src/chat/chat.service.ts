@@ -32,6 +32,13 @@ export class ChatService {
     });
   }
 
+  async getUnreadCount(userId: string) {
+    const res = await this.client.getUnreadCount(userId)
+
+    return {
+      unreadCount: res.total_unread_count || 0,
+    };
+  }
 
 
 }
