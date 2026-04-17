@@ -213,6 +213,13 @@ export class AuthService {
             // Mark email as verified
             const updatedUser = await this.userService.updateEmailVerification(user.id);
 
+            await this.chatService.syncUser({
+                id: updatedUser.id,
+                name: updatedUser.name,
+                image: updatedUser.profileImageUrl,
+
+            });
+
             const accessToken = await this.createAccessToken(updatedUser);
             const refreshToken = await this.createRefreshToken(user.id);
 

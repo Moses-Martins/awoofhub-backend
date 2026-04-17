@@ -82,7 +82,7 @@ export class UsersService {
 
     async getUserByEmail(email: string) {
         return await this.userRepository.findOne({
-            where: { email },
+            where: { email: email.trim().toLowerCase() },
         });
     }
 
