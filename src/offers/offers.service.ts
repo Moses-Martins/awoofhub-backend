@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AlertService } from 'src/alert/alert.service';
 import { CategoryService } from 'src/category/category.service';
 import { PaginationService } from 'src/common/pagination/pagination.service';
-import { NotificationType } from 'src/common/types/enums';
+import { ApprovalStatus, NotificationType } from 'src/common/types/enums';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { ReviewsService } from 'src/reviews/reviews.service';
 import { UsersService } from 'src/users/users.service';
@@ -429,5 +429,144 @@ export class OffersService {
       meta
     };
   }
+
+  async getBusinessDashboard(businessId: string) {
+    const now = new Date();
+
+    /** ---------------- STATS ---------------- */
+    const totalAdsPromise = this.offersRepository.count({
+      where: { business: { id: businessId } },
+    });
+
+    const pendingAdsPromise = this.offersRepository.count({
+      where: {
+        business: { id: businessId },
+        approvalStatus: ApprovalStatus.PENDING,
+      },
+    });
+
+    const rejectedAdsPromise = this.offersRepository.count({
+      where: {
+        business: { id: businessId },
+        approvalStatus: ApprovalStatus.REJECTED,
+      },
+    });
+
+    const expiredAdsPromise = this.offersRepository
+      .createQueryBuilder('offer')
+      .where('offer.businessId = :businessId', { businessId })
+      .andWhere('offer.endDate < :now', { now })
+      .getCount();
+
+
+    const topOffersPromise = this.offersRepository
+      .createQueryBuilder('offer')
+      .leftJoin('offer.reviews', 'review')
+      .where('offer.businessId = :businessId', { businessId })
+      .addSelect('AVG(review.rating)', 'avgRating')
+      .groupBy('offer.id')
+      .orderBy('"avgRating"', 'DESC')
+      .limit(3)
+      .getRawAndEntities();
+
+  
+    const categoryPiePromise = this.offersRepository
+      .createQueryBuilder('offer')
+      .leftJoin('offer.category', 'category')
+      .where('offer.businessId = :businessId', { businessId })
+      .select('category.name', 'name')
+      .addSelect('COUNT(offer.id)', 'value')
+      .groupBy('category.name')
+      .getRawMany();
+
+    
+    const offersByMonthPromise = this.offersRepository
+      .createQueryBuilder('offer')
+      .leftJoin('offer.category', 'category')
+      .where('offer.businessId = :businessId', { businessId })
+      .select("TO_CHAR(offer.createdAt, 'YYYY-MM')", 'month')
+      .addSelect('category.name', 'category')
+      .addSelect('COUNT(offer.id)', 'count')
+      .groupBy('month')
+      .addGroupBy('category.name')
+      .orderBy('month', 'ASC')
+      .getRawMany();
+
+    const expiringOffersPromise = this.offersRepository
+      .createQueryBuilder('offer')
+      .where('offer.businessId = :businessId', { businessId })
+      .select(`
+      SUM(CASE WHEN offer.endDate BETWEEN NOW() AND NOW() + INTERVAL '3 days' THEN 1 ELSE 0 END) as "1-3 days",
+      SUM(CASE WHEN offer.endDate BETWEEN NOW() + INTERVAL '4 days' AND NOW() + INTERVAL '7 days' THEN 1 ELSE 0 END) as "4-7 days",
+      SUM(CASE WHEN offer.endDate > NOW() + INTERVAL '7 days' THEN 1 ELSE 0 END) as "7+ days"
+    `)
+      .getRawOne();
+
+
+    const [
+      totalAds,
+      pendingAds,
+      rejectedAds,
+      expiredAds,
+      topOffersData,
+      categoryPie,
+      offersByMonthRaw,
+      expiringOffers,
+    ] = await Promise.all([
+      totalAdsPromise,
+      pendingAdsPromise,
+      rejectedAdsPromise,
+      expiredAdsPromise,
+      topOffersPromise,
+      categoryPiePromise,
+      offersByMonthPromise,
+      expiringOffersPromise,
+    ]);
+
+    const topOffers = topOffersData.entities.map((offer, index) => ({
+      ...offer,
+      avgRating: Number(topOffersData.raw[index].avgRating),
+    }));
+
+    const offersByMonth = this.formatMonthlyData(offersByMonthRaw);
+
+    return {
+      stats: {
+        totalAds,
+        pendingAds,
+        rejectedAds,
+        expiredAds,
+      },
+      topOffers,
+      charts: {
+        categoryPie: categoryPie.map(item => ({
+          name: item.name,
+          value: Number(item.value),
+        })),
+        offersByMonth,
+        expiringOffers: {
+          "1-3 days": Number(expiringOffers['1-3 days']),
+          "4-7 days": Number(expiringOffers['4-7 days']),
+          "7+ days": Number(expiringOffers['7+ days']),
+        },
+      },
+    };
+  }
+
+
+  private formatMonthlyData(data: any[]) {
+    const result = {};
+
+    data.forEach(item => {
+      if (!result[item.month]) {
+        result[item.month] = { month: item.month };
+      }
+
+      result[item.month][item.category] = Number(item.count);
+    });
+
+    return Object.values(result);
+  }
+
 
 }

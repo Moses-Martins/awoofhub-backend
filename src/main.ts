@@ -27,7 +27,7 @@ async function bootstrap() {
   }
 
   app.use(cookieParser(cookieSecret))
-
+ 
   const config = new DocumentBuilder()
     .setTitle('AwoofHub API')
     .setDescription('API for discovering freebies, promotions, events, and volunteer opportunities')

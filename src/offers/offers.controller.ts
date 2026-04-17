@@ -59,6 +59,13 @@ export class OffersController {
     return this.offersService.findByUserId(id, page, limit);
   }
 
+  @Get('business/dashboard')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.BUSINESS)
+  getBusinessDashboard(@CurrentUser() user: User,) {
+    return this.offersService.getBusinessDashboard(user.id);
+  }
+
   @Get(':id')
   findOfferById(@Param('id') id: string) {
     return this.offersService.findById(id);
