@@ -7,7 +7,7 @@ import { ApprovalStatus, NotificationType } from 'src/common/types/enums';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { ReviewsService } from 'src/reviews/reviews.service';
 import { UsersService } from 'src/users/users.service';
-import { Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { Offer } from './entities/offer.entity';
 
@@ -433,7 +433,6 @@ export class OffersService {
   async getBusinessDashboard(businessId: string) {
     const now = new Date();
 
-    /** ---------------- STATS ---------------- */
     const totalAdsPromise = this.offersRepository.count({
       where: { business: { id: businessId } },
     });
@@ -442,6 +441,14 @@ export class OffersService {
       where: {
         business: { id: businessId },
         approvalStatus: ApprovalStatus.PENDING,
+      },
+    });
+
+    const activeAdsPromise = this.offersRepository.count({
+      where: {
+        business: { id: businessId },
+        approvalStatus: ApprovalStatus.APPROVED,
+        endDate: MoreThan(now), 
       },
     });
 
@@ -469,7 +476,7 @@ export class OffersService {
       .limit(3)
       .getRawAndEntities();
 
-  
+
     const categoryPiePromise = this.offersRepository
       .createQueryBuilder('offer')
       .leftJoin('offer.category', 'category')
@@ -479,7 +486,7 @@ export class OffersService {
       .groupBy('category.name')
       .getRawMany();
 
-    
+
     const offersByMonthPromise = this.offersRepository
       .createQueryBuilder('offer')
       .leftJoin('offer.category', 'category')
@@ -505,6 +512,7 @@ export class OffersService {
 
     const [
       totalAds,
+      activeAds,
       pendingAds,
       rejectedAds,
       expiredAds,
@@ -514,6 +522,7 @@ export class OffersService {
       expiringOffers,
     ] = await Promise.all([
       totalAdsPromise,
+      activeAdsPromise,
       pendingAdsPromise,
       rejectedAdsPromise,
       expiredAdsPromise,
@@ -533,6 +542,7 @@ export class OffersService {
     return {
       stats: {
         totalAds,
+        activeAds,
         pendingAds,
         rejectedAds,
         expiredAds,
