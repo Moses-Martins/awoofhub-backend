@@ -210,6 +210,7 @@ export class OffersService {
       .groupBy('offer.id')
       .addGroupBy('business.id')
       .addGroupBy('category.id')
+      .orderBy('offer.createdAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit)
 
