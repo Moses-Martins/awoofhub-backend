@@ -27,11 +27,8 @@ export class AlertController {
 
   @Get(':businessId')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(UserRole.USER)
   getBusinessAlert(@CurrentUser() user: User, @Param('businessId') businessId: string) {
     return this.alertService.getBusinessAlert(user.id, businessId);
   }
-
-
 
 }

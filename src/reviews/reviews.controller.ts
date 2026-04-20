@@ -18,14 +18,13 @@ export class ReviewsController {
 
   @Get(':offerId')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(UserRole.USER)
   getUserReview(@CurrentUser() user, @Param('offerId') offerId: string) {
     return this.reviewsService.getUserReview(user.id, offerId)
   }
 
   @Post(':offerId')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(UserRole.USER)
+  @Roles(UserRole.USER, UserRole.BUSINESS)
   upsertReview(@CurrentUser() user, @Param('offerId') offerId: string, @Body() createReviewDto: CreateReviewDto) {
     return this.reviewsService.upsertReview(user.id, offerId, createReviewDto);
   }

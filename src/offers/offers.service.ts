@@ -479,7 +479,8 @@ export class OffersService {
         'business.id',
         'business.name'
       ])
-      .addSelect('AVG(review.rating)', 'avgRating')
+      .addSelect('COALESCE(AVG(review.rating), 0)', 'avgRating')
+      .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
       .groupBy('offer.id')
       .addGroupBy('category.id')
       .addGroupBy('category.name')
@@ -549,6 +550,7 @@ export class OffersService {
     const topOffers = topOffersData.entities.map((offer, index) => ({
       ...offer,
       avgRating: Number(topOffersData.raw[index].avgRating),
+      reviewCount: Number(topOffersData.raw[index].reviewCount)
     }));
 
     const offersByMonth = this.formatMonthlyData(offersByMonthRaw);
