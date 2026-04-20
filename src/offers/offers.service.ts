@@ -448,7 +448,7 @@ export class OffersService {
       where: {
         business: { id: businessId },
         approvalStatus: ApprovalStatus.APPROVED,
-        endDate: MoreThan(now), 
+        endDate: MoreThan(now),
       },
     });
 
@@ -469,9 +469,23 @@ export class OffersService {
     const topOffersPromise = this.offersRepository
       .createQueryBuilder('offer')
       .leftJoin('offer.reviews', 'review')
+      .leftJoin('offer.category', 'category')
+      .leftJoin('offer.business', 'business')
       .where('offer.businessId = :businessId', { businessId })
+      .addSelect([
+        'category.id',
+        'category.name',
+        'category.slug',
+        'business.id',
+        'business.name'
+      ])
       .addSelect('AVG(review.rating)', 'avgRating')
       .groupBy('offer.id')
+      .addGroupBy('category.id')
+      .addGroupBy('category.name')
+      .addGroupBy('category.slug')
+      .addGroupBy('business.id')
+      .addGroupBy('business.name')
       .orderBy('"avgRating"', 'DESC')
       .limit(3)
       .getRawAndEntities();
