@@ -1,9 +1,11 @@
+import { Transform } from 'class-transformer';
 import {
-    IsEnum,
-    IsOptional,
-    IsString,
-    IsUrl,
-    Length
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUrl,
+  Length,
+  ValidateIf
 } from 'class-validator';
 import { UserRole } from 'src/common/types/enums';
 
@@ -30,6 +32,8 @@ export class UpdateUserDto {
   address?: string;
 
   @IsOptional()
+  @Transform(({ value }) => (value === "" ? null : value))
+  @ValidateIf((object, value) => value !== null)
   @IsUrl()
-  website?: string;
+  website?: string | null;
 }

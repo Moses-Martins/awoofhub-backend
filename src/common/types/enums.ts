@@ -4,7 +4,7 @@ export enum UserRole {
   BUSINESS = 'business',
 }
 
-export enum ApprovalStatus {
+export enum ModerationStatus {
   PENDING = 'pending',
   APPROVED = 'approved',
   REJECTED = 'rejected',

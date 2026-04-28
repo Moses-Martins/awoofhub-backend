@@ -40,6 +40,14 @@ export class CategoryService {
 
   }
 
+  async findAllByBusiness(id: string): Promise<Category[]> {
+    return await this.categoriesRepository
+      .createQueryBuilder('category')
+      .innerJoin('category.offers', 'offer')
+      .where('offer.business = :id', { id })
+      .distinct(true)
+      .getMany();
+  }
 
   async findById(id: string): Promise<Category> {
     const category = await this.categoriesRepository.findOne({

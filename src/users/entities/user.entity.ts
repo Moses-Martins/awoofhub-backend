@@ -72,7 +72,7 @@ export class User {
   @OneToMany(() => Offer, offer => offer.business)
   offers: Offer[];
 
-  @OneToMany(() => Offer, offer => offer.approvedBy)
+  @OneToMany(() => Offer, offer => offer.moderatedBy)
   approvals: Offer[];
 
   @OneToMany(() => Alert, (alert) => alert.user)

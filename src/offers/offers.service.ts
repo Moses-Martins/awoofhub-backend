@@ -3,11 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AlertService } from 'src/alert/alert.service';
 import { CategoryService } from 'src/category/category.service';
 import { PaginationService } from 'src/common/pagination/pagination.service';
-import { ApprovalStatus, NotificationType } from 'src/common/types/enums';
+import { ModerationStatus, NotificationType } from 'src/common/types/enums';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { ReviewsService } from 'src/reviews/reviews.service';
 import { UsersService } from 'src/users/users.service';
-import { MoreThan, Repository } from 'typeorm';
+import { Brackets, MoreThan, Repository } from 'typeorm';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { Offer } from './entities/offer.entity';
 
@@ -70,6 +70,39 @@ export class OffersService {
       }
 
       throw new InternalServerErrorException('Failed to create offer');
+    }
+  }
+
+  async adminModerate(offerId: string, userId: string, status: ModerationStatus, note: string | null | undefined) {
+    try {
+      const offer = await this.offersRepository.findOne({
+        where: { id: offerId },
+      });
+
+      if (!offer) {
+        throw new NotFoundException('Offer not found');
+      }
+
+      const admin = await this.userService.getUserById(userId)
+
+      if (!admin) {
+        throw new NotFoundException('Admin user not found');
+      }
+
+      offer.moderationStatus = ModerationStatus.APPROVED;
+      offer.moderatedBy = admin;
+      offer.statusUpdatedAt = new Date();
+      offer.adminNote = note
+      offer.moderationStatus = status
+
+      return await this.offersRepository.save(offer);
+
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException('Failed to approve offer');
     }
   }
 
@@ -275,6 +308,50 @@ export class OffersService {
     };
   }
 
+  async findByBusinessCategorySlug(businessId: string, slug: string, page = 1, limit = 10) {
+
+    const category = await this.categoryService.findBySlug(slug)
+
+    const queryBuilder = this.offersRepository
+      .createQueryBuilder('offer')
+      .leftJoin('offer.reviews', 'review')
+      .leftJoin('offer.business', 'business')
+      .leftJoin('offer.category', 'category')
+      .addSelect([
+        'business.id',
+        'business.name',
+        'business.email',
+        'category.id',
+        'category.name',
+        'category.slug',
+      ])
+      .where('category.slug = :slug', { slug: category.slug })
+      .andWhere('offer.business = :businessId', { businessId })
+      .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
+      .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
+      .groupBy('offer.id')
+      .addGroupBy('business.id')
+      .addGroupBy('category.id')
+      .skip((page - 1) * limit)
+      .take(limit)
+
+    const total = await queryBuilder.clone().getCount();
+    const meta = this.paginationService.getPaginationMeta(page, limit, total);
+
+    const { entities, raw } = await queryBuilder.getRawAndEntities();
+
+    const results = entities.map((offer, index) => ({
+      ...offer,
+      avgRating: Number(raw[index].avgRating),
+      reviewCount: Number(raw[index].reviewCount)
+    }));
+
+    return {
+      data: results,
+      meta
+    };
+  }
+
   async searchOffers(query: string, page = 1, limit = 10) {
     const queryBuilder = this.offersRepository
       .createQueryBuilder('offer')
@@ -288,6 +365,49 @@ export class OffersService {
       ])
       .where('offer.title ILIKE :query', { query: `%${query}%` })
       .orWhere('offer.description ILIKE :query', { query: `%${query}%` })
+      .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
+      .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
+      .groupBy('offer.id')
+      .addGroupBy('business.id')
+      .addGroupBy('category.id')
+      .skip((page - 1) * limit)
+      .take(limit)
+
+    const total = await queryBuilder.clone().getCount();
+    const meta = this.paginationService.getPaginationMeta(page, limit, total);
+
+    const { entities, raw } = await queryBuilder.getRawAndEntities();
+
+    const results = entities.map((offer, index) => ({
+      ...offer,
+      avgRating: Number(raw[index].avgRating),
+      reviewCount: Number(raw[index].reviewCount)
+    }));
+
+    return {
+      data: results,
+      meta
+    };
+  }
+
+  async searchUserOffers(businessId: string, query: string, page = 1, limit = 10) {
+    const queryBuilder = this.offersRepository
+      .createQueryBuilder('offer')
+      .leftJoin('offer.reviews', 'review')
+      .leftJoin('offer.business', 'business')
+      .leftJoin('offer.category', 'category')
+      .select([
+        'offer',
+        'business.id', 'business.name', 'business.email',
+        'category.id', 'category.name',
+      ])
+      .where(
+        new Brackets((qb) => {
+          qb.where('offer.title ILIKE :query', { query: `%${query}%` })
+            .orWhere('offer.description ILIKE :query', { query: `%${query}%` });
+        }),
+      )
+      .andWhere('offer.business = :businessId', { businessId })
       .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
       .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
       .groupBy('offer.id')
@@ -441,14 +561,14 @@ export class OffersService {
     const pendingAdsPromise = this.offersRepository.count({
       where: {
         business: { id: businessId },
-        approvalStatus: ApprovalStatus.PENDING,
+        moderationStatus: ModerationStatus.PENDING,
       },
     });
 
     const activeAdsPromise = this.offersRepository.count({
       where: {
         business: { id: businessId },
-        approvalStatus: ApprovalStatus.APPROVED,
+        moderationStatus: ModerationStatus.APPROVED,
         endDate: MoreThan(now),
       },
     });
@@ -456,7 +576,7 @@ export class OffersService {
     const rejectedAdsPromise = this.offersRepository.count({
       where: {
         business: { id: businessId },
-        approvalStatus: ApprovalStatus.REJECTED,
+        moderationStatus: ModerationStatus.REJECTED,
       },
     });
 

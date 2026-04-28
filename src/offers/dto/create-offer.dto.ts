@@ -7,19 +7,15 @@ export class CreateOfferDto {
 
     @IsNotEmpty()
     @IsString()
-    highlight: string;
-
-    @IsNotEmpty()
-    @IsString()
     description: string;
 
     @IsNotEmpty()
     @IsString()
     category: string;
 
-    @IsOptional()
+    @IsNotEmpty()
     @IsString()
-    imageUrl?: string;
+    imageUrl: string;
 
     @IsNotEmpty()
     @IsString()
