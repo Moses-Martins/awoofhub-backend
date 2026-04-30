@@ -14,7 +14,7 @@ export class AlertService {
 
   async setAlert(userId: string, businessId: string) {
     if (userId === businessId) {
-      throw new BadRequestException('You cannot subscribe to your own business alerts');
+      throw new BadRequestException('You cannot set Alert to yourself');
     }
 
     const [user, business] = await Promise.all([

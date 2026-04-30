@@ -12,7 +12,10 @@ export class ChatService {
 
     this.client = StreamChat.getInstance(
       this.configService.getOrThrow('STREAM_API_KEY'),
-      this.configService.getOrThrow('STREAM_API_SECRET'),
+      this.configService.getOrThrow('STREAM_API_SECRET'), 
+      {
+        timeout: 10000
+      }
     );
   }
 
