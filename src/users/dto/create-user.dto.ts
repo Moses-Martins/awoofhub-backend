@@ -1,11 +1,9 @@
 import {
     IsEmail,
-    IsEnum,
     IsString,
     IsStrongPassword,
     Length
 } from 'class-validator';
-import { UserRole } from 'src/common/types/enums';
 
 
 export class CreateUserDto {
@@ -31,7 +29,4 @@ export class CreateUserDto {
 
     @IsEmail()
     email: string;
-
-    @IsEnum(UserRole)
-    role: UserRole;
 }

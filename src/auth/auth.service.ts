@@ -78,10 +78,6 @@ export class AuthService {
 
     async signup(createUser: CreateUserDto) {
         try {
-            if (createUser.role === UserRole.ADMIN) {
-                throw new BadRequestException('Cannot assign admin role via signup');
-            }
-
             const existingUser = await this.userService.getUserByEmail(createUser.email);
             if (existingUser) {
                 throw new BadRequestException('Email already in use');
