@@ -74,6 +74,28 @@ export class UsersService {
         }
     }
 
+    async getUserStats() {
+        const [
+            totalUsers,
+            businessUsers,
+            individualUsers,
+        ] = await Promise.all([
+            this.userRepository.count(),
+            this.userRepository.count({
+                where: { role: UserRole.BUSINESS },
+            }),
+            this.userRepository.count({
+                where: { role: UserRole.USER },
+            }),
+        ]);
+
+        return {
+            totalUsers,
+            businessUsers,
+            individualUsers,
+        };
+    }
+
     async getUserById(id: string) {
         return await this.userRepository.findOne({
             where: { id },

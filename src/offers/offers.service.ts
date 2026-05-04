@@ -551,6 +551,41 @@ export class OffersService {
     };
   }
 
+  async getOfferStats() {
+    const now = new Date();
+
+    const [
+      totalOffers,
+      pendingOffers,
+      activeOffers,
+      expiredOffers,
+    ] = await Promise.all([
+      this.offersRepository.count(),
+      this.offersRepository.count({
+        where: {
+          moderationStatus: ModerationStatus.PENDING,
+        },
+      }),
+      this.offersRepository.count({
+        where: {
+          moderationStatus: ModerationStatus.APPROVED,
+          endDate: MoreThan(now),
+        },
+      }),
+      this.offersRepository
+        .createQueryBuilder('offer')
+        .where('offer.endDate < :now', { now })
+        .getCount(),
+    ]);
+
+    return {
+      totalOffers,
+      pendingOffers,
+      activeOffers,
+      expiredOffers,
+    };
+  }
+
   async getBusinessDashboard(businessId: string) {
     const now = new Date();
 

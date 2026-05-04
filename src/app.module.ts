@@ -17,6 +17,7 @@ import { OffersModule } from './offers/offers.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { UsersModule } from './users/users.module';
 import { WishlistModule } from './wishlist/wishlist.module';
+import { StatsModule } from './stats/stats.module';
 
 
 @Module({
@@ -38,6 +39,7 @@ import { WishlistModule } from './wishlist/wishlist.module';
     AlertModule,
     CommentsModule,
     CategoryModule,
+    StatsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
