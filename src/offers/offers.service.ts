@@ -7,7 +7,7 @@ import { ModerationStatus, NotificationType } from 'src/common/types/enums';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { ReviewsService } from 'src/reviews/reviews.service';
 import { UsersService } from 'src/users/users.service';
-import { Brackets, MoreThan, Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { Offer } from './entities/offer.entity';
 
@@ -73,40 +73,9 @@ export class OffersService {
     }
   }
 
-  async adminModerate(offerId: string, userId: string, status: ModerationStatus, note: string | null | undefined) {
-    try {
-      const offer = await this.offersRepository.findOne({
-        where: { id: offerId },
-      });
 
-      if (!offer) {
-        throw new NotFoundException('Offer not found');
-      }
 
-      const admin = await this.userService.getUserById(userId)
-
-      if (!admin) {
-        throw new NotFoundException('Admin user not found');
-      }
-
-      offer.moderationStatus = ModerationStatus.APPROVED;
-      offer.moderatedBy = admin;
-      offer.statusUpdatedAt = new Date();
-      offer.adminNote = note
-      offer.moderationStatus = status
-
-      return await this.offersRepository.save(offer);
-
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-
-      throw new InternalServerErrorException('Failed to approve offer');
-    }
-  }
-
-  async findAll(page = 1, limit = 10) {
+  async findAll(search?: string, category?: string, minRating?: number, createdFrom?: string, createdTo?: string, page = 1, limit = 10) {
     const queryBuilder = this.offersRepository
       .createQueryBuilder('offer')
       .leftJoin('offer.reviews', 'review')
@@ -119,16 +88,68 @@ export class OffersService {
         'business.email',
         'category.id',
         'category.name',
+        'category.slug'
       ])
       .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
       .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
       .groupBy('offer.id')
       .addGroupBy('business.id')
-      .addGroupBy('category.id')
-      .skip((page - 1) * limit)
-      .take(limit)
+      .addGroupBy('category.id');
 
-    const total = await queryBuilder.clone().getCount();
+
+    if (search) {
+      queryBuilder.andWhere(
+        '(offer.title ILIKE :search OR offer.description ILIKE :search)',
+        { search: `%${search}%` }
+      );
+    }
+
+    if (category) {
+      queryBuilder.andWhere('category.slug = :categorySlug', {
+        categorySlug: category
+      });
+    }
+
+    if (createdFrom) {
+      queryBuilder.andWhere('offer.createdAt >= :createdFrom', {
+        createdFrom: new Date(createdFrom)
+      });
+    }
+
+    if (createdTo) {
+      queryBuilder.andWhere('offer.createdAt <= :createdTo', {
+        createdTo: new Date(createdTo)
+      });
+    }
+
+    if (minRating) {
+      queryBuilder.having(
+        'COALESCE(AVG(review.rating), 0) >= :minRating',
+        { minRating }
+      );
+    }
+
+    queryBuilder.orderBy('offer.createdAt', 'DESC');
+
+    queryBuilder
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const countQuery = queryBuilder.clone()
+      .skip(undefined)
+      .take(undefined)
+      .orderBy()
+      .select('offer.id');
+
+    const totalResult = await this.offersRepository.manager
+      .createQueryBuilder()
+      .select('COUNT(*)', 'count')
+      .from(`(${countQuery.getQuery()})`, 'sub')
+      .setParameters(countQuery.getParameters())
+      .getRawOne();
+
+    const total = Number(totalResult.count);
+
     const meta = this.paginationService.getPaginationMeta(page, limit, total);
 
     const { entities, raw } = await queryBuilder.getRawAndEntities();
@@ -143,6 +164,7 @@ export class OffersService {
       data: results,
       meta
     };
+
   }
 
   async findById(id: string) {
@@ -172,6 +194,7 @@ export class OffersService {
       ...reviews
     }
   }
+
 
   async findByCategoryId(id: string, page = 1, limit = 10) {
 
@@ -217,223 +240,11 @@ export class OffersService {
   }
 
 
-  async findByUserId(userId: string, page = 1, limit = 10) {
-
+  async findAllByUser(userId: string, search?: string, category?: string, minRating?: number, createdFrom?: string, createdTo?: string, page = 1, limit = 10) {
     const user = await this.userService.getUserById(userId);
     if (!user) {
       throw new NotFoundException('User not found');
     }
-
-    const queryBuilder = this.offersRepository
-      .createQueryBuilder('offer')
-      .leftJoin('offer.reviews', 'review')
-      .leftJoin('offer.business', 'business')
-      .leftJoin('offer.category', 'category')
-      .addSelect([
-        'business.id',
-        'business.name',
-        'business.email',
-        'category.id',
-        'category.name',
-        'category.slug',
-      ])
-      .where('business.id = :id', { id: user.id })
-      .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
-      .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
-      .groupBy('offer.id')
-      .addGroupBy('business.id')
-      .addGroupBy('category.id')
-      .orderBy('offer.createdAt', 'DESC')
-      .skip((page - 1) * limit)
-      .take(limit)
-
-    const total = await queryBuilder.clone().getCount();
-    const meta = this.paginationService.getPaginationMeta(page, limit, total);
-
-    const { entities, raw } = await queryBuilder.getRawAndEntities();
-
-    const results = entities.map((offer, index) => ({
-      ...offer,
-      avgRating: Number(raw[index].avgRating),
-      reviewCount: Number(raw[index].reviewCount)
-    }));
-
-    return {
-      data: results,
-      meta
-    };
-  }
-
-
-  async findByCategorySlug(slug: string, page = 1, limit = 10) {
-
-    const category = await this.categoryService.findBySlug(slug)
-
-    const queryBuilder = this.offersRepository
-      .createQueryBuilder('offer')
-      .leftJoin('offer.reviews', 'review')
-      .leftJoin('offer.business', 'business')
-      .leftJoin('offer.category', 'category')
-      .addSelect([
-        'business.id',
-        'business.name',
-        'business.email',
-        'category.id',
-        'category.name',
-        'category.slug',
-      ])
-      .where('category.slug = :slug', { slug: category.slug })
-      .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
-      .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
-      .groupBy('offer.id')
-      .addGroupBy('business.id')
-      .addGroupBy('category.id')
-      .skip((page - 1) * limit)
-      .take(limit)
-
-    const total = await queryBuilder.clone().getCount();
-    const meta = this.paginationService.getPaginationMeta(page, limit, total);
-
-    const { entities, raw } = await queryBuilder.getRawAndEntities();
-
-    const results = entities.map((offer, index) => ({
-      ...offer,
-      avgRating: Number(raw[index].avgRating),
-      reviewCount: Number(raw[index].reviewCount)
-    }));
-
-    return {
-      data: results,
-      meta
-    };
-  }
-
-  async findByBusinessCategorySlug(businessId: string, slug: string, page = 1, limit = 10) {
-
-    const category = await this.categoryService.findBySlug(slug)
-
-    const queryBuilder = this.offersRepository
-      .createQueryBuilder('offer')
-      .leftJoin('offer.reviews', 'review')
-      .leftJoin('offer.business', 'business')
-      .leftJoin('offer.category', 'category')
-      .addSelect([
-        'business.id',
-        'business.name',
-        'business.email',
-        'category.id',
-        'category.name',
-        'category.slug',
-      ])
-      .where('category.slug = :slug', { slug: category.slug })
-      .andWhere('offer.business = :businessId', { businessId })
-      .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
-      .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
-      .groupBy('offer.id')
-      .addGroupBy('business.id')
-      .addGroupBy('category.id')
-      .skip((page - 1) * limit)
-      .take(limit)
-
-    const total = await queryBuilder.clone().getCount();
-    const meta = this.paginationService.getPaginationMeta(page, limit, total);
-
-    const { entities, raw } = await queryBuilder.getRawAndEntities();
-
-    const results = entities.map((offer, index) => ({
-      ...offer,
-      avgRating: Number(raw[index].avgRating),
-      reviewCount: Number(raw[index].reviewCount)
-    }));
-
-    return {
-      data: results,
-      meta
-    };
-  }
-
-  async searchOffers(query: string, page = 1, limit = 10) {
-    const queryBuilder = this.offersRepository
-      .createQueryBuilder('offer')
-      .leftJoin('offer.reviews', 'review')
-      .leftJoin('offer.business', 'business')
-      .leftJoin('offer.category', 'category')
-      .select([
-        'offer',
-        'business.id', 'business.name', 'business.email',
-        'category.id', 'category.name',
-      ])
-      .where('offer.title ILIKE :query', { query: `%${query}%` })
-      .orWhere('offer.description ILIKE :query', { query: `%${query}%` })
-      .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
-      .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
-      .groupBy('offer.id')
-      .addGroupBy('business.id')
-      .addGroupBy('category.id')
-      .skip((page - 1) * limit)
-      .take(limit)
-
-    const total = await queryBuilder.clone().getCount();
-    const meta = this.paginationService.getPaginationMeta(page, limit, total);
-
-    const { entities, raw } = await queryBuilder.getRawAndEntities();
-
-    const results = entities.map((offer, index) => ({
-      ...offer,
-      avgRating: Number(raw[index].avgRating),
-      reviewCount: Number(raw[index].reviewCount)
-    }));
-
-    return {
-      data: results,
-      meta
-    };
-  }
-
-  async searchUserOffers(businessId: string, query: string, page = 1, limit = 10) {
-    const queryBuilder = this.offersRepository
-      .createQueryBuilder('offer')
-      .leftJoin('offer.reviews', 'review')
-      .leftJoin('offer.business', 'business')
-      .leftJoin('offer.category', 'category')
-      .select([
-        'offer',
-        'business.id', 'business.name', 'business.email',
-        'category.id', 'category.name',
-      ])
-      .where(
-        new Brackets((qb) => {
-          qb.where('offer.title ILIKE :query', { query: `%${query}%` })
-            .orWhere('offer.description ILIKE :query', { query: `%${query}%` });
-        }),
-      )
-      .andWhere('offer.business = :businessId', { businessId })
-      .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
-      .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
-      .groupBy('offer.id')
-      .addGroupBy('business.id')
-      .addGroupBy('category.id')
-      .skip((page - 1) * limit)
-      .take(limit)
-
-    const total = await queryBuilder.clone().getCount();
-    const meta = this.paginationService.getPaginationMeta(page, limit, total);
-
-    const { entities, raw } = await queryBuilder.getRawAndEntities();
-
-    const results = entities.map((offer, index) => ({
-      ...offer,
-      avgRating: Number(raw[index].avgRating),
-      reviewCount: Number(raw[index].reviewCount)
-    }));
-
-    return {
-      data: results,
-      meta
-    };
-  }
-
-  async filter(category?: string, minRating?: number, page = 1, limit = 10) {
 
     const queryBuilder = this.offersRepository
       .createQueryBuilder('offer')
@@ -453,19 +264,47 @@ export class OffersService {
       .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
       .groupBy('offer.id')
       .addGroupBy('business.id')
-      .addGroupBy('category.id')
+      .addGroupBy('category.id');
 
+    queryBuilder.andWhere('business.id = :id', { id: user.id })
+
+    if (search) {
+      queryBuilder.andWhere(
+        '(offer.title ILIKE :search OR offer.description ILIKE :search)',
+        { search: `%${search}%` }
+      );
+    }
 
     if (category) {
-      const existing = await this.categoryService.findBySlug(category);
-      if (existing) {
-        queryBuilder.andWhere('offer.categoryId = :categoryId', { categoryId: existing.id });
-      }
+      queryBuilder.andWhere('category.slug = :categorySlug', {
+        categorySlug: category
+      });
+    }
+
+    if (createdFrom) {
+      queryBuilder.andWhere('offer.createdAt >= :createdFrom', {
+        createdFrom: new Date(createdFrom)
+      });
+    }
+
+    if (createdTo) {
+      queryBuilder.andWhere('offer.createdAt <= :createdTo', {
+        createdTo: new Date(createdTo)
+      });
     }
 
     if (minRating) {
-      queryBuilder.having('COALESCE(AVG(review.rating), 0) >= :minRating', { minRating });
+      queryBuilder.having(
+        'COALESCE(AVG(review.rating), 0) >= :minRating',
+        { minRating }
+      );
     }
+
+    queryBuilder.orderBy('offer.createdAt', 'DESC');
+
+    queryBuilder
+      .skip((page - 1) * limit)
+      .take(limit);
 
     const countQuery = queryBuilder.clone()
       .skip(undefined)
@@ -496,6 +335,7 @@ export class OffersService {
       data: results,
       meta
     };
+
   }
 
   async getRandomOffers(page = 1, limit = 10) {
@@ -734,6 +574,41 @@ export class OffersService {
       },
     };
   }
+
+
+  async adminModerate(offerId: string, userId: string, status: ModerationStatus, note: string | null | undefined) {
+    try {
+      const offer = await this.offersRepository.findOne({
+        where: { id: offerId },
+      });
+
+      if (!offer) {
+        throw new NotFoundException('Offer not found');
+      }
+
+      const admin = await this.userService.getUserById(userId)
+
+      if (!admin) {
+        throw new NotFoundException('Admin user not found');
+      }
+
+      offer.moderationStatus = ModerationStatus.APPROVED;
+      offer.moderatedBy = admin;
+      offer.statusUpdatedAt = new Date();
+      offer.adminNote = note
+      offer.moderationStatus = status
+
+      return await this.offersRepository.save(offer);
+
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException('Failed to approve offer');
+    }
+  }
+
 
 
   private formatMonthlyData(data: any[]) {

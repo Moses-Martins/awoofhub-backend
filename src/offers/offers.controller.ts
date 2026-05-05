@@ -28,30 +28,13 @@ export class OffersController {
   }
 
   @Get()
-  findAll(@Query('page') page: number, @Query('limit') limit: number) {
-    return this.offersService.findAll(page, limit);
+  async findAll(@Query('page') page: number, @Query('limit') limit: number, @Query('search') search?: string, @Query('category') category?: string, @Query('minRating') minRating?: number, @Query('createdFrom') createdFrom?: string, @Query('createdTo') createdTo?: string) {
+    return this.offersService.findAll(search, category, minRating, createdFrom, createdTo, page, limit);
   }
 
-  @Get('search')
-  searchOffers(@Query('query') query: string, @Query('page') page: number, @Query('limit') limit: number) {
-    return this.offersService.searchOffers(query, page, limit);
-  }
-
-  @Get('business/search')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(UserRole.BUSINESS)
-  searchUserOffers(@CurrentUser() user: User, @Query('query') query: string, @Query('page') page: number, @Query('limit') limit: number) {
-    return this.offersService.searchUserOffers(user.id, query, page, limit);
-  }
-
-  @Get('filter')
-  filter(
-    @Query('page') page: number,
-    @Query('limit') limit: number,
-    @Query('category') category?: string,
-    @Query('minRating') minRating?: number,
-  ) {
-    return this.offersService.filter(category, minRating, page, limit);
+  @Get('user/:id')
+  async findAllByUser(@Param('id') id: string, @Query('page') page: number, @Query('limit') limit: number, @Query('search') search?: string, @Query('category') category?: string, @Query('minRating') minRating?: number, @Query('createdFrom') createdFrom?: string, @Query('createdTo') createdTo?: string) {
+    return this.offersService.findAllByUser(id, search, category, minRating, createdFrom, createdTo, page, limit);
   }
 
   @Get('random')
@@ -59,33 +42,16 @@ export class OffersController {
     return this.offersService.getRandomOffers(page, limit);
   }
 
-  @Get('category/slug/:slug')
-  findByCategorySlug(@Param('slug') slug: string, @Query('page') page: number, @Query('limit') limit: number) {
-    return this.offersService.findByCategorySlug(slug, page, limit);
-  }
-
-  @Get('business/category/slug/:slug')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(UserRole.BUSINESS)
-  findByBusinessCategorySlug(@CurrentUser() user: User, @Param('slug') slug: string, @Query('page') page: number, @Query('limit') limit: number) {
-    return this.offersService.findByBusinessCategorySlug(user.id, slug, page, limit);
-  }
-
   @Get('category/id/:id')
   findByCategoryId(@Param('id') id: string, @Query('page') page: number, @Query('limit') limit: number) {
     return this.offersService.findByCategoryId(id, page, limit);
-  }
-
-  @Get('user/id/:id')
-  findByUserId(@Param('id') id: string, @Query('page') page: number, @Query('limit') limit: number) {
-    return this.offersService.findByUserId(id, page, limit);
   }
 
   @Get('business/dashboard')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.BUSINESS)
   getBusinessDashboard(@CurrentUser() user: User) {
-    return this.offersService.getBusinessDashboard(user.id); 
+    return this.offersService.getBusinessDashboard(user.id);
   }
 
   @Get(':id')
