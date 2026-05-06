@@ -18,6 +18,7 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { UsersModule } from './users/users.module';
 import { WishlistModule } from './wishlist/wishlist.module';
 import { StatsModule } from './stats/stats.module';
+import { ReportsModule } from './reports/reports.module';
 
 
 @Module({
@@ -40,6 +41,7 @@ import { StatsModule } from './stats/stats.module';
     CommentsModule,
     CategoryModule,
     StatsModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -28,3 +28,10 @@ export enum NotificationType {
   OFFER_APPROVED = "OFFER_APPROVED",
   OFFER_REJECTED = "OFFER_REJECTED",
 }
+
+export enum ReportType {
+  SPAM = 'spam',
+  ABUSE = 'abuse',
+  NSFW = 'nsfw',
+  OTHER = 'other',
+}
