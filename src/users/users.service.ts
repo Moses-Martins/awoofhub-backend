@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UserRole } from 'src/common/types/enums';
+import { AccountStatus, UserRole } from 'src/common/types/enums';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -110,6 +110,30 @@ export class UsersService {
 
     async save(user: User) {
         return this.userRepository.save(user);
+    }
+
+
+    async updateStatus(userId: string, status: AccountStatus) {
+        try {
+            const user = await this.userRepository.findOne({
+                where: { id: userId },
+            });
+
+            if (!user) {
+                throw new NotFoundException('User not found');
+            }
+
+            user.status = status
+
+            return await this.userRepository.save(user);
+
+        } catch (error) {
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
+
+            throw new InternalServerErrorException('Failed to update user status');
+        }
     }
 
 }

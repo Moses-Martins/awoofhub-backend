@@ -6,8 +6,14 @@ import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/exception-filters/http-exception.filter';
 import { APIResponseInterceptor } from './common/interceptors/api-response-interceptor';
 
+import { initializeTransactionalContext } from 'typeorm-transactional';
+
+
 
 async function bootstrap() {
+
+  initializeTransactionalContext();
+
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
@@ -27,7 +33,7 @@ async function bootstrap() {
   }
 
   app.use(cookieParser(cookieSecret))
- 
+
   const config = new DocumentBuilder()
     .setTitle('AwoofHub API')
     .setDescription('API for discovering freebies, promotions, events, and volunteer opportunities')

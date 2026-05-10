@@ -8,15 +8,20 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 export class CommentsController {
   constructor(private readonly commentsService: CommentsService) { }
 
-  @Get(':offerId')
+  @Get('offer/:offerId')
   findAll(@Param('offerId') offerId: string) {
     return this.commentsService.findAll(offerId);
   }
 
-  @Post(':offerId')
+  @Post('offer/:offerId')
   @UseGuards(AuthGuard)
   create(@CurrentUser() user, @Param('offerId') offerId: string, @Body() createCommentDto: CreateCommentDto) {
     return this.commentsService.create(user.id, offerId, createCommentDto);
+  }
+
+  @Get(':id')
+  findById(@Param('id') id: string) {
+    return this.commentsService.findById(id);
   }
 
 }

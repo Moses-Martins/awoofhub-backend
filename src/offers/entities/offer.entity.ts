@@ -1,6 +1,6 @@
 import { Category } from 'src/category/entities/category.entity';
 import { Comment } from 'src/comments/entities/comment.entity';
-import { ModerationStatus } from 'src/common/types/enums';
+import { OfferStatus } from 'src/common/types/enums';
 import { Review } from 'src/reviews/entities/review.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Wishlist } from 'src/wishlist/entities/wishlist.entity';
@@ -52,10 +52,10 @@ export class Offer {
 
     @Column({
         type: 'enum',
-        enum: ModerationStatus,
-        default: ModerationStatus.PENDING,
+        enum: OfferStatus,
+        default: OfferStatus.PENDING,
     })
-    moderationStatus: ModerationStatus;
+    status: OfferStatus;
 
     @Column({ type: 'text', nullable: true, })
     adminNote?: string | null;

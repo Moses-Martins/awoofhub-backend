@@ -4,11 +4,14 @@ import { Alert } from 'src/alert/entities/alert.entity';
 import { PasswordResetToken } from 'src/auth/entities/password-reset-token.entity';
 import { RefreshToken } from 'src/auth/entities/refresh-token.entity';
 import { Comment } from 'src/comments/entities/comment.entity';
-import { AuthProvider, UserRole } from 'src/common/types/enums';
+import { AccountStatus, AuthProvider, UserRole } from 'src/common/types/enums';
+import { Moderation } from 'src/moderation/entities/moderation.entity';
 import { Notification } from 'src/notifications/entities/notification.entity';
 import { Offer } from 'src/offers/entities/offer.entity';
+import { Report } from 'src/reports/entities/report.entity';
 import { Review } from 'src/reviews/entities/review.entity';
 import { Wishlist } from 'src/wishlist/entities/wishlist.entity';
+
 import {
   BeforeInsert,
   BeforeUpdate,
@@ -72,8 +75,14 @@ export class User {
   @OneToMany(() => Offer, offer => offer.business)
   offers: Offer[];
 
+  @OneToMany(() => Report, report => report.reporter)
+  reports: Report[];
+
   @OneToMany(() => Offer, offer => offer.moderatedBy)
   approvals: Offer[];
+
+  @OneToMany(() => Moderation, moderate => moderate.admin)
+  moderate: Moderation[];
 
   @OneToMany(() => Alert, (alert) => alert.user)
   createdAlerts: Alert[];
@@ -98,6 +107,13 @@ export class User {
 
   @OneToMany(() => PasswordResetToken, (token) => token.user)
   passwordResetTokens: PasswordResetToken[];
+
+  @Column({
+    type: 'enum',
+    enum: AccountStatus,
+    default: AccountStatus.ACTIVE,
+  })
+  status: AccountStatus;
 
   @CreateDateColumn()
   createdAt: Date;

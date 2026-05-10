@@ -4,7 +4,7 @@ export enum UserRole {
   BUSINESS = 'business',
 }
 
-export enum ModerationStatus {
+export enum OfferStatus {
   PENDING = 'pending',
   APPROVED = 'approved',
   REJECTED = 'rejected',
@@ -34,4 +34,31 @@ export enum ReportType {
   ABUSE = 'abuse',
   NSFW = 'nsfw',
   OTHER = 'other',
+}
+
+export enum TargetType {
+  USER = 'user',
+  OFFER = 'offer',
+  COMMENT = 'comment',
+}
+
+export enum ReportStatus {
+  PENDING = "pending",
+  RESOLVED = "resolved",
+  DISMISSED = "dismissed"
+}
+
+export enum AccountStatus {
+  ACTIVE = "active",
+  SUSPENDED = "suspended",
+  BANNED = "banned",
+  DELETED = "deleted"
+}
+
+export enum ModerationActionType {
+  WARNING = 'warning',
+  SUSPEND = 'suspend',
+  BLOCK = 'block',
+  DELETE = 'delete',
+  RESTORE = 'restore',
 }

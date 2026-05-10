@@ -1,26 +1,40 @@
-import { Entity, PrimaryGeneratedColumn } from "typeorm";
+import { ReportStatus, ReportType, TargetType } from "src/common/types/enums";
+import { User } from "src/users/entities/user.entity";
+import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity('reports')
 export class Report {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
+    @Column({
+        type: 'enum',
+        enum: ReportType,
+    })
+    type: ReportType;
 
-}
+    @Column('text')
+    description: string;
 
+    @Column({
+        type: 'enum',
+        enum: TargetType,
+    })
+    targetType: TargetType;
 
-{
-  "report_id": "uuid_v4_string",
-  "reporter_user_id": "123456789",
-  "target_type": "TWEET", // or "USER", "DM"
-  "target_id": "2051315373425807783", 
-  "report_category": "harassment",
-  "report_subcategory": "threats",
-  "timestamp": "2026-05-06T13:54:45Z",
-  "metadata": {
-    "ip_address": "...",
-    "client_device": "firefox_win_10",
-    "session_id": "..."
-  },
-  "status": "PENDING_REVIEW" 
+    @Column()
+    targetId: string;
+
+    @ManyToOne(() => User, (reporter) => reporter.reports, { onDelete: 'CASCADE' })
+    reporter: string;
+
+    @CreateDateColumn()
+    createdAt: Date;
+
+    @UpdateDateColumn()
+    updatedAt: Date;
+
+    @Column({ type: 'enum', enum: ReportStatus, default: ReportStatus.PENDING })
+    status: ReportStatus;
+
 }
