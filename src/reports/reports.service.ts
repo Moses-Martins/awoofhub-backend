@@ -71,6 +71,39 @@ export class ReportsService {
 
   }
 
+  async getReportStats() {
+      const [
+        totalReports,
+        pendingReports,
+        activeReports,
+        expiredReports,
+      ] = await Promise.all([
+        this.reportRepo.count(),
+        this.reportRepo.count({
+          where: {
+            status: ReportStatus.PENDING,
+          },
+        }),
+        this.reportRepo.count({
+          where: {
+            status: ReportStatus.RESOLVED,
+          },
+        }),
+        this.reportRepo.count({
+          where: {
+            status: ReportStatus.DISMISSED,
+          },
+        }),
+      ]);
+  
+      return {
+        totalReports,
+        pendingReports,
+        activeReports,
+        expiredReports,
+      };
+    }
+
   private async resolveTarget(type: TargetType, id: string) {
     switch (type) {
       case TargetType.USER:

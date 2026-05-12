@@ -398,6 +398,7 @@ export class OffersService {
       totalOffers,
       pendingOffers,
       activeOffers,
+      rejectedOffers,
       expiredOffers,
     ] = await Promise.all([
       this.offersRepository.count(),
@@ -412,6 +413,11 @@ export class OffersService {
           endDate: MoreThan(now),
         },
       }),
+      this.offersRepository.count({
+        where: {
+          status: OfferStatus.REJECTED,
+        },
+      }),
       this.offersRepository
         .createQueryBuilder('offer')
         .where('offer.endDate < :now', { now })
@@ -422,6 +428,7 @@ export class OffersService {
       totalOffers,
       pendingOffers,
       activeOffers,
+      rejectedOffers,
       expiredOffers,
     };
   }

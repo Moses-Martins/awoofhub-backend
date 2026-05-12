@@ -97,4 +97,14 @@ export class CommentsService {
     return { message: "Comment successfully removed" };
   }
 
+  async getCommentStats() {
+    const [ totalComments ] = await Promise.all([
+      this.commentsRepository.count(),
+    ])
+
+    return {
+      totalComments,
+    };
+  }
+
 }
