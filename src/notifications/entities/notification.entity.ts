@@ -22,7 +22,7 @@ export class Notification {
     @Column()
     message: string;
 
-    @Column({ nullable: true })
+    @Column()
     entityId: string;
 
     @Column({ default: false })

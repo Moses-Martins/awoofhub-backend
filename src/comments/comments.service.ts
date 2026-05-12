@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { OffersService } from 'src/offers/offers.service';
 import { UsersService } from 'src/users/users.service';
@@ -51,6 +51,60 @@ export class CommentsService {
       .getMany();
 
     return comments
+  }
+
+  async findById(id: string) {
+    const comment = await this.commentsRepository
+      .createQueryBuilder('comment')
+      .leftJoin('comment.user', 'user')
+      .leftJoin('comment.offer', 'offer')
+      .addSelect([
+        'user.id',
+        'user.name',
+        'user.email',
+        'offer.id',
+        'offer.name',
+      ])
+      .where('comment.id = :id', { id })
+      .getOne();
+
+    if (!comment) {
+      throw new NotFoundException('Comment not found');
+    }
+
+    return comment
+
+  }
+
+
+  async removeComment(requesterId: string, commentId: string, isAdmin: boolean = false) {
+    const comment = await this.commentsRepository.findOne({
+      where: { id: commentId },
+      relations: ['user']
+    });
+
+    if (!comment) {
+      throw new NotFoundException("Comment not found");
+    }
+
+    const isOwner = comment.user.id === requesterId;
+
+    if (!isOwner && !isAdmin) {
+      throw new ForbiddenException("You do not have permission to delete this comment");
+    }
+
+    await this.commentsRepository.remove(comment);
+    return { message: "Comment successfully removed" };
+  }
+
+  async getCommentStats() {
+    const [ totalComments ] = await Promise.all([
+      this.commentsRepository.count(),
+    ])
+
+    return {
+      totalComments,
+    };
   }
 
 }

@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AlertService } from 'src/alert/alert.service';
 import { CategoryService } from 'src/category/category.service';
 import { PaginationService } from 'src/common/pagination/pagination.service';
-import { ModerationStatus, NotificationType } from 'src/common/types/enums';
+import { NotificationType, OfferStatus } from 'src/common/types/enums';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { ReviewsService } from 'src/reviews/reviews.service';
 import { UsersService } from 'src/users/users.service';
@@ -398,18 +398,24 @@ export class OffersService {
       totalOffers,
       pendingOffers,
       activeOffers,
+      rejectedOffers,
       expiredOffers,
     ] = await Promise.all([
       this.offersRepository.count(),
       this.offersRepository.count({
         where: {
-          moderationStatus: ModerationStatus.PENDING,
+          status: OfferStatus.PENDING,
         },
       }),
       this.offersRepository.count({
         where: {
-          moderationStatus: ModerationStatus.APPROVED,
+          status: OfferStatus.APPROVED,
           endDate: MoreThan(now),
+        },
+      }),
+      this.offersRepository.count({
+        where: {
+          status: OfferStatus.REJECTED,
         },
       }),
       this.offersRepository
@@ -422,6 +428,7 @@ export class OffersService {
       totalOffers,
       pendingOffers,
       activeOffers,
+      rejectedOffers,
       expiredOffers,
     };
   }
@@ -436,14 +443,14 @@ export class OffersService {
     const pendingAdsPromise = this.offersRepository.count({
       where: {
         business: { id: businessId },
-        moderationStatus: ModerationStatus.PENDING,
+        status: OfferStatus.PENDING,
       },
     });
 
     const activeAdsPromise = this.offersRepository.count({
       where: {
         business: { id: businessId },
-        moderationStatus: ModerationStatus.APPROVED,
+        status: OfferStatus.APPROVED,
         endDate: MoreThan(now),
       },
     });
@@ -451,7 +458,7 @@ export class OffersService {
     const rejectedAdsPromise = this.offersRepository.count({
       where: {
         business: { id: businessId },
-        moderationStatus: ModerationStatus.REJECTED,
+        status: OfferStatus.REJECTED,
       },
     });
 
@@ -575,8 +582,7 @@ export class OffersService {
     };
   }
 
-
-  async adminModerate(offerId: string, userId: string, status: ModerationStatus, note: string | null | undefined) {
+  async updateStatus(offerId: string, status: OfferStatus, metadata?: { userId?: string; note?: string | null | undefined }) {
     try {
       const offer = await this.offersRepository.findOne({
         where: { id: offerId },
@@ -586,29 +592,27 @@ export class OffersService {
         throw new NotFoundException('Offer not found');
       }
 
-      const admin = await this.userService.getUserById(userId)
+      offer.status = status;
 
-      if (!admin) {
-        throw new NotFoundException('Admin user not found');
+      if (metadata?.userId) {
+        const admin = await this.userService.getUserById(metadata.userId);
+        if (!admin) {
+          throw new NotFoundException('Admin user not found');
+        }
+
+        offer.moderatedBy = admin;
+        offer.statusUpdatedAt = new Date();
+        offer.adminNote = metadata.note;
       }
-
-      offer.moderationStatus = ModerationStatus.APPROVED;
-      offer.moderatedBy = admin;
-      offer.statusUpdatedAt = new Date();
-      offer.adminNote = note
-      offer.moderationStatus = status
 
       return await this.offersRepository.save(offer);
 
     } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
+      if (error instanceof NotFoundException) throw error;
 
-      throw new InternalServerErrorException('Failed to approve offer');
+      throw new InternalServerErrorException('Failed to update offer status');
     }
   }
-
 
 
   private formatMonthlyData(data: any[]) {
