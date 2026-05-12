@@ -75,24 +75,26 @@ export class UsersService {
     }
 
     async getUserStats() {
-        const [
-            totalUsers,
-            businessUsers,
-            individualUsers,
-        ] = await Promise.all([
-            this.userRepository.count(),
+        const [totalActive, businessActive, suspended, banned] = await Promise.all([
             this.userRepository.count({
-                where: { role: UserRole.BUSINESS },
+                where: { status: AccountStatus.ACTIVE }
             }),
             this.userRepository.count({
-                where: { role: UserRole.USER },
+                where: { role: UserRole.BUSINESS, status: AccountStatus.ACTIVE }
+            }),
+            this.userRepository.count({
+                where: { status: AccountStatus.SUSPENDED }
+            }),
+            this.userRepository.count({
+                where: { status: AccountStatus.BANNED }
             }),
         ]);
 
-        return {
-            totalUsers,
-            businessUsers,
-            individualUsers,
+        return { 
+            totalActive, 
+            businessActive, 
+            suspended, 
+            banned 
         };
     }
 
