@@ -32,6 +32,14 @@ export class UsersController {
     return this.usersService.getUserById(id);
   }
 
+  @Get()
+  @HttpCode(200)
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  findAll() {
+    return this.usersService.findAll();
+  }
+
   @Post(":id/admin/moderate")
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)

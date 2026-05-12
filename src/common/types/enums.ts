@@ -31,8 +31,12 @@ export enum NotificationType {
 
 export enum ReportType {
   SPAM = 'spam',
+  SCAM = 'scam',
   ABUSE = 'abuse',
-  NSFW = 'nsfw',
+  EXPLICIT = 'explicit',
+  VIOLENCE = 'violence',
+  ILLEGAL = 'illegal',
+  SELF_HARM = 'self_harm',
   OTHER = 'other',
 }
 
