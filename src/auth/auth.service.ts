@@ -13,6 +13,7 @@ import { DataSource, Repository } from 'typeorm';
 import { EmailDto, LoginUserDto } from './dto/login-user.dto';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
+import { UserStatus } from 'src/common/types/enums';
 
 
 @Injectable()
@@ -58,6 +59,19 @@ export class AuthService {
                     'Email not verified. Please verify your email before logging in.',
                 );
             }
+
+            // Status checks
+               if (user.status === UserStatus.DELETED) {
+                         throw new ForbiddenException('This account has been deleted');
+                    }
+
+         if (user.status === UserStatus.BLOCKED) {
+              throw new ForbiddenException('Your account has been blocked');
+            }
+
+           if (user.status === UserStatus.SUSPENDED) {
+                 throw new ForbiddenException('Your account has been suspended');
+             }
 
             await this.chatService.syncUser({
                 id: user.id,

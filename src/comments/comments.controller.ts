@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Patch, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
+
 
 @Controller('comments')
 export class CommentsController {
@@ -17,7 +18,18 @@ export class CommentsController {
   @UseGuards(AuthGuard)
   create(@CurrentUser() user, @Param('offerId') offerId: string, @Body() createCommentDto: CreateCommentDto) {
     return this.commentsService.create(user.id, offerId, createCommentDto);
-  }
+  } 
+  @Patch(':commentId')
+@UseGuards(AuthGuard)
+update(@CurrentUser() user, @Param('commentId') commentId: string, @Body() updateCommentDto: CreateCommentDto) {
+return this.commentsService.update(user.id, commentId, updateCommentDto);
+}
+
+@Delete(':commentId')
+@UseGuards(AuthGuard)
+remove(@CurrentUser() user, @Param('commentId') commentId: string) {
+return this.commentsService.remove(user.id, commentId);
+}
 
   @Get(':id')
   findById(@Param('id') id: string) {

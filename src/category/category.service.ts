@@ -81,4 +81,22 @@ export class CategoryService {
   }
 
 
+  async update(id: string, updateCategoryDto: CreateCategoryDto) {
+  const category = await this.findById(id);
+
+  const name = updateCategoryDto.name.trim();
+  const existing = await this.categoriesRepository.findOne({ where: { name } });
+  if (existing && existing.id !== id) {
+    throw new ConflictException(`Category '${name}' already exists`);
+  }
+
+  Object.assign(category, { name });
+  return this.categoriesRepository.save(category);
+}
+
+async remove(id: string) {
+  const category = await this.findById(id);
+  return this.categoriesRepository.remove(category);
+}
+
 }

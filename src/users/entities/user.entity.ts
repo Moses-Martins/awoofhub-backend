@@ -4,14 +4,13 @@ import { Alert } from 'src/alert/entities/alert.entity';
 import { PasswordResetToken } from 'src/auth/entities/password-reset-token.entity';
 import { RefreshToken } from 'src/auth/entities/refresh-token.entity';
 import { Comment } from 'src/comments/entities/comment.entity';
-import { AccountStatus, AuthProvider, UserRole } from 'src/common/types/enums';
+import { AuthProvider, UserRole, UserStatus } from 'src/common/types/enums';
 import { Moderation } from 'src/moderation/entities/moderation.entity';
 import { Notification } from 'src/notifications/entities/notification.entity';
 import { Offer } from 'src/offers/entities/offer.entity';
 import { Report } from 'src/reports/entities/report.entity';
 import { Review } from 'src/reviews/entities/review.entity';
 import { Wishlist } from 'src/wishlist/entities/wishlist.entity';
-
 import {
   BeforeInsert,
   BeforeUpdate,
@@ -22,7 +21,6 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-
 
 @Entity('users')
 export class User {
@@ -50,6 +48,13 @@ export class User {
     default: UserRole.USER,
   })
   role: UserRole;
+
+  @Column({
+    type: 'enum',
+    enum: UserStatus,
+    default: UserStatus.ACTIVE,
+  })
+  status: UserStatus;
 
   @Exclude({ toPlainOnly: true })
   @Column({ default: false })
@@ -107,13 +112,6 @@ export class User {
 
   @OneToMany(() => PasswordResetToken, (token) => token.user)
   passwordResetTokens: PasswordResetToken[];
-
-  @Column({
-    type: 'enum',
-    enum: AccountStatus,
-    default: AccountStatus.ACTIVE,
-  })
-  status: AccountStatus;
 
   @CreateDateColumn()
   createdAt: Date;

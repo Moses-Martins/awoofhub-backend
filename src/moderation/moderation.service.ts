@@ -2,7 +2,7 @@ import { BadRequestException, forwardRef, Inject, Injectable, InternalServerErro
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommentsService } from 'src/comments/comments.service';
-import { AccountStatus, ModerationActionType, OfferStatus, ReportStatus, TargetType } from 'src/common/types/enums';
+import { UserStatus, ModerationActionType, OfferStatus, ReportStatus, TargetType } from 'src/common/types/enums';
 import { OffersService } from 'src/offers/offers.service';
 import { ReportsService } from 'src/reports/reports.service';
 import { UsersService } from 'src/users/users.service';
@@ -122,17 +122,17 @@ export class ModerationService {
   }
 
   private async handleUserModeration(targetId: string, action: ModerationActionType) {
-    switch (action) {
-      case ModerationActionType.SUSPEND:
-        return this.userService.updateStatus(targetId, AccountStatus.SUSPENDED);
-      case ModerationActionType.BLOCK:
-        return this.userService.updateStatus(targetId, AccountStatus.BANNED);
-      case ModerationActionType.RESTORE:
-        return this.userService.updateStatus(targetId, AccountStatus.ACTIVE);
-      default:
-        throw new BadRequestException(`Action '${action}' is not applicable to Users.`)
-    }
+  switch (action) {
+    case ModerationActionType.SUSPEND:
+      return this.userService.updateStatus(targetId, UserStatus.SUSPENDED);
+    case ModerationActionType.BLOCK:
+      return this.userService.updateStatus(targetId, UserStatus.BLOCKED);
+    case ModerationActionType.RESTORE:
+      return this.userService.updateStatus(targetId, UserStatus.ACTIVE);
+    default:
+      throw new BadRequestException(`Action '${action}' is not applicable to Users.`)
   }
+}
 
   private async handleOfferModeration(targetId: string, action: ModerationActionType) {
     switch (action) {

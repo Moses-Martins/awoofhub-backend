@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Patch, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { Roles } from 'src/common/decorators/roles.decorator';
@@ -8,17 +8,18 @@ import { User } from 'src/users/entities/user.entity';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { UpdateOfferStatusDto } from './dto/update-offer-status.dto';
 import { OffersService } from './offers.service';
+import { UserStatusGuard } from 'src/common/guards/user-status.guard';
 
 @Controller('offers')
 export class OffersController {
   constructor(private readonly offersService: OffersService) { }
 
   @Post()
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(UserRole.BUSINESS)
-  create(@CurrentUser() user: User, @Body() createOfferDto: CreateOfferDto) {
-    return this.offersService.create(createOfferDto, user.id);
-  }
+@UseGuards(AuthGuard, UserStatusGuard, RolesGuard)
+@Roles(UserRole.BUSINESS)
+create(@CurrentUser() user: User, @Body() createOfferDto: CreateOfferDto) {
+  return this.offersService.create(createOfferDto, user.id);
+}
 
   @Post(":id/status")
   @UseGuards(AuthGuard, RolesGuard)
@@ -59,5 +60,20 @@ export class OffersController {
   findOfferById(@Param('id') id: string) {
     return this.offersService.findById(id);
   }
+
+ @Patch(':id')
+@UseGuards(AuthGuard, UserStatusGuard, RolesGuard)
+@Roles(UserRole.BUSINESS)
+update(@CurrentUser() user: User, @Param('id') id: string, @Body() updateOfferDto: Partial<CreateOfferDto>) {
+  return this.offersService.update(id, user.id, updateOfferDto);
+}
+
+@Delete(':id')
+@UseGuards(AuthGuard, UserStatusGuard, RolesGuard)
+@Roles(UserRole.BUSINESS)
+remove(@CurrentUser() user: User, @Param('id') id: string) {
+  return this.offersService.remove(id, user.id);
+}
+
 
 }

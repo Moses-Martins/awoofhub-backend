@@ -52,6 +52,40 @@ export class CommentsService {
 
     return comments
   }
+ async update(userId: string, commentId: string, updateCommentDto: CreateCommentDto) {
+  const comment = await this.commentsRepository.findOne({
+    where: { id: commentId },
+    relations: ['user'],
+  });
+
+  if (!comment) {
+    throw new NotFoundException('Comment not found');
+  }
+
+  if (comment.user.id !== userId) {
+    throw new NotFoundException('You can only edit your own comments');
+  }
+
+  Object.assign(comment, updateCommentDto);
+  return this.commentsRepository.save(comment);
+}
+
+async remove(userId: string, commentId: string) {
+  const comment = await this.commentsRepository.findOne({
+    where: { id: commentId },
+    relations: ['user'],
+  });
+
+  if (!comment) {
+    throw new NotFoundException('Comment not found');
+  }
+
+  if (comment.user.id !== userId) {
+    throw new NotFoundException('You can only delete your own comments');
+  }
+
+  return this.commentsRepository.remove(comment);
+}
 
   async findById(id: string) {
     const comment = await this.commentsRepository

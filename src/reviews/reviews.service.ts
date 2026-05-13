@@ -69,6 +69,24 @@ export class ReviewsService {
   }
 
 
+async deleteReview(userId: string, offerId: string) {
+  const review = await this.reviewsRepository.findOne({
+      where: {
+        offer: { id: offerId },
+        user: { id: userId }
+      },
+      relations: ['user', 'offer']
+    });
+
+  if (!review) {
+    throw new NotFoundException('Review not found');
+  }
+
+  return this.reviewsRepository.remove(review);
+}
+
+
+
   async getReviews(offerId: string) {
 
     const overall = await this.reviewsRepository
@@ -90,6 +108,7 @@ export class ReviewsService {
     distributionRaw.forEach(d => {
       ratingDistribution[d.rating] = Number(d.count);
     });
+
 
     return {
       avgRating: Number(overall.avgRating),

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { forwardRef, Inject,Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaginationService } from 'src/common/pagination/pagination.service';
 import { NotificationType } from 'src/common/types/enums';
@@ -11,10 +11,10 @@ export class NotificationsService {
   constructor(
     @InjectRepository(Notification)
     private notificationRepo: Repository<Notification>,
+    @Inject(forwardRef(() => UsersService))
     private userService: UsersService,
     private readonly paginationService: PaginationService,
   ) { }
-
   async create(userId: string, title: string, message: string, type: NotificationType, entityId: string) {
 
     const notification = this.notificationRepo.create({ user: { id: userId }, title, message, type, entityId });

@@ -14,10 +14,11 @@ export class Comment {
     @ManyToOne(() => User, user => user.comments)
     user: User;
 
-    @ManyToOne(() => Offer, offer => offer.comments)
-    offer: Offer;
+    @ManyToOne(() => Offer, offer => offer.comments, { onDelete: 'CASCADE' })
+offer: Offer;
 
     @CreateDateColumn()
     createdAt: Date;
 
+    
 }

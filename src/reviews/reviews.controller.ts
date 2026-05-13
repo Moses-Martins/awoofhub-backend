@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, UseGuards } from "@nestjs/common";
 import { AuthGuard } from "src/auth/guards/auth.guard";
 import { CurrentUser } from "src/common/decorators/current-user.decorator";
 import { Roles } from "src/common/decorators/roles.decorator";
@@ -29,4 +29,11 @@ export class ReviewsController {
     return this.reviewsService.upsertReview(user.id, offerId, createReviewDto);
   }
 
+
+@Delete(':offerId')
+@UseGuards(AuthGuard, RolesGuard)
+@Roles(UserRole.USER, UserRole.BUSINESS)
+deleteReview(@CurrentUser() user, @Param('offerId') offerId: string) {
+  return this.reviewsService.deleteReview(user.id, offerId);
+}
 }

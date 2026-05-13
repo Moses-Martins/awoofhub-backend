@@ -1,6 +1,7 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { AccountStatus, UserRole } from 'src/common/types/enums';
+import { NotificationsService } from 'src/notifications/notifications.service';
+import { NotificationType, UserRole, UserStatus } from 'src/common/types/enums';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -11,15 +12,15 @@ export class UsersService {
     constructor(
         @InjectRepository(User)
         private readonly userRepository: Repository<User>,
+        @Inject(forwardRef(() => NotificationsService))
+        private readonly notificationsService: NotificationsService,
     ) { }
 
     async create(user: CreateUserDto) {
         try {
             const newUser = this.userRepository.create(user);
             await this.userRepository.save(newUser);
-
-            return newUser
-
+            return newUser;
         } catch (error) {
             throw new InternalServerErrorException('Failed to create user');
         }
@@ -35,13 +36,11 @@ export class UsersService {
                 where: { id: userId },
             });
 
-
             if (!user) {
                 throw new NotFoundException("User not found");
             }
 
             Object.assign(user, dto);
-
             return await this.userRepository.save(user);
 
         } catch (error) {
@@ -61,55 +60,33 @@ export class UsersService {
                 throw new InternalServerErrorException('User not found');
             }
             user.isEmailVerified = true;
-
-            // Save the changes back to the database
             return await this.userRepository.save(user);
-
         } catch (error) {
             if (error instanceof InternalServerErrorException) {
                 throw error;
             }
-
             throw new InternalServerErrorException('Failed to verify email');
         }
     }
 
     async getUserStats() {
-        const [totalActive, businessActive, suspended, banned] = await Promise.all([
-            this.userRepository.count({
-                where: { status: AccountStatus.ACTIVE }
-            }),
-            this.userRepository.count({
-                where: { role: UserRole.BUSINESS, status: AccountStatus.ACTIVE }
-            }),
-            this.userRepository.count({
-                where: { status: AccountStatus.SUSPENDED }
-            }),
-            this.userRepository.count({
-                where: { status: AccountStatus.BANNED }
-            }),
+        const [totalActive, businessActive, suspended, blocked] = await Promise.all([
+            this.userRepository.count({ where: { status: UserStatus.ACTIVE } }),
+            this.userRepository.count({ where: { role: UserRole.BUSINESS, status: UserStatus.ACTIVE } }),
+            this.userRepository.count({ where: { status: UserStatus.SUSPENDED } }),
+            this.userRepository.count({ where: { status: UserStatus.BLOCKED } }),
         ]);
 
-        return { 
-            totalActive, 
-            businessActive, 
-            suspended, 
-            banned 
-        };
+        return { totalActive, businessActive, suspended, blocked };
     }
 
     async getUserById(id: string) {
-        return await this.userRepository.findOne({
-            where: { id },
-        });
+        return await this.userRepository.findOne({ where: { id } });
     }
-
 
     async findAll(): Promise<User[]> {
-        const users = this.userRepository.find();
-        return users
+        return this.userRepository.find();
     }
-
 
     async getUserByEmail(email: string) {
         return await this.userRepository.findOne({
@@ -121,28 +98,52 @@ export class UsersService {
         return this.userRepository.save(user);
     }
 
+    async remove(userId: string) {
+        const user = await this.userRepository.findOne({
+            where: { id: userId },
+        });
 
-    async updateStatus(userId: string, status: AccountStatus) {
-        try {
-            const user = await this.userRepository.findOne({
-                where: { id: userId },
-            });
-
-            if (!user) {
-                throw new NotFoundException('User not found');
-            }
-
-            user.status = status
-
-            return await this.userRepository.save(user);
-
-        } catch (error) {
-            if (error instanceof NotFoundException) {
-                throw error;
-            }
-
-            throw new InternalServerErrorException('Failed to update user status');
+        if (!user) {
+            throw new NotFoundException('User not found');
         }
+
+        return this.userRepository.remove(user);
     }
 
+    async updateStatus(userId: string, status: UserStatus) {
+        const user = await this.userRepository.findOne({
+            where: { id: userId },
+        });
+
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        user.status = status;
+        await this.userRepository.save(user);
+
+        const messages = {
+            [UserStatus.BLOCKED]: { title: 'Account Blocked', message: 'Your account has been blocked by an admin.' },
+            [UserStatus.SUSPENDED]: { title: 'Account Suspended', message: 'Your account has been suspended by an admin.' },
+            [UserStatus.DELETED]: { title: 'Account Deleted', message: 'Your account has been deleted by an admin.' },
+            [UserStatus.ACTIVE]: { title: 'Account Activated', message: 'Your account has been reactivated.' },
+        };
+
+        const notificationTypes = {
+            [UserStatus.BLOCKED]: NotificationType.ACCOUNT_BLOCKED,
+            [UserStatus.SUSPENDED]: NotificationType.ACCOUNT_SUSPENDED,
+            [UserStatus.DELETED]: NotificationType.ACCOUNT_DELETED,
+            [UserStatus.ACTIVE]: NotificationType.ACCOUNT_ACTIVATED,
+        };
+
+        await this.notificationsService.create(
+            userId,
+            messages[status].title,
+            messages[status].message,
+            notificationTypes[status],
+            userId,
+        );
+
+        return user;
+    }
 }
