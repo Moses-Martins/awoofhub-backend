@@ -27,8 +27,7 @@ export class ModerationController {
   }
 
   @Get('history/:targetId/latest')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @UseGuards(AuthGuard)
   async getLatestHistoryForTarget(@Param('targetId') targetId: string) {
     return this.moderationService.getLatestHistoryForTarget(targetId);
   }
