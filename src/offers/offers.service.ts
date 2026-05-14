@@ -95,6 +95,7 @@ export class OffersService {
       .groupBy('offer.id')
       .addGroupBy('business.id')
       .addGroupBy('category.id');
+      queryBuilder.andWhere('offer.status = :status', { status: OfferStatus.APPROVED });
 
 
     if (search) {
@@ -676,6 +677,32 @@ async remove(offerId: string, userId: string) {
   }
 
   return this.offersRepository.remove(offer);
+}
+
+async findPending(page = 1, limit = 10) {
+  const queryBuilder = this.offersRepository
+    .createQueryBuilder('offer')
+    .leftJoin('offer.business', 'business')
+    .leftJoin('offer.category', 'category')
+    .select([
+      'offer',
+      'business.id',
+      'business.name',
+      'business.email',
+      'category.id',
+      'category.name',
+      'category.slug'
+    ])
+    .where('offer.status = :status', { status: OfferStatus.PENDING })
+    .orderBy('offer.createdAt', 'ASC')
+    .skip((page - 1) * limit)
+    .take(limit);
+
+  const total = await queryBuilder.clone().getCount();
+  const meta = this.paginationService.getPaginationMeta(page, limit, total);
+  const offers = await queryBuilder.getMany();
+
+  return { data: offers, meta };
 }
 
 }

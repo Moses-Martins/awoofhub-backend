@@ -75,5 +75,12 @@ remove(@CurrentUser() user: User, @Param('id') id: string) {
   return this.offersService.remove(id, user.id);
 }
 
+@Get('admin/pending')
+@UseGuards(AuthGuard, RolesGuard)
+@Roles(UserRole.ADMIN)
+getPendingOffers(@Query('page') page: number, @Query('limit') limit: number) {
+  return this.offersService.findPending(page, limit);
+}
+
 
 }
