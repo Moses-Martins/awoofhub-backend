@@ -5,7 +5,6 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { UserRole } from 'src/common/types/enums';
 import { User } from 'src/users/entities/user.entity';
-import { AdminModerateDto } from './dto/admin-moderate.dto';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { OffersService } from './offers.service';
 
@@ -18,13 +17,6 @@ export class OffersController {
   @Roles(UserRole.BUSINESS)
   create(@CurrentUser() user: User, @Body() createOfferDto: CreateOfferDto) {
     return this.offersService.create(createOfferDto, user.id);
-  }
-
-  @Post(":id/admin/moderate")
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  adminModerate(@Param('id') id: string, @CurrentUser() user: User, @Body() adminModerateDto: AdminModerateDto) {
-    return this.offersService.adminModerate(id, user.id, adminModerateDto.status, adminModerateDto.note);
   }
 
   @Get()
