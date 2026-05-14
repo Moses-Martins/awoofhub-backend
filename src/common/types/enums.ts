@@ -64,5 +64,5 @@ export enum ModerationActionType {
   SUSPEND = 'suspend',
   BLOCK = 'block',
   DELETE = 'delete',
-  RESTORE = 'restore',
+  ACTIVATE = 'activate',
 }

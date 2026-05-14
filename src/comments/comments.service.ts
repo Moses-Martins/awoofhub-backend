@@ -63,7 +63,6 @@ export class CommentsService {
         'user.name',
         'user.email',
         'offer.id',
-        'offer.name',
       ])
       .where('comment.id = :id', { id })
       .getOne();

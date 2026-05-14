@@ -78,9 +78,6 @@ export class User {
   @OneToMany(() => Report, report => report.reporter)
   reports: Report[];
 
-  @OneToMany(() => Offer, offer => offer.moderatedBy)
-  approvals: Offer[];
-
   @OneToMany(() => Moderation, moderate => moderate.admin)
   moderate: Moderation[];
 

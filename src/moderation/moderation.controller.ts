@@ -10,7 +10,7 @@ import { ModerationService } from './moderation.service';
 
 @Controller('moderation')
 export class ModerationController {
-  constructor(private readonly moderationService: ModerationService) {}
+  constructor(private readonly moderationService: ModerationService) { }
 
   @Post()
   @UseGuards(AuthGuard, RolesGuard)
@@ -24,5 +24,11 @@ export class ModerationController {
   @Roles(UserRole.ADMIN)
   async getTargetHistory(@Param('targetId') targetId: string) {
     return await this.moderationService.getHistoryForTarget(targetId);
+  }
+
+  @Get('history/:targetId/latest')
+  @UseGuards(AuthGuard)
+  async getLatestHistoryForTarget(@Param('targetId') targetId: string) {
+    return this.moderationService.getLatestHistoryForTarget(targetId);
   }
 }
