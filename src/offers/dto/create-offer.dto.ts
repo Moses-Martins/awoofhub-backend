@@ -1,44 +1,94 @@
-import { IsDateString, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import {
+  IsDateString,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+
+import {
+  ApiProperty,
+  ApiPropertyOptional,
+} from '@nestjs/swagger';
 
 export class CreateOfferDto {
-    @IsNotEmpty()
-    @IsString()
-    title: string;
 
-    @IsNotEmpty()
-    @IsString()
-    description: string;
+  @ApiProperty({
+    example: '50% Off Electronics',
+    description: 'Offer title',
+  })
+  @IsNotEmpty()
+  @IsString()
+  title: string;
 
-    @IsNotEmpty()
-    @IsString()
-    category: string;
+  @ApiProperty({
+    example: 'Get up to 50% discount on selected electronics',
+    description: 'Offer description',
+  })
+  @IsNotEmpty()
+  @IsString()
+  description: string;
 
-    @IsNotEmpty()
-    @IsString()
-    imageUrl: string;
+  @ApiProperty({
+    example: 'Electronics',
+    description: 'Offer category',
+  })
+  @IsNotEmpty()
+  @IsString()
+  category: string;
 
-    @IsNotEmpty()
-    @IsString()
-    location: string;
+  @ApiProperty({
+    example: 'https://cdn.awoofhub.online/offers/offer-image.jpg',
+    description: 'Offer image URL',
+  })
+  @IsNotEmpty()
+  @IsString()
+  imageUrl: string;
 
-    @IsNotEmpty()
-    @IsString()
-    termsAndConditions: string;
+  @ApiProperty({
+    example: 'Abuja, Nigeria',
+    description: 'Offer location',
+  })
+  @IsNotEmpty()
+  @IsString()
+  location: string;
 
-    @IsNotEmpty()
-    @IsString()
-    value: string;
+  @ApiProperty({
+    example: 'Offer valid while stock lasts',
+    description: 'Terms and conditions for the offer',
+  })
+  @IsNotEmpty()
+  @IsString()
+  termsAndConditions: string;
 
-    @IsNotEmpty()
-    @IsString()
-    dealUrl: string;
+  @ApiProperty({
+    example: '₦50,000',
+    description: 'Offer value or pricing information',
+  })
+  @IsNotEmpty()
+  @IsString()
+  value: string;
 
-    @IsOptional()
-    @IsString()
-    couponCode?: string;
+  @ApiProperty({
+    example: 'https://awoofhub.online/deals/offer',
+    description: 'External deal URL',
+  })
+  @IsNotEmpty()
+  @IsString()
+  dealUrl: string;
 
-    @IsNotEmpty()
-    @IsDateString()
-    endDate: string;
+  @ApiPropertyOptional({
+    example: 'SAVE50',
+    description: 'Optional coupon code',
+  })
+  @IsOptional()
+  @IsString()
+  couponCode?: string;
 
+  @ApiProperty({
+    example: '2026-12-31T23:59:59.000Z',
+    description: 'Offer expiration date',
+  })
+  @IsNotEmpty()
+  @IsDateString()
+  endDate: string;
 }
