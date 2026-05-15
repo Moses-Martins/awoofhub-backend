@@ -30,7 +30,7 @@ export class ModerationService {
     if (!admin) throw new NotFoundException('Admin not found');
 
     const isRestrictive = [ModerationActionType.SUSPEND, ModerationActionType.BLOCK].includes(dto.actionType);
-    const isRestore = dto.actionType === ModerationActionType.RESTORE;
+    const isRestore = dto.actionType === ModerationActionType.ACTIVATE;
 
     if (isRestrictive || isRestore) {
       await this.moderationRepo.update(
@@ -51,13 +51,13 @@ export class ModerationService {
 
     if (dto.reportId) {
       await this.reportService.updateStatus(dto.reportId, ReportStatus.RESOLVED);
-    }   
+    }
 
     return action;
   }
 
 
-  @Cron(CronExpression.EVERY_MINUTE) 
+  @Cron(CronExpression.EVERY_MINUTE)
   async handleExpiredModerations() {
     const now = new Date();
 
@@ -82,7 +82,7 @@ export class ModerationService {
       const remainingRestrictiveCount = await this.moderationRepo.count({
         where: {
           targetId: penalty.targetId,
-          targetType: penalty.targetType, 
+          targetType: penalty.targetType,
           isActive: true,
           actionType: In(RESTRICTIVE_ACTIONS)
         }
@@ -92,7 +92,7 @@ export class ModerationService {
         await this.applyModerationEffect(
           penalty.targetType,
           penalty.targetId,
-          ModerationActionType.RESTORE
+          ModerationActionType.ACTIVATE
         );
       }
     }
@@ -100,6 +100,14 @@ export class ModerationService {
 
   async getHistoryForTarget(targetId: string) {
     return this.moderationRepo.find({
+      where: { targetId },
+      order: { createdAt: 'DESC' },
+      relations: ['admin']
+    });
+  }
+
+  async getLatestHistoryForTarget(targetId: string) {
+    return this.moderationRepo.findOne({
       where: { targetId },
       order: { createdAt: 'DESC' },
       relations: ['admin']
@@ -129,6 +137,8 @@ export class ModerationService {
       return this.userService.updateStatus(targetId, UserStatus.BLOCKED);
     case ModerationActionType.RESTORE:
       return this.userService.updateStatus(targetId, UserStatus.ACTIVE);
+    case ModerationActionType.ACTIVATE:
+      return this.userService.updateStatus(targetId, UserStatus.ACTIVE);
     default:
       throw new BadRequestException(`Action '${action}' is not applicable to Users.`)
   }
@@ -140,7 +150,7 @@ export class ModerationService {
         return this.offerService.updateStatus(targetId, OfferStatus.PENDING);
       case ModerationActionType.BLOCK:
         return this.offerService.updateStatus(targetId, OfferStatus.REJECTED);
-      case ModerationActionType.RESTORE:
+      case ModerationActionType.ACTIVATE:
         return this.offerService.updateStatus(targetId, OfferStatus.APPROVED);
       default:
         throw new BadRequestException(`Action '${action}' is not applicable to Offers.`)

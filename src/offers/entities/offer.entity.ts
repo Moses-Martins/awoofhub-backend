@@ -57,15 +57,6 @@ export class Offer {
     })
     status: OfferStatus;
 
-    @Column({ type: 'text', nullable: true, })
-    adminNote?: string | null;
-
-    @Column({ type: 'timestamp', nullable: true })
-    statusUpdatedAt?: Date;
-
-    @ManyToOne(() => User, (admin) => admin.approvals)
-    moderatedBy?: User;
-
     @OneToMany(() => Review, review => review.offer)
     reviews: Review[];
 

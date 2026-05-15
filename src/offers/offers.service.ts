@@ -583,7 +583,7 @@ export class OffersService {
     };
   }
 
-  async updateStatus(offerId: string, status: OfferStatus, metadata?: { userId?: string; note?: string | null | undefined }) {
+  async updateStatus(offerId: string, status: OfferStatus) {
     try {
       const offer = await this.offersRepository.findOne({
         where: { id: offerId },
@@ -594,17 +594,6 @@ export class OffersService {
       }
 
       offer.status = status;
-
-      if (metadata?.userId) {
-        const admin = await this.userService.getUserById(metadata.userId);
-        if (!admin) {
-          throw new NotFoundException('Admin user not found');
-        }
-
-        offer.moderatedBy = admin;
-        offer.statusUpdatedAt = new Date();
-        offer.adminNote = metadata.note;
-      }
 
       return await this.offersRepository.save(offer);
 

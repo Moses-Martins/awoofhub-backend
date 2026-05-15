@@ -6,7 +6,6 @@ import { RolesGuard } from 'src/common/guards/roles.guard';
 import { UserRole } from 'src/common/types/enums';
 import { User } from 'src/users/entities/user.entity';
 import { CreateOfferDto } from './dto/create-offer.dto';
-import { UpdateOfferStatusDto } from './dto/update-offer-status.dto';
 import { OffersService } from './offers.service';
 import { UserStatusGuard } from 'src/common/guards/user-status.guard';
 
@@ -20,13 +19,6 @@ export class OffersController {
 create(@CurrentUser() user: User, @Body() createOfferDto: CreateOfferDto) {
   return this.offersService.create(createOfferDto, user.id);
 }
-
-  @Post(":id/status")
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  updateStatus(@Param('id') id: string, @CurrentUser() user: User, @Body() updateOfferStatusDto: UpdateOfferStatusDto) {
-    return this.offersService.updateStatus(id, updateOfferStatusDto.status, {userId: user.id, note: updateOfferStatusDto.note});
-  }
 
   @Get()
   async findAll(@Query('page') page: number, @Query('limit') limit: number, @Query('search') search?: string, @Query('category') category?: string, @Query('minRating') minRating?: number, @Query('createdFrom') createdFrom?: string, @Query('createdTo') createdTo?: string) {

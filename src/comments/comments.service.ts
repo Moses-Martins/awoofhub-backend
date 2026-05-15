@@ -97,7 +97,6 @@ async remove(userId: string, commentId: string) {
         'user.name',
         'user.email',
         'offer.id',
-        'offer.name',
       ])
       .where('comment.id = :id', { id })
       .getOne();
