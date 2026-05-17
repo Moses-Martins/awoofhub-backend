@@ -123,16 +123,10 @@ export class UsersService {
         await this.userRepository.save(user);
 
         const messages = {
-            [UserStatus.BLOCKED]: { title: 'Account Blocked', message: 'Your account has been blocked by an admin.' },
-            [UserStatus.SUSPENDED]: { title: 'Account Suspended', message: 'Your account has been suspended by an admin.' },
-            [UserStatus.DELETED]: { title: 'Account Deleted', message: 'Your account has been deleted by an admin.' },
-            [UserStatus.ACTIVE]: { title: 'Account Activated', message: 'Your account has been reactivated.' },
+            [UserStatus.ACTIVE]: { title: 'Account Activated', message: 'Your account has been reactivated.' }
         };
 
         const notificationTypes = {
-            [UserStatus.BLOCKED]: NotificationType.ACCOUNT_BLOCKED,
-            [UserStatus.SUSPENDED]: NotificationType.ACCOUNT_SUSPENDED,
-            [UserStatus.DELETED]: NotificationType.ACCOUNT_DELETED,
             [UserStatus.ACTIVE]: NotificationType.ACCOUNT_ACTIVATED,
         };
 

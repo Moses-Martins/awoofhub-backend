@@ -4,6 +4,7 @@ import { OffersService } from 'src/offers/offers.service';
 import { UsersService } from 'src/users/users.service';
 import { Repository } from 'typeorm';
 import { CreateCommentDto } from './dto/create-comment.dto';
+import { UpdateCommentDto } from './dto/update-comment.dto';
 import { Comment } from './entities/comment.entity';
 
 
@@ -52,7 +53,7 @@ export class CommentsService {
 
     return comments
   }
- async update(userId: string, commentId: string, updateCommentDto: CreateCommentDto) {
+ async update(userId: string, commentId: string, updateCommentDto: UpdateCommentDto){
   const comment = await this.commentsRepository.findOne({
     where: { id: commentId },
     relations: ['user'],

@@ -27,9 +27,6 @@ export enum NotificationType {
   NEW_MESSAGE = "NEW_MESSAGE",
   OFFER_APPROVED = "OFFER_APPROVED",
   OFFER_REJECTED = "OFFER_REJECTED",
-  ACCOUNT_SUSPENDED = "ACCOUNT_SUSPENDED",
-  ACCOUNT_BLOCKED = "ACCOUNT_BLOCKED",
-  ACCOUNT_DELETED = "ACCOUNT_DELETED",
   ACCOUNT_ACTIVATED = "ACCOUNT_ACTIVATED",
 }
 
@@ -68,8 +65,8 @@ export enum ModerationActionType {
   SUSPEND = 'suspend',
   BLOCK = 'block',
   DELETE = 'delete',
-  RESTORE = 'restore',
   ACTIVATE = 'activate',
+  RESTORE = 'restore',
 }
 
 export enum UserStatus {

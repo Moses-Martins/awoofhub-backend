@@ -6,6 +6,7 @@ import { RolesGuard } from 'src/common/guards/roles.guard';
 import { UserRole } from 'src/common/types/enums';
 import { User } from 'src/users/entities/user.entity';
 import { CreateOfferDto } from './dto/create-offer.dto';
+import { UpdateOfferDto } from './dto/update-offer.dto';
 import { OffersService } from './offers.service';
 import { UserStatusGuard } from 'src/common/guards/user-status.guard';
 
@@ -53,10 +54,10 @@ create(@CurrentUser() user: User, @Body() createOfferDto: CreateOfferDto) {
     return this.offersService.findById(id);
   }
 
- @Patch(':id')
+@Patch(':id')
 @UseGuards(AuthGuard, UserStatusGuard, RolesGuard)
 @Roles(UserRole.BUSINESS)
-update(@CurrentUser() user: User, @Param('id') id: string, @Body() updateOfferDto: Partial<CreateOfferDto>) {
+update(@CurrentUser() user: User, @Param('id') id: string, @Body() updateOfferDto: UpdateOfferDto) {
   return this.offersService.update(id, user.id, updateOfferDto);
 }
 

@@ -3,6 +3,7 @@ import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
+import { UpdateCommentDto } from './dto/update-comment.dto';
 
 
 @Controller('comments')
@@ -21,7 +22,7 @@ export class CommentsController {
   } 
   @Patch(':commentId')
 @UseGuards(AuthGuard)
-update(@CurrentUser() user, @Param('commentId') commentId: string, @Body() updateCommentDto: CreateCommentDto) {
+update(@CurrentUser() user, @Param('commentId') commentId: string, @Body() updateCommentDto: UpdateCommentDto){
 return this.commentsService.update(user.id, commentId, updateCommentDto);
 }
 

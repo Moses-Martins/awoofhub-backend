@@ -7,6 +7,7 @@ import { UserRole } from 'src/common/types/enums';
 import { User } from 'src/users/entities/user.entity';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @Controller('category')
 export class CategoryController {
@@ -37,11 +38,11 @@ export class CategoryController {
   }
 
   @Patch(':id')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  update(@Param('id') id: string, @Body() updateCategoryDto: CreateCategoryDto) {
-    return this.categoryService.update(id, updateCategoryDto);
-  }
+@UseGuards(AuthGuard, RolesGuard)
+@Roles(UserRole.ADMIN)
+update(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
+  return this.categoryService.update(id, updateCategoryDto);
+}
 
   @Delete(':id')
   @UseGuards(AuthGuard, RolesGuard)

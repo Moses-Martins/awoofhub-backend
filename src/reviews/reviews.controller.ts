@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
 import { AuthGuard } from "src/auth/guards/auth.guard";
 import { CurrentUser } from "src/common/decorators/current-user.decorator";
 import { Roles } from "src/common/decorators/roles.decorator";
@@ -6,6 +6,7 @@ import { RolesGuard } from "src/common/guards/roles.guard";
 import { UserRole } from "src/common/types/enums";
 import { CreateReviewDto } from "./dto/create-review.dto";
 import { ReviewsService } from "./reviews.service";
+import { UserStatusGuard } from 'src/common/guards/user-status.guard';
 
 @Controller('reviews')
 export class ReviewsController {
@@ -23,17 +24,11 @@ export class ReviewsController {
   }
 
   @Post(':offerId')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(UserRole.USER, UserRole.BUSINESS)
-  upsertReview(@CurrentUser() user, @Param('offerId') offerId: string, @Body() createReviewDto: CreateReviewDto) {
-    return this.reviewsService.upsertReview(user.id, offerId, createReviewDto);
-  }
-
-
-@Delete(':offerId')
-@UseGuards(AuthGuard, RolesGuard)
+@UseGuards(AuthGuard, UserStatusGuard, RolesGuard)
 @Roles(UserRole.USER, UserRole.BUSINESS)
-deleteReview(@CurrentUser() user, @Param('offerId') offerId: string) {
-  return this.reviewsService.deleteReview(user.id, offerId);
+upsertReview(@CurrentUser() user, @Param('offerId') offerId: string, @Body() createReviewDto: CreateReviewDto) {
+  return this.reviewsService.upsertReview(user.id, offerId, createReviewDto);
 }
+
+
 }

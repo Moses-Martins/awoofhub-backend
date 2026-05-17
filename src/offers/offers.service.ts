@@ -9,6 +9,7 @@ import { ReviewsService } from 'src/reviews/reviews.service';
 import { UsersService } from 'src/users/users.service';
 import { MoreThan, Repository } from 'typeorm';
 import { CreateOfferDto } from './dto/create-offer.dto';
+import { UpdateOfferDto } from './dto/update-offer.dto';
 import { Offer } from './entities/offer.entity';
 
 @Injectable()
@@ -619,7 +620,7 @@ export class OffersService {
     return Object.values(result);
   }
 
-  async update(offerId: string, userId: string, updateOfferDto: Partial<CreateOfferDto>) {
+  async update(offerId: string, userId: string, updateOfferDto: UpdateOfferDto) {
   const offer = await this.offersRepository.findOne({
     where: { id: offerId },
     relations: ['business'],

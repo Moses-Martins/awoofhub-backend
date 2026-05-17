@@ -69,9 +69,7 @@ export class AuthService {
               throw new ForbiddenException('Your account has been blocked');
             }
 
-           if (user.status === UserStatus.SUSPENDED) {
-                 throw new ForbiddenException('Your account has been suspended');
-             }
+          
 
             await this.chatService.syncUser({
                 id: user.id,
