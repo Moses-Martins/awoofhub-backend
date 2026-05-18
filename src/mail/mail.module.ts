@@ -13,12 +13,13 @@ import { MailService } from './mail.service';
       useFactory: (configService: ConfigService) => ({
         transport: {
           host: configService.get('EMAIL_HOST'),
-          port: +configService.get<number>('EMAIL_PORT', 587),
+          // port: +configService.get<number>('EMAIL_PORT', 587),
+          port: Number(configService.get('EMAIL_PORT')),
           secure: false,
-          requireTLS: true, 
+          // requireTLS: true,
           auth: {
             user: configService.get('EMAIL_HOST_USER'),
-            pass: configService.get('EMAIL_HOST_PASSWORD'),
+            pass: configService.get('EMAIL_HOST_PASSWORD'), //
           },
         },
         defaults: {

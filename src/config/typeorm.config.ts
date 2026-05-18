@@ -16,8 +16,10 @@ const AppDataSource = new DataSource({
     database: configService.get<string>('DB_DATABASE'),
     ssl: isProduction ? { rejectUnauthorized: false } : false,
     synchronize: false,
-    entities: ['dist/**/*.entity.js'],
-    migrations: ['dist/database/migrations/*.js'],
+    // entities: ['dist/**/*.entity.js'],
+    // migrations: ['dist/database/migrations/*.js'],
+    entities: [__dirname + '/../**/*.entity.{js,ts}'],
+    migrations: [__dirname + '/../database/migrations/*{.js,.ts}'],
     migrationsRun: false,
     logging: true,
 });
