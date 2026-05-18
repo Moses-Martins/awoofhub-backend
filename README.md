@@ -181,6 +181,6 @@ The core orchestration layer. It manages:
 
 ## Swagger UI
 Documentation is available at:
-`http://localhost:<PORT>/api`
+`https://api.awoofhub.online/api`
 
 *Note: Use the "Authorize" button to manage session state when testing protected endpoints, though the API primarily relies on Cookie-based authentication.*
