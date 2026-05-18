@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import { MinLength } from 'class-validator';
 import { Alert } from 'src/alert/entities/alert.entity';
@@ -27,15 +28,19 @@ import {
 @Entity('users')
 export class User {
 
+  @ApiProperty({ example: '550e8400-e29b-41d4-a716-446655440000' })
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @ApiProperty({ example: 'user@example.com' })
   @Column({ unique: true })
   email: string;
 
+  @ApiProperty({ example: 'John Doe' })
   @Column()
   name: string;
 
+  @ApiProperty({ required: false })
   @Exclude({ toPlainOnly: true })
   @MinLength(6)
   @Column({ nullable: true })
@@ -44,6 +49,7 @@ export class User {
   @Column({ nullable: true })
   profileImageUrl?: string;
 
+  @ApiProperty({ enum: UserRole, default: UserRole.USER })
   @Column({
     type: 'enum',
     enum: UserRole,
@@ -51,10 +57,12 @@ export class User {
   })
   role: UserRole;
 
+  @ApiProperty()
   @Exclude({ toPlainOnly: true })
   @Column({ default: false })
   isEmailVerified: boolean;
 
+  @ApiProperty({ enum: AuthProvider, default: AuthProvider.LOCAL })
   @Exclude({ toPlainOnly: true })
   @Column({
     type: 'enum',
@@ -105,6 +113,7 @@ export class User {
   @OneToMany(() => PasswordResetToken, (token) => token.user)
   passwordResetTokens: PasswordResetToken[];
 
+  @ApiProperty()
   @Column({
     type: 'enum',
     enum: AccountStatus,
@@ -112,9 +121,11 @@ export class User {
   })
   status: AccountStatus;
 
+  @ApiProperty()
   @CreateDateColumn()
   createdAt: Date;
 
+  @ApiProperty()
   @UpdateDateColumn()
   updatedAt: Date;
 

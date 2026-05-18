@@ -29,6 +29,12 @@ export class AuthService {
         private readonly passwordResetTokenRepository: Repository<PasswordResetToken>,
 
     ) { }
+
+    /**
+     * Authenticates a user with email and password.
+     * Handles local provider validation, verification status, and chat synchronization.
+     * @returns User entity and generated access/refresh tokens.
+     */
     async login(loginUser: LoginUserDto) {
         try {
             const user = await this.userService.getUserByEmail(loginUser.email);
@@ -76,6 +82,12 @@ export class AuthService {
         }
     }
 
+    /**
+     * Handles the creation of a new user and sends a verification email.
+     * @param createUser - The DTO containing user registration details.
+     * @throws BadRequestException if the email is already in use.
+     * @returns A success message directing the user to check their email.
+     */
     async signup(createUser: CreateUserDto) {
         try {
             const existingUser = await this.userService.getUserByEmail(createUser.email);
@@ -111,6 +123,10 @@ export class AuthService {
         }
     }
 
+    /**
+     * Processes Google OAuth profile data to either log in an existing user 
+     * or provision a new account automatically.
+     */
     async googleLogin(googleUser: any) {
         if (!googleUser) {
             throw new BadRequestException('Unauthenticated');
@@ -231,7 +247,11 @@ export class AuthService {
         }
     }
 
-
+    /**
+     * Validates a refresh token and issues a new pair of tokens.
+     * This method implements a "Refresh Token Rotation" strategy by revoking the old 
+     * token upon use to prevent replay attacks.
+     */
     async refreshToken(token: string) {
         const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
         const refreshTokenEntity = await this.refreshTokenRepository.findOne({
@@ -451,5 +471,3 @@ export class AuthService {
 
 
 }
-
-
