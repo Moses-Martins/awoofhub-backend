@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  Query,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -11,6 +12,7 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -24,7 +26,7 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 @ApiTags('Comments')
 @Controller('comments')
 export class CommentsController {
-  constructor(private readonly commentsService: CommentsService) {}
+  constructor(private readonly commentsService: CommentsService) { }
 
   @Get('offer/:offerId')
   @ApiOperation({
@@ -41,7 +43,7 @@ export class CommentsController {
     description: 'Comments fetched successfully',
   })
   findAll(@Param('offerId') offerId: string) {
-    return this.commentsService.findAll(offerId);
+    return this.commentsService.findByOffer(offerId);
   }
 
   @Post('offer/:offerId')
@@ -96,5 +98,50 @@ export class CommentsController {
   })
   findById(@Param('id') id: string) {
     return this.commentsService.findById(id);
+  }
+
+  @Get()
+  @ApiOperation({
+    summary: 'Get all comments',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+  })
+  @ApiQuery({
+    name: 'createdFrom',
+    required: false,
+    type: String,
+  })
+  @ApiQuery({
+    name: 'createdTo',
+    required: false,
+    type: String,
+  })
+  findAllGlobal(
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+    @Query('search') search?: string,
+    @Query('createdFrom') createdFrom?: string,
+    @Query('createdTo') createdTo?: string,
+  ) {
+    return this.commentsService.findAllGlobal(
+      search,
+      createdFrom,
+      createdTo,
+      page,
+      limit,
+    );
   }
 }
