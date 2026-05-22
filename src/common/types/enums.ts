@@ -16,18 +16,18 @@ export enum TokenPurpose {
 }
 
 export enum AuthProvider {
-  GOOGLE = "google",
-  LOCAL = "local",
+  GOOGLE = 'google',
+  LOCAL = 'local',
 }
 
 export enum NotificationType {
-  PROFILE_UPDATED = "PROFILE_UPDATED",
-  OFFER_CREATED = "OFFER_CREATED",
-  PASSWORD_CHANGED = "PASSWORD_CHANGED",
-  NEW_MESSAGE = "NEW_MESSAGE",
-  OFFER_APPROVED = "OFFER_APPROVED",
-  OFFER_REJECTED = "OFFER_REJECTED",
-  ACCOUNT_ACTIVATED = "ACCOUNT_ACTIVATED",
+  PROFILE_UPDATED = 'PROFILE_UPDATED',
+  OFFER_CREATED = 'OFFER_CREATED',
+  PASSWORD_CHANGED = 'PASSWORD_CHANGED',
+  NEW_MESSAGE = 'NEW_MESSAGE',
+  OFFER_APPROVED = 'OFFER_APPROVED',
+  OFFER_REJECTED = 'OFFER_REJECTED',
+  ACCOUNT_ACTIVATED = 'ACCOUNT_ACTIVATED',
 }
 
 export enum ReportType {
@@ -48,16 +48,16 @@ export enum TargetType {
 }
 
 export enum ReportStatus {
-  PENDING = "pending",
-  RESOLVED = "resolved",
-  DISMISSED = "dismissed"
+  PENDING = 'pending',
+  RESOLVED = 'resolved',
+  DISMISSED = 'dismissed',
 }
 
 export enum AccountStatus {
-  ACTIVE = "active",
-  SUSPENDED = "suspended",
-  BANNED = "banned",
-  DELETED = "deleted"
+  ACTIVE = 'active',
+  SUSPENDED = 'suspended',
+  BANNED = 'banned',
+  DELETED = 'deleted',
 }
 
 export enum ModerationActionType {
@@ -66,7 +66,6 @@ export enum ModerationActionType {
   BLOCK = 'block',
   DELETE = 'delete',
   ACTIVATE = 'activate',
-  RESTORE = 'restore',
 }
 
 export enum UserStatus {

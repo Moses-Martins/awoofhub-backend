@@ -1,5 +1,14 @@
-
-import { Body, Controller, Delete, Patch, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Patch,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 
 import {
   ApiBearerAuth,
@@ -21,7 +30,6 @@ import { User } from 'src/users/entities/user.entity';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { UpdateOfferDto } from './dto/update-offer.dto';
 import { OffersService } from './offers.service';
-import { UserStatusGuard } from 'src/common/guards/user-status.guard';
 
 @ApiTags('Offers')
 @ApiBearerAuth()
@@ -30,7 +38,7 @@ export class OffersController {
   constructor(private readonly offersService: OffersService) {}
 
   @Post()
-@UseGuards(AuthGuard, UserStatusGuard, RolesGuard)
+  @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.BUSINESS)
   @ApiOperation({
     summary: 'Create a new offer',
@@ -131,10 +139,7 @@ export class OffersController {
     status: 200,
     description: 'Random offers fetched successfully',
   })
-  getRandom(
-    @Query('page') page: number,
-    @Query('limit') limit: number,
-  ) {
+  getRandom(@Query('page') page: number, @Query('limit') limit: number) {
     return this.offersService.getRandomOffers(page, limit);
   }
 
@@ -156,11 +161,7 @@ export class OffersController {
     @Query('page') page: number,
     @Query('limit') limit: number,
   ) {
-    return this.offersService.findByCategoryId(
-      id,
-      page,
-      limit,
-    );
+    return this.offersService.findByCategoryId(id, page, limit);
   }
 
   @Get('business/dashboard')
@@ -198,17 +199,21 @@ export class OffersController {
   findOfferById(@Param('id') id: string) {
     return this.offersService.findById(id);
   }
-@Patch(':id')
-  @UseGuards(AuthGuard, UserStatusGuard, RolesGuard)
+  @Patch(':id')
+  @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.BUSINESS)
   @ApiOperation({ summary: 'Update an offer' })
   @ApiResponse({ status: 200, description: 'Offer updated successfully' })
-  update(@CurrentUser() user: User, @Param('id') id: string, @Body() updateOfferDto: UpdateOfferDto) {
+  update(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+    @Body() updateOfferDto: UpdateOfferDto,
+  ) {
     return this.offersService.update(id, user.id, updateOfferDto);
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard, UserStatusGuard, RolesGuard)
+  @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.BUSINESS)
   @ApiOperation({ summary: 'Delete an offer' })
   @ApiResponse({ status: 200, description: 'Offer deleted successfully' })
@@ -220,9 +225,11 @@ export class OffersController {
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Get pending offers for admin review' })
-  @ApiResponse({ status: 200, description: 'Pending offers fetched successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Pending offers fetched successfully',
+  })
   getPendingOffers(@Query('page') page: number, @Query('limit') limit: number) {
     return this.offersService.findPending(page, limit);
   }
 }
-

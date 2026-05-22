@@ -1,8 +1,21 @@
-import { BadRequestException, forwardRef, Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommentsService } from 'src/comments/comments.service';
-import { UserStatus, ModerationActionType, OfferStatus, ReportStatus, TargetType } from 'src/common/types/enums';
+import {
+  UserStatus,
+  ModerationActionType,
+  OfferStatus,
+  ReportStatus,
+  TargetType,
+} from 'src/common/types/enums';
 import { OffersService } from 'src/offers/offers.service';
 import { ReportsService } from 'src/reports/reports.service';
 import { UsersService } from 'src/users/users.service';
@@ -21,41 +34,49 @@ export class ModerationService {
     private readonly commentService: CommentsService,
     @Inject(forwardRef(() => ReportsService))
     private readonly reportService: ReportsService,
-  ) { }
+  ) {}
 
   @Transactional()
   async create(dto: CreateModerationDto, userId: string) {
-
     const admin = await this.userService.getUserById(userId);
     if (!admin) throw new NotFoundException('Admin not found');
 
-    const isRestrictive = [ModerationActionType.SUSPEND, ModerationActionType.BLOCK].includes(dto.actionType);
+    const isRestrictive = [
+      ModerationActionType.SUSPEND,
+      ModerationActionType.BLOCK,
+    ].includes(dto.actionType);
     const isRestore = dto.actionType === ModerationActionType.ACTIVATE;
 
     if (isRestrictive || isRestore) {
       await this.moderationRepo.update(
         { targetId: dto.targetId, isActive: true },
-        { isActive: false }
+        { isActive: false },
       );
     }
 
     const action = this.moderationRepo.create({
       ...dto,
       admin,
-      isActive: isRestrictive
+      isActive: isRestrictive,
     });
 
     await this.moderationRepo.save(action);
 
-    await this.applyModerationEffect(dto.targetType, dto.targetId, dto.actionType);
+    await this.applyModerationEffect(
+      dto.targetType,
+      dto.targetId,
+      dto.actionType,
+    );
 
     if (dto.reportId) {
-      await this.reportService.updateStatus(dto.reportId, ReportStatus.RESOLVED);
+      await this.reportService.updateStatus(
+        dto.reportId,
+        ReportStatus.RESOLVED,
+      );
     }
 
     return action;
   }
-
 
   @Cron(CronExpression.EVERY_MINUTE)
   async handleExpiredModerations() {
@@ -72,7 +93,7 @@ export class ModerationService {
 
     const RESTRICTIVE_ACTIONS = [
       ModerationActionType.SUSPEND,
-      ModerationActionType.BLOCK
+      ModerationActionType.BLOCK,
     ];
 
     for (const penalty of expiredPenalties) {
@@ -84,15 +105,15 @@ export class ModerationService {
           targetId: penalty.targetId,
           targetType: penalty.targetType,
           isActive: true,
-          actionType: In(RESTRICTIVE_ACTIONS)
-        }
+          actionType: In(RESTRICTIVE_ACTIONS),
+        },
       });
 
       if (remainingRestrictiveCount === 0) {
         await this.applyModerationEffect(
           penalty.targetType,
           penalty.targetId,
-          ModerationActionType.ACTIVATE
+          ModerationActionType.ACTIVATE,
         );
       }
     }
@@ -102,7 +123,7 @@ export class ModerationService {
     return this.moderationRepo.find({
       where: { targetId },
       order: { createdAt: 'DESC' },
-      relations: ['admin']
+      relations: ['admin'],
     });
   }
 
@@ -110,41 +131,55 @@ export class ModerationService {
     return this.moderationRepo.findOne({
       where: { targetId },
       order: { createdAt: 'DESC' },
-      relations: ['admin']
+      relations: ['admin'],
     });
   }
 
-  private async applyModerationEffect(targetType: TargetType, targetId: string, actionType: ModerationActionType) {
+  private async applyModerationEffect(
+    targetType: TargetType,
+    targetId: string,
+    actionType: ModerationActionType,
+  ) {
     const handlers = {
       [TargetType.USER]: () => this.handleUserModeration(targetId, actionType),
-      [TargetType.OFFER]: () => this.handleOfferModeration(targetId, actionType),
-      [TargetType.COMMENT]: () => this.handleCommentModeration(targetId, actionType),
+      [TargetType.OFFER]: () =>
+        this.handleOfferModeration(targetId, actionType),
+      [TargetType.COMMENT]: () =>
+        this.handleCommentModeration(targetId, actionType),
     };
 
     const handler = handlers[targetType];
     if (!handler) {
-      throw new InternalServerErrorException(`No moderation handler for ${targetType}`);
+      throw new InternalServerErrorException(
+        `No moderation handler for ${targetType}`,
+      );
     }
 
     await handler();
   }
 
-  private async handleUserModeration(targetId: string, action: ModerationActionType) {
-  switch (action) {
-    case ModerationActionType.SUSPEND:
-      return this.userService.updateStatus(targetId, UserStatus.SUSPENDED);
-    case ModerationActionType.BLOCK:
-      return this.userService.updateStatus(targetId, UserStatus.BLOCKED);
-    case ModerationActionType.RESTORE:
-      return this.userService.updateStatus(targetId, UserStatus.ACTIVE);
-    case ModerationActionType.ACTIVATE:
-      return this.userService.updateStatus(targetId, UserStatus.ACTIVE);
-    default:
-      throw new BadRequestException(`Action '${action}' is not applicable to Users.`)
+  private async handleUserModeration(
+    targetId: string,
+    action: ModerationActionType,
+  ) {
+    switch (action) {
+      case ModerationActionType.SUSPEND:
+        return this.userService.updateStatus(targetId, UserStatus.SUSPENDED);
+      case ModerationActionType.BLOCK:
+        return this.userService.updateStatus(targetId, UserStatus.BLOCKED);
+      case ModerationActionType.ACTIVATE:
+        return this.userService.updateStatus(targetId, UserStatus.ACTIVE);
+      default:
+        throw new BadRequestException(
+          `Action '${action}' is not applicable to Users.`,
+        );
+    }
   }
-}
 
-  private async handleOfferModeration(targetId: string, action: ModerationActionType) {
+  private async handleOfferModeration(
+    targetId: string,
+    action: ModerationActionType,
+  ) {
     switch (action) {
       case ModerationActionType.SUSPEND:
         return this.offerService.updateStatus(targetId, OfferStatus.PENDING);
@@ -153,15 +188,22 @@ export class ModerationService {
       case ModerationActionType.ACTIVATE:
         return this.offerService.updateStatus(targetId, OfferStatus.APPROVED);
       default:
-        throw new BadRequestException(`Action '${action}' is not applicable to Offers.`)
+        throw new BadRequestException(
+          `Action '${action}' is not applicable to Offers.`,
+        );
     }
   }
 
-  private async handleCommentModeration(targetId: string, action: ModerationActionType) {
+  private async handleCommentModeration(
+    targetId: string,
+    action: ModerationActionType,
+  ) {
     if (action === ModerationActionType.DELETE) {
-      return this.commentService.removeComment("-", targetId, true);
+      return this.commentService.removeComment('-', targetId, true);
     }
 
-    throw new BadRequestException(`Action ${action} is not supported for Comments`);
+    throw new BadRequestException(
+      `Action ${action} is not supported for Comments`,
+    );
   }
 }

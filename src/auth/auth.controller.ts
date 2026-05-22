@@ -1,23 +1,39 @@
-import { Body, Controller, Get, HttpCode, Post, Req, Res, UnauthorizedException, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Post,
+  Req,
+  Res,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { instanceToPlain } from 'class-transformer';
 import type { Request, Response } from 'express';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { AuthService } from './auth.service';
-import { EmailDto, LoginUserDto, ResetPasswordDto, VerifyEmailDto } from './dto/login-user.dto';
+import {
+  EmailDto,
+  LoginUserDto,
+  ResetPasswordDto,
+  VerifyEmailDto,
+} from './dto/login-user.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private readonly authService: AuthService,
-  ) { }
+  constructor(private readonly authService: AuthService) {}
 
   @Post('signup')
   @ApiOperation({ summary: 'Register a new user' })
-  @ApiResponse({ status: 201, description: 'User successfully created. Verification email sent.' })
-  @ApiResponse({ status: 400, description: 'Invalid signup payload', })
+  @ApiResponse({
+    status: 201,
+    description: 'User successfully created. Verification email sent.',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid signup payload' })
   @HttpCode(201)
   signup(@Body() createUserDto: CreateUserDto) {
     return this.authService.signup(createUserDto);
@@ -31,14 +47,19 @@ export class AuthController {
     description: 'Invalid credentials',
   })
   @HttpCode(200)
-  async login(@Body() loginUser: LoginUserDto, @Res({ passthrough: true }) res: Response) {
-    const { user, accessToken, refreshToken } = await this.authService.login(loginUser);
+  async login(
+    @Body() loginUser: LoginUserDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { user, accessToken, refreshToken } =
+      await this.authService.login(loginUser);
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
       signed: true,
-      domain: process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
+      domain:
+        process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
@@ -47,24 +68,24 @@ export class AuthController {
       secure: true,
       sameSite: 'none',
       signed: true,
-      domain: process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
+      domain:
+        process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-
 
     return {
       message: 'Login successful',
       data: {
         ...instanceToPlain(user),
       },
-    }
+    };
   }
 
   @Get('google/')
   @UseGuards(AuthGuard('google'))
   @ApiOperation({
-  summary: 'Initiate Google OAuth login',
-})
+    summary: 'Initiate Google OAuth login',
+  })
   async googleAuth(@Req() req) {
     return;
   }
@@ -72,18 +93,23 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   @ApiOperation({
-  summary: 'Google OAuth callback endpoint',
-})
-  async googleAuthRedirect(@Req() req: Request & { user: any }, @Res() res: Response) {
-
-    const { accessToken, refreshToken } = await this.authService.googleLogin(req.user);
+    summary: 'Google OAuth callback endpoint',
+  })
+  async googleAuthRedirect(
+    @Req() req: Request & { user: any },
+    @Res() res: Response,
+  ) {
+    const { accessToken, refreshToken } = await this.authService.googleLogin(
+      req.user,
+    );
 
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
       signed: true,
-      domain: process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
+      domain:
+        process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
@@ -92,13 +118,13 @@ export class AuthController {
       secure: true,
       sameSite: 'none',
       signed: true,
-      domain: process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
+      domain:
+        process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:8000';
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     return res.redirect(frontendUrl);
-
   }
 
   @Post('verify-email')
@@ -111,14 +137,19 @@ export class AuthController {
     status: 400,
     description: 'Invalid or expired token',
   })
-  async verifyEmail(@Body() dto: VerifyEmailDto, @Res({ passthrough: true }) res: Response) {
-    const { updatedUser, accessToken, refreshToken } = await this.authService.verifyEmail(dto.token);
+  async verifyEmail(
+    @Body() dto: VerifyEmailDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { updatedUser, accessToken, refreshToken } =
+      await this.authService.verifyEmail(dto.token);
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
       signed: true,
-      domain: process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
+      domain:
+        process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
@@ -127,11 +158,12 @@ export class AuthController {
       secure: true,
       sameSite: 'none',
       signed: true,
-      domain: process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
+      domain:
+        process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    return updatedUser
+    return updatedUser;
   }
 
   @Post('resend-verification')
@@ -142,26 +174,33 @@ export class AuthController {
   }
 
   @Post('refresh')
-  @ApiOperation({ summary: 'Refresh access tokens using the refresh_token cookie' })
+  @ApiOperation({
+    summary: 'Refresh access tokens using the refresh_token cookie',
+  })
   @ApiResponse({ status: 200, description: 'Tokens successfully refreshed' })
   @ApiResponse({
     status: 401,
     description: 'Refresh token missing or invalid',
   })
-  async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const token = req.signedCookies?.refresh_token;
     if (!token) {
       throw new UnauthorizedException('No refresh token');
     }
 
-    const { accessToken, refreshToken } = await this.authService.refreshToken(token);
+    const { accessToken, refreshToken } =
+      await this.authService.refreshToken(token);
 
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
       signed: true,
-      domain: process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
+      domain:
+        process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
@@ -170,13 +209,13 @@ export class AuthController {
       secure: true,
       sameSite: 'none',
       signed: true,
-      domain: process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
+      domain:
+        process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     return { message: 'Token refreshed' };
   }
-
 
   @Post('logout')
   @ApiOperation({ summary: 'Revoke tokens and clear authentication cookies' })
@@ -184,26 +223,28 @@ export class AuthController {
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const token = req.signedCookies?.refresh_token;
     if (token) {
-      this.authService.revokeRefreshToken(token)
+      this.authService.revokeRefreshToken(token);
     }
 
     res.clearCookie('access_token', {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
-      domain: process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
+      domain:
+        process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
     });
 
     res.clearCookie('refresh_token', {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
-      domain: process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
+      domain:
+        process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
     });
 
     return {
-      message: 'Logged out successfully'
-    }
+      message: 'Logged out successfully',
+    };
   }
 
   @Post('forgot-password')
@@ -219,16 +260,14 @@ export class AuthController {
   @Post('reset-password')
   @ApiOperation({ summary: 'Reset password using a valid reset token' })
   @ApiResponse({
-  status: 200,
-  description: 'Password reset successful',
-})
-@ApiResponse({
-  status: 400,
-  description: 'Invalid or expired reset token',
-})
-  async resetPassword(
-    @Body() dto: ResetPasswordDto) {
+    status: 200,
+    description: 'Password reset successful',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid or expired reset token',
+  })
+  async resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto.token, dto.password);
   }
-
 }
