@@ -20,6 +20,7 @@ async function bootstrap() {
     origin: [
       process.env.FRONTEND_URL,
       'http://localhost:3000',
+      'http://localhost:8081',
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
