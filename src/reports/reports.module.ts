@@ -7,6 +7,7 @@ import { UsersModule } from 'src/users/users.module';
 import { Report } from './entities/report.entity';
 import { ReportsController } from './reports.controller';
 import { ReportsService } from './reports.service';
+import { PaginationService } from 'src/common/pagination/pagination.service';
 
 @Module({
   imports: [
@@ -17,7 +18,7 @@ import { ReportsService } from './reports.service';
     CommentsModule,
   ],
   controllers: [ReportsController],
-  providers: [ReportsService],
+  providers: [ReportsService, PaginationService],
   exports: [ReportsService],
 })
 export class ReportsModule { }
