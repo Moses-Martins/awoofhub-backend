@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { forwardRef,ForbiddenException, Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AlertService } from 'src/alert/alert.service';
 import { CategoryService } from 'src/category/category.service';
@@ -11,6 +11,7 @@ import { MoreThan, Repository } from 'typeorm';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { UpdateOfferDto } from './dto/update-offer.dto';
 import { Offer } from './entities/offer.entity';
+import { UserStatus } from 'src/common/types/enums';
 
 @Injectable()
 export class OffersService {
@@ -39,6 +40,15 @@ export class OffersService {
       if (!user) {
         throw new NotFoundException('User not found');
       }
+      if (user.status === UserStatus.DELETED){
+                  throw new ForbiddenException('User not found')
+                }
+                if (user.status === UserStatus.BLOCKED){
+                  throw new ForbiddenException('Your account has been blocked, you cannot create offers')
+                }
+                if (user.status === UserStatus.SUSPENDED){
+                  throw new ForbiddenException('Your account has been suspended, you cannot create offers')
+                }
 
       const offer = this.offersRepository.create({ ...rest, category: { id: existing.id }, endDate: new Date(endDate), business: { id: user.id } });
       await this.offersRepository.save(offer);

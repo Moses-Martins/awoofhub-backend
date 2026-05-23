@@ -1,10 +1,11 @@
-import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { OffersService } from 'src/offers/offers.service';
 import { UsersService } from 'src/users/users.service';
 import { Repository } from 'typeorm';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { Review } from './entities/review.entity';
+import { UserStatus } from 'src/common/types/enums';
 
 @Injectable()
 export class ReviewsService {
@@ -51,6 +52,15 @@ export class ReviewsService {
     const user = await this.usersService.getUserById(userId);
     if (!user) {
       throw new NotFoundException('User not found');
+    }
+    if (user.status === UserStatus.DELETED){
+      throw new ForbiddenException('User not found')
+    }
+    if (user.status === UserStatus.BLOCKED){
+      throw new ForbiddenException('Your account has been blocked, you cannot post reviews')
+    }
+    if (user.status === UserStatus.SUSPENDED){
+      throw new ForbiddenException('Your account has been suspended, you cannot post reviews')
     }
 
     const offer = await this.offersService.findById(offerId);
