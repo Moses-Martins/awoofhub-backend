@@ -166,6 +166,44 @@ export class OffersController {
     );
   }
 
+  @Get('business')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.BUSINESS)
+  @ApiOperation({
+    summary: 'Get offers for business',
+  })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    example: '64f8c2d9a12b3c0012345678',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User offers fetched successfully',
+  })
+  async findAllByBusiness(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+    @Query('search') search?: string,
+    @Query('category') category?: string,
+    @Query('minRating') minRating?: number,
+    @Query('createdFrom') createdFrom?: string,
+    @Query('createdTo') createdTo?: string,
+  ) {
+    return this.offersService.findAllByBusiness(
+      user.id,
+      search,
+      category,
+      minRating,
+      createdFrom,
+      createdTo,
+      page,
+      limit,
+    );
+  }
+
   @Get('random')
   @ApiOperation({
     summary: 'Get random offers',
