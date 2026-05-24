@@ -182,7 +182,7 @@ export class OffersController {
   })
   @ApiResponse({
     status: 200,
-    description: 'User offers fetched successfully',
+    description: 'Business offers fetched successfully',
   })
   async findAllByBusiness(
     @CurrentUser() user: User,
