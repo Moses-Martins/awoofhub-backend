@@ -439,7 +439,7 @@ export class OffersService {
 
   }
 
-   async findAllByBusiness(userId: string, search?: string, category?: string, minRating?: number, createdFrom?: string, createdTo?: string, page = 1, limit = 10) {
+  async findAllByBusiness(userId: string, search?: string, category?: string, minRating?: number, createdFrom?: string, createdTo?: string, page = 1, limit = 10) {
     const now = new Date();
 
     const user = await this.userService.getUserById(userId);
@@ -676,15 +676,23 @@ export class OffersService {
       .leftJoin('offer.category', 'category')
       .leftJoin('offer.business', 'business')
       .where('offer.businessId = :businessId', { businessId })
-      .addSelect([
+      .select([
+        'offer.id',
+        'offer.title',
+        'offer.description',
+        'offer.imageUrl',
+        'offer.location',
+        'offer.value',
+        'offer.status',
+        'offer.createdAt',
         'category.id',
         'category.name',
         'category.slug',
         'business.id',
-        'business.name'
+        'business.name',
       ])
       .addSelect('COALESCE(AVG(review.rating), 0)', 'avgRating')
-      .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
+      .addSelect('COALESCE(COUNT(review.id), 0)', 'reviewCount')
       .groupBy('offer.id')
       .addGroupBy('category.id')
       .addGroupBy('category.name')
@@ -692,8 +700,8 @@ export class OffersService {
       .addGroupBy('business.id')
       .addGroupBy('business.name')
       .orderBy('"avgRating"', 'DESC')
-      .take(3)
-      .getRawAndEntities();
+      .limit(3)
+      .getRawMany();
 
 
     const categoryPiePromise = this.offersRepository
@@ -751,10 +759,23 @@ export class OffersService {
       expiringOffersPromise,
     ]);
 
-    const topOffers = topOffersData.entities.map((offer, index) => ({
-      ...offer,
-      avgRating: Number(topOffersData.raw[index].avgRating),
-      reviewCount: Number(topOffersData.raw[index].reviewCount)
+    const topOffers = topOffersData.map((item) => ({
+      id: item.offer_id,
+      title: item.offer_title,
+      description: item.offer_description,
+      imageUrl: item.offer_imageUrl,
+      location: item.offer_location,
+      value: item.offer_value,
+      status: item.offer_status,
+      createdAt: item.offer_createdAt,
+      endDate: item.offer_endDate,
+
+      category: {
+        name: item.category_name,
+      },
+
+      avgRating: Number(item.avgRating),
+      reviewCount: Number(item.reviewCount),
     }));
 
     const offersByMonth = this.formatMonthlyData(offersByMonthRaw);
