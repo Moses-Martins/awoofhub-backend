@@ -292,7 +292,7 @@ export class OffersService {
 
 
   async findByCategoryId(id: string, page = 1, limit = 10) {
-
+    const now = new Date();
     const category = await this.categoryService.findById(id)
 
     const queryBuilder = this.offersRepository
@@ -309,6 +309,8 @@ export class OffersService {
         'category.slug',
       ])
       .where('category.id = :id', { id: category.id })
+      .andWhere('offer.status = :status', { status: OfferStatus.APPROVED })
+      .andWhere('offer.endDate < :now', { now })
       .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
       .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
       .groupBy('offer.id')
