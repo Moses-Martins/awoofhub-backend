@@ -692,7 +692,7 @@ export class OffersService {
       .addGroupBy('business.id')
       .addGroupBy('business.name')
       .orderBy('"avgRating"', 'DESC')
-      .limit(3)
+      .take(3)
       .getRawAndEntities();
 
 
