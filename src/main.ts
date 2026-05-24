@@ -26,7 +26,7 @@ async function bootstrap() {
     credentials: true,
   });
 
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix('v1');
 
   const cookieSecret = process.env.COOKIE_SECRET;
   if (!cookieSecret) {
