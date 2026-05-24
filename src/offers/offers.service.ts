@@ -106,17 +106,6 @@ export class OffersService {
     }
   }
 
-<<<<<<< HEAD
-  async findAll(
-    search?: string,
-    category?: string,
-    minRating?: number,
-    createdFrom?: string,
-    createdTo?: string,
-    page = 1,
-    limit = 10,
-  ) {
-=======
 
 
   async findAll(search?: string, category?: string, minRating?: number, createdFrom?: string, createdTo?: string, page = 1, limit = 10) {
@@ -215,7 +204,6 @@ export class OffersService {
   }
 
   async findAllAdmin(search?: string, category?: string, minRating?: number, createdFrom?: string, createdTo?: string, page = 1, limit = 10) {
->>>>>>> a49bbd4dca48f03297b4c89d9fae7710395673eb
     const queryBuilder = this.offersRepository
       .createQueryBuilder('offer')
       .leftJoin('offer.reviews', 'review')
@@ -335,7 +323,8 @@ export class OffersService {
   }
 
   async findByCategoryId(id: string, page = 1, limit = 10) {
-    const category = await this.categoryService.findById(id);
+    const now = new Date();
+    const category = await this.categoryService.findById(id)
 
     const queryBuilder = this.offersRepository
       .createQueryBuilder('offer')
@@ -351,6 +340,8 @@ export class OffersService {
         'category.slug',
       ])
       .where('category.id = :id', { id: category.id })
+      .andWhere('offer.status = :status', { status: OfferStatus.APPROVED })
+      .andWhere('offer.endDate < :now', { now })
       .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
       .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
       .groupBy('offer.id')
