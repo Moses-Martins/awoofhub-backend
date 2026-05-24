@@ -5,8 +5,7 @@ import {
   HttpCode,
   Param,
   Patch,
-  Post,
-  UseGuards,
+  UseGuards
 } from '@nestjs/common';
 
 import {
@@ -24,7 +23,6 @@ import { RolesGuard } from 'src/common/guards/roles.guard';
 import { UserRole } from 'src/common/types/enums';
 
 import { UpdateUserDto } from 'src/users/dto/update-user.dto';
-import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 
 import { UsersService } from './users.service';
 
@@ -125,37 +123,4 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
-  @Post(':id/admin/moderate')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({
-    summary: 'Moderate user account status',
-  })
-  @ApiParam({
-    name: 'id',
-    type: String,
-    description: 'User ID',
-    example: '64f8c2d9a12b3c0012345678',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'User status updated successfully',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Forbidden',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Unauthorized',
-  })
-  updateStatus(
-    @Param('id') id: string,
-    @Body() updateUserStatusDto: UpdateUserStatusDto,
-  ) {
-    return this.usersService.updateStatus(
-      id,
-      updateUserStatusDto.status,
-    );
-  }
 }

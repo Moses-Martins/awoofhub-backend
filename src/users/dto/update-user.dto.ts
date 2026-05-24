@@ -36,7 +36,7 @@ export class UpdateUserDto {
   role?: UserRole;
 
   @ApiPropertyOptional({
-    example: 'https://cdn.awoofhub.online/profile.jpg',
+    example: 'https://cdn.awoofhub.ng/profile.jpg',
     description: 'Profile image URL',
   })
   @IsOptional()
