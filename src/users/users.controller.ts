@@ -33,7 +33,8 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Patch('update')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.USER, UserRole.BUSINESS)
   @ApiOperation({
     summary: 'Update authenticated user profile',
   })
