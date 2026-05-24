@@ -199,18 +199,7 @@ export class OffersController {
   findOfferById(@Param('id') id: string) {
     return this.offersService.findById(id);
   }
-  @Patch(':id')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(UserRole.BUSINESS)
-  @ApiOperation({ summary: 'Update an offer' })
-  @ApiResponse({ status: 200, description: 'Offer updated successfully' })
-  update(
-    @CurrentUser() user: User,
-    @Param('id') id: string,
-    @Body() updateOfferDto: UpdateOfferDto,
-  ) {
-    return this.offersService.update(id, user.id, updateOfferDto);
-  }
+  
 
   @Delete(':id')
   @UseGuards(AuthGuard, RolesGuard)
@@ -221,15 +210,4 @@ export class OffersController {
     return this.offersService.remove(id, user.id);
   }
 
-  @Get('admin/pending')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Get pending offers for admin review' })
-  @ApiResponse({
-    status: 200,
-    description: 'Pending offers fetched successfully',
-  })
-  getPendingOffers(@Query('page') page: number, @Query('limit') limit: number) {
-    return this.offersService.findPending(page, limit);
-  }
 }

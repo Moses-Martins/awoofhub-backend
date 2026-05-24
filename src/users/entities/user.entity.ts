@@ -63,6 +63,7 @@ export class User {
   })
   status: UserStatus;
 
+  @ApiProperty()
   @Exclude({ toPlainOnly: true })
   @Column({ default: false })
   isEmailVerified: boolean;
@@ -125,7 +126,6 @@ export class User {
   @ApiProperty()
   @UpdateDateColumn()
   updatedAt: Date;
-
   @BeforeInsert()
   @BeforeUpdate()
   normalizeEmail() {

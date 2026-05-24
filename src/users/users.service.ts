@@ -41,9 +41,20 @@ export class UsersService {
             }
 
             Object.assign(user, dto);
-            return await this.userRepository.save(user);
+            const updatedUser = await this.userRepository.save(user);
+        await this.notificationsService.create(
+            userId,
+            'Profile Updated',
+            'Your profile has been updated succesfully',
+            NotificationType.PROFILE_UPDATED,
+            userId,
+        );
+            return updatedUser;
 
         } catch (error) {
+            if(error instanceof BadRequestException || error instanceof NotFoundException){
+                throw error;
+            }
             throw new InternalServerErrorException("Failed to update user");
         }
     }
@@ -106,8 +117,9 @@ export class UsersService {
         if (!user) {
             throw new NotFoundException('User not found');
         }
+        user.status = UserStatus.DELETED;
 
-        return this.userRepository.remove(user);
+        return this.userRepository.save(user);
     }
 
     async updateStatus(userId: string, status: UserStatus) {
@@ -121,23 +133,5 @@ export class UsersService {
 
         user.status = status;
         await this.userRepository.save(user);
-
-        const messages = {
-            [UserStatus.ACTIVE]: { title: 'Account Activated', message: 'Your account has been reactivated.' }
-        };
-
-        const notificationTypes = {
-            [UserStatus.ACTIVE]: NotificationType.ACCOUNT_ACTIVATED,
-        };
-
-        await this.notificationsService.create(
-            userId,
-            messages[status].title,
-            messages[status].message,
-            notificationTypes[status],
-            userId,
-        );
-
-        return user;
     }
 }
