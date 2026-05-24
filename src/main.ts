@@ -16,9 +16,11 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
+  const allowedOrigins = (process.env.ALLOWED_ORIGINS || "").split(",").map(o => o.trim());
+
   app.enableCors({
     origin: [
-      process.env.FRONTEND_URL,
+      ...allowedOrigins,
       'http://localhost:3000',
       'http://localhost:8081',
     ],
