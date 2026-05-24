@@ -6,6 +6,7 @@ import { UsersModule } from 'src/users/users.module';
 import { CommentsController } from './comments.controller';
 import { CommentsService } from './comments.service';
 import { Comment } from './entities/comment.entity';
+import { PaginationService } from 'src/common/pagination/pagination.service';
 
 
 @Module({
@@ -16,7 +17,7 @@ import { Comment } from './entities/comment.entity';
     OffersModule,
   ],
   controllers: [CommentsController],
-  providers: [CommentsService],
+  providers: [CommentsService, PaginationService],
   exports: [CommentsService],
 })
 export class CommentsModule {}

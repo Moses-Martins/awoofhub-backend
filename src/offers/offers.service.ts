@@ -37,7 +37,7 @@ export class OffersService {
   async create(createOfferDto: CreateOfferDto, id: string) {
     try {
       const { category, endDate, ...rest } = createOfferDto;
-      const existing = await this.categoryService.findByName(category.trim());
+      const existing = await this.categoryService.findByName(category);
       if (!existing) {
         throw new NotFoundException('Category not found');
       }
@@ -106,6 +106,7 @@ export class OffersService {
     }
   }
 
+<<<<<<< HEAD
   async findAll(
     search?: string,
     category?: string,
@@ -115,6 +116,106 @@ export class OffersService {
     page = 1,
     limit = 10,
   ) {
+=======
+
+
+  async findAll(search?: string, category?: string, minRating?: number, createdFrom?: string, createdTo?: string, page = 1, limit = 10) {
+    const now = new Date();
+    const queryBuilder = this.offersRepository
+      .createQueryBuilder('offer')
+      .leftJoin('offer.reviews', 'review')
+      .leftJoin('offer.business', 'business')
+      .leftJoin('offer.category', 'category')
+      .select([
+        'offer',
+        'business.id',
+        'business.name',
+        'business.email',
+        'category.id',
+        'category.name',
+        'category.slug'
+      ])
+      .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
+      .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
+      .where('offer.status = :status', { status: OfferStatus.APPROVED })
+      .andWhere('offer.endDate < :now', { now })
+      .groupBy('offer.id')
+      .addGroupBy('business.id')
+      .addGroupBy('category.id');
+
+
+    if (search) {
+      queryBuilder.andWhere(
+        '(offer.title ILIKE :search OR offer.description ILIKE :search)',
+        { search: `%${search}%` }
+      );
+    }
+
+    if (category) {
+      queryBuilder.andWhere('category.slug = :categorySlug', {
+        categorySlug: category
+      });
+    }
+
+    if (createdFrom) {
+      queryBuilder.andWhere('offer.createdAt >= :createdFrom', {
+        createdFrom: new Date(createdFrom)
+      });
+    }
+
+    if (createdTo) {
+      queryBuilder.andWhere('offer.createdAt <= :createdTo', {
+        createdTo: new Date(createdTo)
+      });
+    }
+
+    if (minRating) {
+      queryBuilder.having(
+        'COALESCE(AVG(review.rating), 0) >= :minRating',
+        { minRating }
+      );
+    }
+
+    queryBuilder.orderBy('offer.createdAt', 'DESC');
+
+    queryBuilder
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const countQuery = queryBuilder.clone()
+      .skip(undefined)
+      .take(undefined)
+      .orderBy()
+      .select('offer.id');
+
+    const totalResult = await this.offersRepository.manager
+      .createQueryBuilder()
+      .select('COUNT(*)', 'count')
+      .from(`(${countQuery.getQuery()})`, 'sub')
+      .setParameters(countQuery.getParameters())
+      .getRawOne();
+
+    const total = Number(totalResult.count);
+
+    const meta = this.paginationService.getPaginationMeta(page, limit, total);
+
+    const { entities, raw } = await queryBuilder.getRawAndEntities();
+
+    const results = entities.map((offer, index) => ({
+      ...offer,
+      avgRating: Number(raw[index].avgRating),
+      reviewCount: Number(raw[index].reviewCount)
+    }));
+
+    return {
+      data: results,
+      meta
+    };
+
+  }
+
+  async findAllAdmin(search?: string, category?: string, minRating?: number, createdFrom?: string, createdTo?: string, page = 1, limit = 10) {
+>>>>>>> a49bbd4dca48f03297b4c89d9fae7710395673eb
     const queryBuilder = this.offersRepository
       .createQueryBuilder('offer')
       .leftJoin('offer.reviews', 'review')

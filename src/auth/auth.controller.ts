@@ -58,8 +58,7 @@ export class AuthController {
       secure: true,
       sameSite: 'none',
       signed: true,
-      domain:
-        process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
+      domain: process.env.NODE_ENV === 'production' ? '.awoofhub.ng' : undefined,
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
@@ -68,8 +67,7 @@ export class AuthController {
       secure: true,
       sameSite: 'none',
       signed: true,
-      domain:
-        process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
+      domain: process.env.NODE_ENV === 'production' ? '.awoofhub.ng' : undefined,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -108,8 +106,7 @@ export class AuthController {
       secure: true,
       sameSite: 'none',
       signed: true,
-      domain:
-        process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
+      domain: process.env.NODE_ENV === 'production' ? '.awoofhub.ng' : undefined,
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
@@ -118,8 +115,7 @@ export class AuthController {
       secure: true,
       sameSite: 'none',
       signed: true,
-      domain:
-        process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
+      domain: process.env.NODE_ENV === 'production' ? '.awoofhub.ng' : undefined,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -148,8 +144,7 @@ export class AuthController {
       secure: true,
       sameSite: 'none',
       signed: true,
-      domain:
-        process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
+      domain: process.env.NODE_ENV === 'production' ? '.awoofhub.ng' : undefined,
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
@@ -158,8 +153,7 @@ export class AuthController {
       secure: true,
       sameSite: 'none',
       signed: true,
-      domain:
-        process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
+      domain: process.env.NODE_ENV === 'production' ? '.awoofhub.ng' : undefined,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -199,8 +193,7 @@ export class AuthController {
       secure: true,
       sameSite: 'none',
       signed: true,
-      domain:
-        process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
+      domain: process.env.NODE_ENV === 'production' ? '.awoofhub.ng' : undefined,
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
@@ -209,8 +202,7 @@ export class AuthController {
       secure: true,
       sameSite: 'none',
       signed: true,
-      domain:
-        process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
+      domain: process.env.NODE_ENV === 'production' ? '.awoofhub.ng' : undefined,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -230,16 +222,14 @@ export class AuthController {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
-      domain:
-        process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
+      domain: process.env.NODE_ENV === 'production' ? '.awoofhub.ng' : undefined,
     });
 
     res.clearCookie('refresh_token', {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
-      domain:
-        process.env.NODE_ENV === 'production' ? '.awoofhub.online' : undefined,
+      domain: process.env.NODE_ENV === 'production' ? '.awoofhub.ng' : undefined,
     });
 
     return {

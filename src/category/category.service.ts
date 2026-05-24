@@ -72,7 +72,7 @@ export class CategoryService {
   }
 
   async findByName(name: string): Promise<Category> {
-    const category = await this.categoriesRepository.findOneBy({ name });
+    const category = await this.categoriesRepository.findOneBy({ name: name.trim() });
 
     if (!category) {
       throw new NotFoundException('Category not found');

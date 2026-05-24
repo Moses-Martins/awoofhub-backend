@@ -7,6 +7,7 @@ import { UsersService } from 'src/users/users.service';
 import { Repository } from 'typeorm';
 import { CreateReportDto } from './dto/create-report.dto';
 import { Report } from './entities/report.entity';
+import { PaginationService } from 'src/common/pagination/pagination.service';
 
 @Injectable()
 export class ReportsService {
@@ -16,11 +17,12 @@ export class ReportsService {
     private readonly userService: UsersService,
     private readonly offerService: OffersService,
     private readonly commentService: CommentsService,
+    private readonly paginationService: PaginationService,
   ) { }
 
 
   async create(createReportDto: CreateReportDto, userId: string) {
-      const report = this.reportRepo.create({
+    const report = this.reportRepo.create({
       ...createReportDto,
       reporter: userId,
     });
@@ -29,9 +31,97 @@ export class ReportsService {
 
 
 
-  async findAll(): Promise<Report[]> {
-    const reports = this.reportRepo.find();
-    return reports
+  async findAll(
+    search?: string,
+    status?: ReportStatus,
+    targetType?: TargetType,
+    createdFrom?: string,
+    createdTo?: string,
+    page = 1,
+    limit = 10,
+  ) {
+
+    const queryBuilder = this.reportRepo
+      .createQueryBuilder('report')
+      .leftJoin('report.reporter', 'reporter')
+      .select([
+        'report',
+        'reporter.id',
+        'reporter.name',
+        'reporter.email',
+      ]);
+
+    // Search
+    if (search) {
+      queryBuilder.andWhere(
+        '(report.reason ILIKE :search)',
+        {
+          search: `%${search}%`,
+        },
+      );
+    }
+
+    // Status filter
+    if (status) {
+      queryBuilder.andWhere(
+        'report.status = :status',
+        { status },
+      );
+    }
+
+    // Target type filter
+    if (targetType) {
+      queryBuilder.andWhere(
+        'report.targetType = :targetType',
+        { targetType },
+      );
+    }
+
+    // Date filters
+    if (createdFrom) {
+      queryBuilder.andWhere(
+        'report.createdAt >= :createdFrom',
+        {
+          createdFrom: new Date(createdFrom),
+        },
+      );
+    }
+
+    if (createdTo) {
+      queryBuilder.andWhere(
+        'report.createdAt <= :createdTo',
+        {
+          createdTo: new Date(createdTo),
+        },
+      );
+    }
+
+    queryBuilder
+      .orderBy('report.createdAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const countQuery = queryBuilder
+      .clone()
+      .skip(undefined)
+      .take(undefined)
+      .orderBy();
+
+    const total = await countQuery.getCount();
+
+    const meta =
+      this.paginationService.getPaginationMeta(
+        page,
+        limit,
+        total,
+      );
+
+    const reports = await queryBuilder.getMany();
+
+    return {
+      data: reports,
+      meta,
+    };
   }
 
 
@@ -72,37 +162,37 @@ export class ReportsService {
   }
 
   async getReportStats() {
-      const [
-        totalReports,
-        pendingReports,
-        activeReports,
-        expiredReports,
-      ] = await Promise.all([
-        this.reportRepo.count(),
-        this.reportRepo.count({
-          where: {
-            status: ReportStatus.PENDING,
-          },
-        }),
-        this.reportRepo.count({
-          where: {
-            status: ReportStatus.RESOLVED,
-          },
-        }),
-        this.reportRepo.count({
-          where: {
-            status: ReportStatus.DISMISSED,
-          },
-        }),
-      ]);
-  
-      return {
-        totalReports,
-        pendingReports,
-        activeReports,
-        expiredReports,
-      };
-    }
+    const [
+      totalReports,
+      pendingReports,
+      activeReports,
+      expiredReports,
+    ] = await Promise.all([
+      this.reportRepo.count(),
+      this.reportRepo.count({
+        where: {
+          status: ReportStatus.PENDING,
+        },
+      }),
+      this.reportRepo.count({
+        where: {
+          status: ReportStatus.RESOLVED,
+        },
+      }),
+      this.reportRepo.count({
+        where: {
+          status: ReportStatus.DISMISSED,
+        },
+      }),
+    ]);
+
+    return {
+      totalReports,
+      pendingReports,
+      activeReports,
+      expiredReports,
+    };
+  }
 
   private async resolveTarget(type: TargetType, id: string) {
     switch (type) {

@@ -1,4 +1,17 @@
+<<<<<<< HEAD
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, UseGuards } from '@nestjs/common';
+=======
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  Patch,
+  UseGuards
+} from '@nestjs/common';
+
+>>>>>>> a49bbd4dca48f03297b4c89d9fae7710395673eb
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -13,6 +26,10 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { UserRole, UserStatus } from 'src/common/types/enums';
 import { UpdateUserDto } from 'src/users/dto/update-user.dto';
+<<<<<<< HEAD
+=======
+
+>>>>>>> a49bbd4dca48f03297b4c89d9fae7710395673eb
 import { UsersService } from './users.service';
 
 @ApiTags('Users')
@@ -112,6 +129,7 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+<<<<<<< HEAD
 @Delete('me')
 @UseGuards(AuthGuard)
 @ApiBearerAuth()
@@ -149,4 +167,6 @@ remove(@CurrentUser() user) {
   updateStatus(@Param('id') id: string, @Body('status') status: UserStatus) {
     return this.usersService.updateStatus(id, status);
   }
+=======
+>>>>>>> a49bbd4dca48f03297b4c89d9fae7710395673eb
 }

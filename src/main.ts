@@ -20,12 +20,13 @@ async function bootstrap() {
     origin: [
       process.env.FRONTEND_URL,
       'http://localhost:3000',
+      'http://localhost:8081',
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
 
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix('v1');
 
   const cookieSecret = process.env.COOKIE_SECRET;
   if (!cookieSecret) {
@@ -41,7 +42,7 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('', app, document);
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     forbidNonWhitelisted: true,

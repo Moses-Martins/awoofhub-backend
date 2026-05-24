@@ -7,6 +7,7 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { Comment } from './entities/comment.entity';
 import { UserStatus } from 'src/common/types/enums';
+import { PaginationService } from 'src/common/pagination/pagination.service';
 
 
 @Injectable()
@@ -16,6 +17,7 @@ export class CommentsService {
     private commentsRepository: Repository<Comment>,
     private usersService: UsersService,
     private offersService: OffersService,
+    private paginationService: PaginationService,
   ) { }
 
   async create(userId: string, OfferId: string, createCommentDto: CreateCommentDto) {
@@ -44,7 +46,8 @@ export class CommentsService {
 
   }
 
-  async findAll(offerId: string) {
+  // Get all comments for a specific offer
+  async findByOffer(offerId: string) {
     const offer = await this.offersService.findById(offerId);
     if (!offer) {
       throw new NotFoundException('Offer not found');
@@ -98,6 +101,84 @@ async remove(userId: string, commentId: string) {
   return this.commentsRepository.remove(comment);
 }
 
+  // Get all comments with pagination and filtering
+  async findAllGlobal(
+    search?: string,
+    createdFrom?: string,
+    createdTo?: string,
+    page = 1,
+    limit = 10,
+  ) {
+    const queryBuilder = this.commentsRepository
+      .createQueryBuilder('comment')
+      .leftJoin('comment.user', 'user')
+      .leftJoin('comment.offer', 'offer')
+      .select([
+        'comment',
+        'user.id',
+        'user.name',
+        'user.profileImageUrl',
+        'offer.id',
+        'offer.title',
+      ]);
+
+    // Search comment text
+    if (search) {
+      queryBuilder.andWhere(
+        'comment.comment ILIKE :search',
+        {
+          search: `%${search}%`,
+        },
+      );
+    }
+
+    // Date filters
+    if (createdFrom) {
+      queryBuilder.andWhere(
+        'comment.createdAt >= :createdFrom',
+        {
+          createdFrom: new Date(createdFrom),
+        },
+      );
+    }
+
+    if (createdTo) {
+      queryBuilder.andWhere(
+        'comment.createdAt <= :createdTo',
+        {
+          createdTo: new Date(createdTo),
+        },
+      );
+    }
+
+    queryBuilder
+      .orderBy('comment.createdAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    // Get total count without pagination
+    const countQuery = queryBuilder
+      .clone()
+      .skip(undefined)
+      .take(undefined)
+      .orderBy();
+
+    const total = await countQuery.getCount();
+
+    const meta = this.paginationService.getPaginationMeta(
+      page,
+      limit,
+      total,
+    );
+
+    const comments = await queryBuilder.getMany();
+
+    return {
+      data: comments,
+      meta,
+    };
+  }
+
   async findById(id: string) {
     const comment = await this.commentsRepository
       .createQueryBuilder('comment')
@@ -142,7 +223,7 @@ async remove(userId: string, commentId: string) {
   }
 
   async getCommentStats() {
-    const [ totalComments ] = await Promise.all([
+    const [totalComments] = await Promise.all([
       this.commentsRepository.count(),
     ])
 
