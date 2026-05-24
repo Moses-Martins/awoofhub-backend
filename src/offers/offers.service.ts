@@ -681,15 +681,11 @@ export class OffersService {
         'offer.title',
         'offer.description',
         'offer.imageUrl',
-        'offer.location',
+        'offer.endDate',
         'offer.value',
         'offer.status',
         'offer.createdAt',
-        'category.id',
         'category.name',
-        'category.slug',
-        'business.id',
-        'business.name',
       ])
       .addSelect('COALESCE(AVG(review.rating), 0)', 'avgRating')
       .addSelect('COALESCE(COUNT(review.id), 0)', 'reviewCount')
@@ -764,16 +760,13 @@ export class OffersService {
       title: item.offer_title,
       description: item.offer_description,
       imageUrl: item.offer_imageUrl,
-      location: item.offer_location,
       value: item.offer_value,
       status: item.offer_status,
       createdAt: item.offer_createdAt,
       endDate: item.offer_endDate,
-
       category: {
         name: item.category_name,
       },
-
       avgRating: Number(item.avgRating),
       reviewCount: Number(item.reviewCount),
     }));
