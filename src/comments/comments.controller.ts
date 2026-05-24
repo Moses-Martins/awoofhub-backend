@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Patch, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Patch,
+  Get,
+  Param,
+  Query,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 
 import {
   ApiBearerAuth,
@@ -16,11 +26,10 @@ import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 
-
 @ApiTags('Comments')
 @Controller('comments')
 export class CommentsController {
-  constructor(private readonly commentsService: CommentsService) { }
+  constructor(private readonly commentsService: CommentsService) {}
 
   @Get('offer/:offerId')
   @ApiOperation({
@@ -42,7 +51,7 @@ export class CommentsController {
 
   @Post('offer/:offerId')
   @UseGuards(AuthGuard)
-@ApiBearerAuth()
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Create comment for an offer',
   })
@@ -68,16 +77,24 @@ export class CommentsController {
     return this.commentsService.create(user.id, offerId, createCommentDto);
   }
 
-
   @Patch(':commentId')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update a comment' })
-  @ApiParam({ name: 'commentId', type: String, description: 'Comment ID', example: '64f8c2d9a12b3c0012345678' })
+  @ApiParam({
+    name: 'commentId',
+    type: String,
+    description: 'Comment ID',
+    example: '64f8c2d9a12b3c0012345678',
+  })
   @ApiResponse({ status: 200, description: 'Comment updated successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Comment not found' })
-  update(@CurrentUser() user, @Param('commentId') commentId: string, @Body() updateCommentDto: UpdateCommentDto) {
+  update(
+    @CurrentUser() user,
+    @Param('commentId') commentId: string,
+    @Body() updateCommentDto: UpdateCommentDto,
+  ) {
     return this.commentsService.update(user.id, commentId, updateCommentDto);
   }
 
@@ -85,7 +102,12 @@ export class CommentsController {
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a comment' })
-  @ApiParam({ name: 'commentId', type: String, description: 'Comment ID', example: '64f8c2d9a12b3c0012345678' })
+  @ApiParam({
+    name: 'commentId',
+    type: String,
+    description: 'Comment ID',
+    example: '64f8c2d9a12b3c0012345678',
+  })
   @ApiResponse({ status: 200, description: 'Comment deleted successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Comment not found' })
