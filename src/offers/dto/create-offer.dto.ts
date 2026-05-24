@@ -37,7 +37,7 @@ export class CreateOfferDto {
   category: string;
 
   @ApiProperty({
-    example: 'https://cdn.awoofhub.online/offers/offer-image.jpg',
+    example: 'https://cdn.awoofhub.ng/offers/offer-image.jpg',
     description: 'Offer image URL',
   })
   @IsNotEmpty()
@@ -69,7 +69,7 @@ export class CreateOfferDto {
   value: string;
 
   @ApiProperty({
-    example: 'https://awoofhub.online/deals/offer',
+    example: 'https://awoofhub.ng/deals/offer',
     description: 'External deal URL',
   })
   @IsNotEmpty()
