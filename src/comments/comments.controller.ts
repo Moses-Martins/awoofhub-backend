@@ -11,7 +11,7 @@ export class CommentsController {
 
   @Get('offer/:offerId')
   findAll(@Param('offerId') offerId: string) {
-    return this.commentsService.findAll(offerId);
+    return this.commentsService.findByOffer(offerId);
   }
 
   @Post('offer/:offerId')
@@ -37,5 +37,4 @@ return this.commentsService.remove(user.id, commentId);
   }
 
 }
-
 

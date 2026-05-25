@@ -1,4 +1,11 @@
-import { forwardRef, Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  forwardRef,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AlertService } from 'src/alert/alert.service';
 import { CategoryService } from 'src/category/category.service';
@@ -9,7 +16,9 @@ import { ReviewsService } from 'src/reviews/reviews.service';
 import { UsersService } from 'src/users/users.service';
 import { MoreThan, Repository } from 'typeorm';
 import { CreateOfferDto } from './dto/create-offer.dto';
+import { UpdateOfferDto } from './dto/update-offer.dto';
 import { Offer } from './entities/offer.entity';
+import { UserStatus } from 'src/common/types/enums';
 
 @Injectable()
 export class OffersService {
@@ -23,13 +32,12 @@ export class OffersService {
     private readonly reviewService: ReviewsService,
     private readonly alertService: AlertService,
     private readonly categoryService: CategoryService,
-  ) { }
+  ) {}
 
   async create(createOfferDto: CreateOfferDto, id: string) {
     try {
-
       const { category, endDate, ...rest } = createOfferDto;
-      const existing = await this.categoryService.findByName(category.trim());
+      const existing = await this.categoryService.findByName(category);
       if (!existing) {
         throw new NotFoundException('Category not found');
       }
@@ -38,33 +46,58 @@ export class OffersService {
       if (!user) {
         throw new NotFoundException('User not found');
       }
+      if (user.status === UserStatus.DELETED) {
+        throw new ForbiddenException('User not found');
+      }
+      if (user.status === UserStatus.BLOCKED) {
+        throw new ForbiddenException(
+          'Your account has been blocked, you cannot create offers',
+        );
+      }
+      if (user.status === UserStatus.SUSPENDED) {
+        throw new ForbiddenException(
+          'Your account has been suspended, you cannot create offers',
+        );
+      }
 
-      const offer = this.offersRepository.create({ ...rest, category: { id: existing.id }, endDate: new Date(endDate), business: { id: user.id } });
+      const offer = this.offersRepository.create({
+        ...rest,
+        category: { id: existing.id },
+        endDate: new Date(endDate),
+        business: { id: user.id },
+      });
       await this.offersRepository.save(offer);
 
-      const subscribers = await this.alertService.getSubscribersForBusiness(user.id);
+      const subscribers = await this.alertService.getSubscribersForBusiness(
+        user.id,
+      );
 
-      const notificationPromises = subscribers.map(sub =>
+      const notificationPromises = subscribers.map((sub) =>
         this.notificationService.create(
           sub.id,
           'New Offer',
           `${user.name} posted a new offer`,
           NotificationType.OFFER_CREATED,
           offer.id,
-        )
+        ),
       );
 
       // Fire them all at once!
       await Promise.all(notificationPromises);
 
-      await this.notificationService.create(offer.business.id, "Created Offer", "You just created an offer", NotificationType.OFFER_CREATED, offer.id)
+      await this.notificationService.create(
+        offer.business.id,
+        'Created Offer',
+        'You just created an offer',
+        NotificationType.OFFER_CREATED,
+        offer.id,
+      );
 
       return {
         message: 'Offer created successfully',
         data: offer,
       };
     } catch (error) {
-
       if (error instanceof NotFoundException) {
         throw error;
       }
@@ -76,6 +109,7 @@ export class OffersService {
 
 
   async findAll(search?: string, category?: string, minRating?: number, createdFrom?: string, createdTo?: string, page = 1, limit = 10) {
+    const now = new Date();
     const queryBuilder = this.offersRepository
       .createQueryBuilder('offer')
       .leftJoin('offer.reviews', 'review')
@@ -92,6 +126,8 @@ export class OffersService {
       ])
       .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
       .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
+      .where('offer.status = :status', { status: OfferStatus.APPROVED })
+      .andWhere('offer.endDate < :now', { now })
       .groupBy('offer.id')
       .addGroupBy('business.id')
       .addGroupBy('category.id');
@@ -167,6 +203,97 @@ export class OffersService {
 
   }
 
+  async findAllAdmin(search?: string, category?: string, minRating?: number, createdFrom?: string, createdTo?: string, page = 1, limit = 10) {
+    const queryBuilder = this.offersRepository
+      .createQueryBuilder('offer')
+      .leftJoin('offer.reviews', 'review')
+      .leftJoin('offer.business', 'business')
+      .leftJoin('offer.category', 'category')
+      .select([
+        'offer',
+        'business.id',
+        'business.name',
+        'business.email',
+        'category.id',
+        'category.name',
+        'category.slug',
+      ])
+      .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
+      .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
+      .groupBy('offer.id')
+      .addGroupBy('business.id')
+      .addGroupBy('category.id');
+    queryBuilder.andWhere('offer.status = :status', {
+      status: OfferStatus.APPROVED,
+    });
+
+    if (search) {
+      queryBuilder.andWhere(
+        '(offer.title ILIKE :search OR offer.description ILIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
+    if (category) {
+      queryBuilder.andWhere('category.slug = :categorySlug', {
+        categorySlug: category,
+      });
+    }
+
+    if (createdFrom) {
+      queryBuilder.andWhere('offer.createdAt >= :createdFrom', {
+        createdFrom: new Date(createdFrom),
+      });
+    }
+
+    if (createdTo) {
+      queryBuilder.andWhere('offer.createdAt <= :createdTo', {
+        createdTo: new Date(createdTo),
+      });
+    }
+
+    if (minRating) {
+      queryBuilder.having('COALESCE(AVG(review.rating), 0) >= :minRating', {
+        minRating,
+      });
+    }
+
+    queryBuilder.orderBy('offer.createdAt', 'DESC');
+
+    queryBuilder.skip((page - 1) * limit).take(limit);
+
+    const countQuery = queryBuilder
+      .clone()
+      .skip(undefined)
+      .take(undefined)
+      .orderBy()
+      .select('offer.id');
+
+    const totalResult = await this.offersRepository.manager
+      .createQueryBuilder()
+      .select('COUNT(*)', 'count')
+      .from(`(${countQuery.getQuery()})`, 'sub')
+      .setParameters(countQuery.getParameters())
+      .getRawOne();
+
+    const total = Number(totalResult.count);
+
+    const meta = this.paginationService.getPaginationMeta(page, limit, total);
+
+    const { entities, raw } = await queryBuilder.getRawAndEntities();
+
+    const results = entities.map((offer, index) => ({
+      ...offer,
+      avgRating: Number(raw[index].avgRating),
+      reviewCount: Number(raw[index].reviewCount),
+    }));
+
+    return {
+      data: results,
+      meta,
+    };
+  }
+
   async findById(id: string) {
     const offer = await this.offersRepository
       .createQueryBuilder('offer')
@@ -187,17 +314,16 @@ export class OffersService {
       throw new NotFoundException('Offer not found');
     }
 
-    const reviews = await this.reviewService.getReviews(id)
+    const reviews = await this.reviewService.getReviews(id);
 
     return {
       ...offer,
-      ...reviews
-    }
+      ...reviews,
+    };
   }
 
-
   async findByCategoryId(id: string, page = 1, limit = 10) {
-
+    const now = new Date();
     const category = await this.categoryService.findById(id)
 
     const queryBuilder = this.offersRepository
@@ -214,13 +340,15 @@ export class OffersService {
         'category.slug',
       ])
       .where('category.id = :id', { id: category.id })
+      .andWhere('offer.status = :status', { status: OfferStatus.APPROVED })
+      .andWhere('offer.endDate < :now', { now })
       .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
       .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
       .groupBy('offer.id')
       .addGroupBy('business.id')
       .addGroupBy('category.id')
       .skip((page - 1) * limit)
-      .take(limit)
+      .take(limit);
 
     const total = await queryBuilder.clone().getCount();
     const meta = this.paginationService.getPaginationMeta(page, limit, total);
@@ -230,17 +358,19 @@ export class OffersService {
     const results = entities.map((offer, index) => ({
       ...offer,
       avgRating: Number(raw[index].avgRating),
-      reviewCount: Number(raw[index].reviewCount)
+      reviewCount: Number(raw[index].reviewCount),
     }));
 
     return {
       data: results,
-      meta
+      meta,
     };
   }
 
 
   async findAllByUser(userId: string, search?: string, category?: string, minRating?: number, createdFrom?: string, createdTo?: string, page = 1, limit = 10) {
+    const now = new Date();
+
     const user = await this.userService.getUserById(userId);
     if (!user) {
       throw new NotFoundException('User not found');
@@ -262,6 +392,8 @@ export class OffersService {
       ])
       .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
       .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
+      .where('offer.status = :status', { status: OfferStatus.APPROVED })
+      .andWhere('offer.endDate < :now', { now })
       .groupBy('offer.id')
       .addGroupBy('business.id')
       .addGroupBy('category.id');
@@ -338,8 +470,104 @@ export class OffersService {
 
   }
 
-  async getRandomOffers(page = 1, limit = 10) {
+   async findAllByBusiness(userId: string, search?: string, category?: string, minRating?: number, createdFrom?: string, createdTo?: string, page = 1, limit = 10) {
+    const now = new Date();
 
+    const user = await this.userService.getUserById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const queryBuilder = this.offersRepository
+      .createQueryBuilder('offer')
+      .leftJoin('offer.reviews', 'review')
+      .leftJoin('offer.business', 'business')
+      .leftJoin('offer.category', 'category')
+      .select([
+        'offer',
+        'business.id',
+        'business.name',
+        'business.email',
+        'category.id',
+        'category.name',
+        'category.slug',
+      ])
+      .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
+      .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
+      .groupBy('offer.id')
+      .addGroupBy('business.id')
+      .addGroupBy('category.id');
+
+    queryBuilder.andWhere('business.id = :id', { id: user.id });
+
+    if (search) {
+      queryBuilder.andWhere(
+        '(offer.title ILIKE :search OR offer.description ILIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
+    if (category) {
+      queryBuilder.andWhere('category.slug = :categorySlug', {
+        categorySlug: category,
+      });
+    }
+
+    if (createdFrom) {
+      queryBuilder.andWhere('offer.createdAt >= :createdFrom', {
+        createdFrom: new Date(createdFrom),
+      });
+    }
+
+    if (createdTo) {
+      queryBuilder.andWhere('offer.createdAt <= :createdTo', {
+        createdTo: new Date(createdTo),
+      });
+    }
+
+    if (minRating) {
+      queryBuilder.having('COALESCE(AVG(review.rating), 0) >= :minRating', {
+        minRating,
+      });
+    }
+
+    queryBuilder.orderBy('offer.createdAt', 'DESC');
+
+    queryBuilder.skip((page - 1) * limit).take(limit);
+
+    const countQuery = queryBuilder
+      .clone()
+      .skip(undefined)
+      .take(undefined)
+      .orderBy()
+      .select('offer.id');
+
+    const totalResult = await this.offersRepository.manager
+      .createQueryBuilder()
+      .select('COUNT(*)', 'count')
+      .from(`(${countQuery.getQuery()})`, 'sub')
+      .setParameters(countQuery.getParameters())
+      .getRawOne();
+
+    const total = Number(totalResult.count);
+
+    const meta = this.paginationService.getPaginationMeta(page, limit, total);
+
+    const { entities, raw } = await queryBuilder.getRawAndEntities();
+
+    const results = entities.map((offer, index) => ({
+      ...offer,
+      avgRating: Number(raw[index].avgRating),
+      reviewCount: Number(raw[index].reviewCount),
+    }));
+
+    return {
+      data: results,
+      meta,
+    };
+  }
+
+  async getRandomOffers(page = 1, limit = 10) {
     const randomIds = await this.offersRepository
       .createQueryBuilder('offer')
       .select('offer.id')
@@ -348,7 +576,7 @@ export class OffersService {
       .take(limit)
       .getRawMany();
 
-    const ids = randomIds.map(r => r.offer_id);
+    const ids = randomIds.map((r) => r.offer_id);
 
     if (!ids.length) {
       return {
@@ -364,15 +592,18 @@ export class OffersService {
       .leftJoin('offer.category', 'category')
       .select([
         'offer',
-        'business.id', 'business.name', 'business.email',
-        'category.id', 'category.name',
+        'business.id',
+        'business.name',
+        'business.email',
+        'category.id',
+        'category.name',
       ])
       .whereInIds(ids)
       .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
       .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
       .groupBy('offer.id')
       .addGroupBy('business.id')
-      .addGroupBy('category.id')
+      .addGroupBy('category.id');
 
     const total = await this.offersRepository.count();
     const meta = this.paginationService.getPaginationMeta(page, limit, total);
@@ -382,12 +613,12 @@ export class OffersService {
     const results = entities.map((offer, index) => ({
       ...offer,
       avgRating: Number(raw[index].avgRating),
-      reviewCount: Number(raw[index].reviewCount)
+      reviewCount: Number(raw[index].reviewCount),
     }));
 
     return {
       data: results,
-      meta
+      meta,
     };
   }
 
@@ -468,7 +699,6 @@ export class OffersService {
       .andWhere('offer.endDate < :now', { now })
       .getCount();
 
-
     const topOffersPromise = this.offersRepository
       .createQueryBuilder('offer')
       .leftJoin('offer.reviews', 'review')
@@ -480,7 +710,7 @@ export class OffersService {
         'category.name',
         'category.slug',
         'business.id',
-        'business.name'
+        'business.name',
       ])
       .addSelect('COALESCE(AVG(review.rating), 0)', 'avgRating')
       .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
@@ -494,7 +724,6 @@ export class OffersService {
       .limit(3)
       .getRawAndEntities();
 
-
     const categoryPiePromise = this.offersRepository
       .createQueryBuilder('offer')
       .leftJoin('offer.category', 'category')
@@ -503,7 +732,6 @@ export class OffersService {
       .addSelect('COUNT(offer.id)', 'value')
       .groupBy('category.name')
       .getRawMany();
-
 
     const offersByMonthPromise = this.offersRepository
       .createQueryBuilder('offer')
@@ -520,13 +748,14 @@ export class OffersService {
     const expiringOffersPromise = this.offersRepository
       .createQueryBuilder('offer')
       .where('offer.businessId = :businessId', { businessId })
-      .select(`
+      .select(
+        `
       SUM(CASE WHEN offer.endDate BETWEEN NOW() AND NOW() + INTERVAL '3 days' THEN 1 ELSE 0 END) as "1-3 days",
       SUM(CASE WHEN offer.endDate BETWEEN NOW() + INTERVAL '4 days' AND NOW() + INTERVAL '7 days' THEN 1 ELSE 0 END) as "4-7 days",
       SUM(CASE WHEN offer.endDate > NOW() + INTERVAL '7 days' THEN 1 ELSE 0 END) as "7+ days"
-    `)
+    `,
+      )
       .getRawOne();
-
 
     const [
       totalAds,
@@ -553,7 +782,7 @@ export class OffersService {
     const topOffers = topOffersData.entities.map((offer, index) => ({
       ...offer,
       avgRating: Number(topOffersData.raw[index].avgRating),
-      reviewCount: Number(topOffersData.raw[index].reviewCount)
+      reviewCount: Number(topOffersData.raw[index].reviewCount),
     }));
 
     const offersByMonth = this.formatMonthlyData(offersByMonthRaw);
@@ -568,21 +797,21 @@ export class OffersService {
       },
       topOffers,
       charts: {
-        categoryPie: categoryPie.map(item => ({
+        categoryPie: categoryPie.map((item) => ({
           name: item.name,
           value: Number(item.value),
         })),
         offersByMonth,
         expiringOffers: {
-          "1-3 days": Number(expiringOffers['1-3 days']),
-          "4-7 days": Number(expiringOffers['4-7 days']),
-          "7+ days": Number(expiringOffers['7+ days']),
+          '1-3 days': Number(expiringOffers['1-3 days']),
+          '4-7 days': Number(expiringOffers['4-7 days']),
+          '7+ days': Number(expiringOffers['7+ days']),
         },
       },
     };
   }
 
-  async updateStatus(offerId: string, status: OfferStatus, metadata?: { userId?: string; note?: string | null | undefined }) {
+  async updateStatus(offerId: string, status: OfferStatus) {
     try {
       const offer = await this.offersRepository.findOne({
         where: { id: offerId },
@@ -594,19 +823,7 @@ export class OffersService {
 
       offer.status = status;
 
-      if (metadata?.userId) {
-        const admin = await this.userService.getUserById(metadata.userId);
-        if (!admin) {
-          throw new NotFoundException('Admin user not found');
-        }
-
-        offer.moderatedBy = admin;
-        offer.statusUpdatedAt = new Date();
-        offer.adminNote = metadata.note;
-      }
-
       return await this.offersRepository.save(offer);
-
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
 
@@ -614,11 +831,10 @@ export class OffersService {
     }
   }
 
-
   private formatMonthlyData(data: any[]) {
     const result = {};
 
-    data.forEach(item => {
+    data.forEach((item) => {
       if (!result[item.month]) {
         result[item.month] = { month: item.month };
       }
@@ -629,7 +845,7 @@ export class OffersService {
     return Object.values(result);
   }
 
-  async update(offerId: string, userId: string, updateOfferDto: Partial<CreateOfferDto>) {
+  async update(offerId: string, userId: string, updateOfferDto: UpdateOfferDto) {
   const offer = await this.offersRepository.findOne({
     where: { id: offerId },
     relations: ['business'],
@@ -661,21 +877,22 @@ export class OffersService {
   return this.offersRepository.save(offer);
 }
 
-async remove(offerId: string, userId: string) {
-  const offer = await this.offersRepository.findOne({
-    where: { id: offerId },
-    relations: ['business', 'comments', 'reviews', 'wishlists'],
-  });
+  async remove(offerId: string, userId: string) {
+    const offer = await this.offersRepository.findOne({
+      where: { id: offerId },
+      relations: ['business', 'comments', 'reviews', 'wishlists'],
+    });
 
-  if (!offer) {
-    throw new NotFoundException('Offer not found');
+    if (!offer) {
+      throw new NotFoundException('Offer not found');
+    }
+
+    if (offer.business.id !== userId) {
+      throw new NotFoundException('You can only delete your own offers');
+    }
+
+    return this.offersRepository.remove(offer);
   }
 
-  if (offer.business.id !== userId) {
-    throw new NotFoundException('You can only delete your own offers');
-  }
-
-  return this.offersRepository.remove(offer);
-}
 
 }
