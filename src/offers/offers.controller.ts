@@ -186,7 +186,6 @@ export class OffersController {
   })
   async findAllByBusiness(
     @CurrentUser() user: User,
-    @Param('id') id: string,
     @Query('page') page: number,
     @Query('limit') limit: number,
     @Query('search') search?: string,
