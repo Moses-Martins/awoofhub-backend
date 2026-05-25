@@ -94,7 +94,7 @@ export class OffersService {
       .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
       .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
       .where('offer.status = :status', { status: OfferStatus.APPROVED })
-      .andWhere('offer.endDate < :now', { now })
+      .andWhere('offer.endDate > :now', { now })
       .groupBy('offer.id')
       .addGroupBy('business.id')
       .addGroupBy('category.id');
@@ -310,7 +310,7 @@ export class OffersService {
       ])
       .where('category.id = :id', { id: category.id })
       .andWhere('offer.status = :status', { status: OfferStatus.APPROVED })
-      .andWhere('offer.endDate < :now', { now })
+      .andWhere('offer.endDate > :now', { now })
       .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
       .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
       .groupBy('offer.id')
@@ -362,7 +362,7 @@ export class OffersService {
       .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
       .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
       .where('offer.status = :status', { status: OfferStatus.APPROVED })
-      .andWhere('offer.endDate < :now', { now })
+      .andWhere('offer.endDate > :now', { now })
       .groupBy('offer.id')
       .addGroupBy('business.id')
       .addGroupBy('category.id');
@@ -440,7 +440,6 @@ export class OffersService {
   }
 
   async findAllByBusiness(userId: string, search?: string, category?: string, minRating?: number, createdFrom?: string, createdTo?: string, page = 1, limit = 10) {
-    const now = new Date();
 
     const user = await this.userService.getUserById(userId);
     if (!user) {
@@ -663,7 +662,7 @@ export class OffersService {
       },
     });
 
-    const expiredAdsPromise = this.offersRepository
+    const expiredAdsPromise = this.offersRepository 
       .createQueryBuilder('offer')
       .where('offer.businessId = :businessId', { businessId })
       .andWhere('offer.endDate < :now', { now })
