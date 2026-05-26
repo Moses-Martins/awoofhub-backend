@@ -6,6 +6,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 
+
 @Injectable()
 export class UsersService {
     constructor(
@@ -144,5 +145,18 @@ export class UsersService {
             throw new InternalServerErrorException('Failed to update user status');
         }
     }
+    async remove(userId: string) {
+  const user = await this.userRepository.findOne({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  user.status = AccountStatus.DELETED;
+  return this.userRepository.save(user);
+}
+
 
 }
