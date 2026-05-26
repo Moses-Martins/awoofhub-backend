@@ -97,5 +97,20 @@ export class ReviewsService {
       ratingDistribution
     };
   }
+  async deleteReview(userId: string, offerId: string) {
+  const review = await this.reviewsRepository.findOne({
+    where: {
+      offer: { id: offerId },
+      user: { id: userId },
+    },
+    relations: ['user', 'offer'],
+  });
+
+  if (!review) {
+    throw new NotFoundException('Review not found');
+  }
+
+  return this.reviewsRepository.remove(review);
+}
 
 }

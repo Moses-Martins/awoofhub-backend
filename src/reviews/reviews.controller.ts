@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Post,
+  Delete,
   UseGuards,
 } from '@nestjs/common';
 
@@ -112,4 +113,16 @@ export class ReviewsController {
       createReviewDto,
     );
   }
+  @Delete(':offerId')
+@UseGuards(AuthGuard, RolesGuard)
+@Roles(UserRole.USER, UserRole.BUSINESS)
+@ApiBearerAuth()
+@ApiOperation({ summary: 'Delete a review' })
+@ApiParam({ name: 'offerId', type: String, description: 'Offer ID', example: '64f8c2d9a12b3c0012345678' })
+@ApiResponse({ status: 200, description: 'Review deleted successfully' })
+@ApiResponse({ status: 401, description: 'Unauthorized' })
+@ApiResponse({ status: 404, description: 'Review not found' })
+deleteReview(@CurrentUser() user, @Param('offerId') offerId: string) {
+  return this.reviewsService.deleteReview(user.id, offerId);
+}
 }
