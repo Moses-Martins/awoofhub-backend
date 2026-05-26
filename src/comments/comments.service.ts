@@ -6,7 +6,7 @@ import { Repository } from 'typeorm';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { Comment } from './entities/comment.entity';
 import { PaginationService } from 'src/common/pagination/pagination.service';
-
+import { UserStatus } from 'src/common/types/enums';
 
 @Injectable()
 export class CommentsService {
@@ -23,6 +23,15 @@ export class CommentsService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+    if (user.status === UserStatus.DELETED) {
+  throw new ForbiddenException('User not found');
+}
+if (user.status === UserStatus.BLOCKED) {
+  throw new ForbiddenException('Your account has been blocked, you cannot post comments');
+}
+if (user.status === UserStatus.SUSPENDED) {
+  throw new ForbiddenException('Your account has been suspended, you cannot post comments');
+}
 
     const offer = await this.offersService.findById(OfferId);
     if (!offer) {

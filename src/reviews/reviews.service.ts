@@ -1,10 +1,17 @@
-import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { OffersService } from 'src/offers/offers.service';
 import { UsersService } from 'src/users/users.service';
 import { Repository } from 'typeorm';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { Review } from './entities/review.entity';
+import { UserStatus } from 'src/common/types/enums';
 
 @Injectable()
 export class ReviewsService {
@@ -14,11 +21,28 @@ export class ReviewsService {
     private usersService: UsersService,
     @Inject(forwardRef(() => OffersService))
     private offersService: OffersService,
-  ) { }
-  async upsertReview(userId: string, offerId: string, createReviewDto: CreateReviewDto): Promise<Review> {
+  ) {}
+  async upsertReview(
+    userId: string,
+    offerId: string,
+    createReviewDto: CreateReviewDto,
+  ): Promise<Review> {
     const user = await this.usersService.getUserById(userId);
     if (!user) {
       throw new NotFoundException('User not found');
+    }
+    if (user.status === UserStatus.DELETED) {
+      throw new ForbiddenException('User not found');
+    }
+    if (user.status === UserStatus.BLOCKED) {
+      throw new ForbiddenException(
+        'Your account has been blocked, you cannot post reviews',
+      );
+    }
+    if (user.status === UserStatus.SUSPENDED) {
+      throw new ForbiddenException(
+        'Your account has been suspended, you cannot post reviews',
+      );
     }
 
     const offer = await this.offersService.findById(offerId);
@@ -29,23 +53,26 @@ export class ReviewsService {
     const existingReview = await this.reviewsRepository.findOne({
       where: {
         offer: { id: offer.id },
-        user: { id: user.id }   // filter by the current user too
+        user: { id: user.id }, // filter by the current user too
       },
     });
 
     if (existingReview) {
       const updatedReview = this.reviewsRepository.merge(
         existingReview,
-        createReviewDto
+        createReviewDto,
       );
 
       return this.reviewsRepository.save(updatedReview);
     }
 
-    const review = this.reviewsRepository.create({ ...createReviewDto, user: { id: user.id }, offer: { id: offer.id } });
+    const review = this.reviewsRepository.create({
+      ...createReviewDto,
+      user: { id: user.id },
+      offer: { id: offer.id },
+    });
     return this.reviewsRepository.save(review);
   }
-
 
   async getUserReview(userId: string, offerId: string) {
     const user = await this.usersService.getUserById(userId);
@@ -61,16 +88,14 @@ export class ReviewsService {
     const review = await this.reviewsRepository.findOne({
       where: {
         offer: { id: offer.id },
-        user: { id: user.id }
+        user: { id: user.id },
       },
     });
 
-    return review
+    return review;
   }
 
-
   async getReviews(offerId: string) {
-
     const overall = await this.reviewsRepository
       .createQueryBuilder('review')
       .select('COALESCE(AVG(review.rating),0)', 'avgRating')
@@ -86,16 +111,15 @@ export class ReviewsService {
       .groupBy('review.rating')
       .getRawMany();
 
-    const ratingDistribution = { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 };
-    distributionRaw.forEach(d => {
+    const ratingDistribution = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
+    distributionRaw.forEach((d) => {
       ratingDistribution[d.rating] = Number(d.count);
     });
 
     return {
       avgRating: Number(overall.avgRating),
       reviewCount: Number(overall.reviewCount),
-      ratingDistribution
+      ratingDistribution,
     };
   }
-
 }
