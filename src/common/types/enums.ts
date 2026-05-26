@@ -65,3 +65,9 @@ export enum ModerationActionType {
   DELETE = 'delete',
   ACTIVATE = 'activate',
 }
+export enum UserStatus {
+  ACTIVE = 'active',
+  SUSPENDED = 'suspended',
+  BLOCKED = 'blocked',
+  DELETED = 'deleted',
+}

@@ -12,6 +12,7 @@ import { Offer } from 'src/offers/entities/offer.entity';
 import { Report } from 'src/reports/entities/report.entity';
 import { Review } from 'src/reviews/entities/review.entity';
 import { Wishlist } from 'src/wishlist/entities/wishlist.entity';
+import { UserStatus } from 'src/common/types/enums';
 
 import {
   BeforeInsert,
@@ -113,13 +114,13 @@ export class User {
   @OneToMany(() => PasswordResetToken, (token) => token.user)
   passwordResetTokens: PasswordResetToken[];
 
-  @ApiProperty()
-  @Column({
-    type: 'enum',
-    enum: AccountStatus,
-    default: AccountStatus.ACTIVE,
-  })
-  status: AccountStatus;
+    @ApiProperty({ enum: UserStatus, default: UserStatus.ACTIVE })
+@Column({
+  type: 'enum',
+  enum: UserStatus,
+  default: UserStatus.ACTIVE,
+})
+status: UserStatus;
 
   @ApiProperty()
   @CreateDateColumn()

@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { AccountStatus, UserRole } from 'src/common/types/enums';
+import { UserRole, UserStatus } from 'src/common/types/enums';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -8,141 +8,114 @@ import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
-    constructor(
-        @InjectRepository(User)
-        private readonly userRepository: Repository<User>,
-    ) { }
+constructor(
+@InjectRepository(User)
+private readonly userRepository: Repository<User>,
+) { }
 
-    async create(user: CreateUserDto) {
-        try {
-            const newUser = this.userRepository.create(user);
-            await this.userRepository.save(newUser);
+async create(user: CreateUserDto) {
+try {
+const newUser = this.userRepository.create(user);
+await this.userRepository.save(newUser);
+return newUser;
+} catch (error) {
+throw new InternalServerErrorException('Failed to create user');
+}
+}
 
-            return newUser
+async update(userId: string, dto: UpdateUserDto) {
+try {
+if (dto.role === UserRole.ADMIN) {
+throw new BadRequestException('Cannot assign admin role');
+}
 
-        } catch (error) {
-            throw new InternalServerErrorException('Failed to create user');
-        }
-    }
+const user = await this.userRepository.findOne({
+where: { id: userId },
+});
 
-    async update(userId: string, dto: UpdateUserDto) {
-        try {
-            if (dto.role === UserRole.ADMIN) {
-                throw new BadRequestException('Cannot assign admin role');
-            }
+if (!user) {
+throw new NotFoundException("User not found");
+}
 
-            const user = await this.userRepository.findOne({
-                where: { id: userId },
-            });
+Object.assign(user, dto);
+return await this.userRepository.save(user);
 
+} catch (error) {
+if (error instanceof BadRequestException || error instanceof NotFoundException) {
+throw error;
+}
+throw new InternalServerErrorException("Failed to update user");
+}
+}
 
-            if (!user) {
-                throw new NotFoundException("User not found");
-            }
+async createGoogleUser(data: Partial<User>) {
+const user = this.userRepository.create(data);
+return this.userRepository.save(user);
+}
 
-            Object.assign(user, dto);
+async updateEmailVerification(id: string) {
+try {
+const user = await this.getUserById(id);
+if (!user) {
+throw new InternalServerErrorException('User not found');
+}
+user.isEmailVerified = true;
+return await this.userRepository.save(user);
+} catch (error) {
+if (error instanceof InternalServerErrorException) {
+throw error;
+}
+throw new InternalServerErrorException('Failed to verify email');
+}
+}
 
-            return await this.userRepository.save(user);
+async getUserStats() {
+const [totalActive, businessActive, suspended, blocked] = await Promise.all([
+this.userRepository.count({ where: { status: UserStatus.ACTIVE } }),
+this.userRepository.count({ where: { role: UserRole.BUSINESS, status: UserStatus.ACTIVE } }),
+this.userRepository.count({ where: { status: UserStatus.SUSPENDED } }),
+this.userRepository.count({ where: { status: UserStatus.BLOCKED } }),
+]);
 
-        } catch (error) {
-            throw new InternalServerErrorException("Failed to update user");
-        }
-    }
+return { totalActive, businessActive, suspended, blocked };
+}
 
-    async createGoogleUser(data: Partial<User>) {
-        const user = this.userRepository.create(data);
-        return this.userRepository.save(user);
-    }
+async getUserById(id: string) {
+return await this.userRepository.findOne({ where: { id } });
+}
 
-    async updateEmailVerification(id: string) {
-        try {
-            const user = await this.getUserById(id);
-            if (!user) {
-                throw new InternalServerErrorException('User not found');
-            }
-            user.isEmailVerified = true;
+async findAll(): Promise<User[]> {
+return this.userRepository.find();
+}
 
-            // Save the changes back to the database
-            return await this.userRepository.save(user);
+async getUserByEmail(email: string) {
+return await this.userRepository.findOne({
+where: { email: email.trim().toLowerCase() },
+});
+}
 
-        } catch (error) {
-            if (error instanceof InternalServerErrorException) {
-                throw error;
-            }
+async save(user: User) {
+return this.userRepository.save(user);
+}
 
-            throw new InternalServerErrorException('Failed to verify email');
-        }
-    }
+async updateStatus(userId: string, status: UserStatus) {
+try {
+const user = await this.userRepository.findOne({
+where: { id: userId },
+});
 
-    async getUserStats() {
-        const [totalActive, businessActive, suspended, banned] = await Promise.all([
-            this.userRepository.count({
-                where: { status: AccountStatus.ACTIVE }
-            }),
-            this.userRepository.count({
-                where: { role: UserRole.BUSINESS, status: AccountStatus.ACTIVE }
-            }),
-            this.userRepository.count({
-                where: { status: AccountStatus.SUSPENDED }
-            }),
-            this.userRepository.count({
-                where: { status: AccountStatus.BANNED }
-            }),
-        ]);
+if (!user) {
+throw new NotFoundException('User not found');
+}
 
-        return { 
-            totalActive, 
-            businessActive, 
-            suspended, 
-            banned 
-        };
-    }
+user.status = status;
+return await this.userRepository.save(user);
 
-    async getUserById(id: string) {
-        return await this.userRepository.findOne({
-            where: { id },
-        });
-    }
-
-
-    async findAll(): Promise<User[]> {
-        const users = this.userRepository.find();
-        return users
-    }
-
-
-    async getUserByEmail(email: string) {
-        return await this.userRepository.findOne({
-            where: { email: email.trim().toLowerCase() },
-        });
-    }
-
-    async save(user: User) {
-        return this.userRepository.save(user);
-    }
-
-
-    async updateStatus(userId: string, status: AccountStatus) {
-        try {
-            const user = await this.userRepository.findOne({
-                where: { id: userId },
-            });
-
-            if (!user) {
-                throw new NotFoundException('User not found');
-            }
-
-            user.status = status
-
-            return await this.userRepository.save(user);
-
-        } catch (error) {
-            if (error instanceof NotFoundException) {
-                throw error;
-            }
-
-            throw new InternalServerErrorException('Failed to update user status');
-        }
-    }
-
+} catch (error) {
+if (error instanceof NotFoundException) {
+throw error;
+}
+throw new InternalServerErrorException('Failed to update user status');
+}
+}
 }

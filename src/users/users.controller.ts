@@ -21,7 +21,7 @@ import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { UserRole } from 'src/common/types/enums';
-
+import { UserStatus } from 'src/common/types/enums';
 import { UpdateUserDto } from 'src/users/dto/update-user.dto';
 
 import { UsersService } from './users.service';
@@ -123,5 +123,17 @@ export class UsersController {
   findAll() {
     return this.usersService.findAll();
   }
+  @Patch(':id/status')
+@UseGuards(AuthGuard, RolesGuard)
+@Roles(UserRole.ADMIN)
+@ApiBearerAuth()
+@ApiOperation({ summary: 'Update user status' })
+@ApiParam({ name: 'id', type: String, description: 'User ID', example: '64f8c2d9a12b3c0012345678' })
+@ApiResponse({ status: 200, description: 'User status updated successfully' })
+@ApiResponse({ status: 403, description: 'Forbidden' })
+@ApiResponse({ status: 401, description: 'Unauthorized' })
+updateStatus(@Param('id') id: string, @Body('status') status: UserStatus) {
+  return this.usersService.updateStatus(id, status);
+}
 
 }
