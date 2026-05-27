@@ -1,10 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Param,
-  Delete,
   Patch,
   Query,
   UseGuards
@@ -128,15 +128,16 @@ export class UsersController {
   ) {
     return this.usersService.findAll(query);
   }
-  @Delete('me')
-@UseGuards(AuthGuard)
-@ApiBearerAuth()
-@ApiOperation({ summary: 'Delete authenticated user account' })
-@ApiResponse({ status: 200, description: 'User account deleted successfully' })
-@ApiResponse({ status: 401, description: 'Unauthorized' })
-remove(@CurrentUser() user) {
-  return this.usersService.remove(user.id);
-}
   
+  @Delete('me')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete authenticated user account' })
+  @ApiResponse({ status: 200, description: 'User account deleted successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  remove(@CurrentUser() user) {
+    return this.usersService.remove(user.id);
+  }
+
 
 }

@@ -663,7 +663,7 @@ export class OffersService {
       },
     });
 
-    const expiredAdsPromise = this.offersRepository 
+    const expiredAdsPromise = this.offersRepository
       .createQueryBuilder('offer')
       .where('offer.businessId = :businessId', { businessId })
       .andWhere('offer.endDate < :now', { now })
@@ -819,6 +819,55 @@ export class OffersService {
   }
 
 
+  async update(offerId: string, userId: string, updateOfferDto: UpdateOfferDto) {
+    const offer = await this.offersRepository.findOne({
+      where: { id: offerId },
+      relations: ['business'],
+    });
+
+    if (!offer) {
+      throw new NotFoundException('Offer not found');
+    }
+
+    if (offer.business.id !== userId) {
+      throw new NotFoundException('You can only update your own offers');
+    }
+
+    if (updateOfferDto.category) {
+      const category = await this.categoryService.findByName(updateOfferDto.category.trim());
+      if (!category) {
+        throw new NotFoundException('Category not found');
+      }
+      offer.category = category;
+      delete updateOfferDto.category;
+    }
+
+    if (updateOfferDto.endDate) {
+      offer.endDate = new Date(updateOfferDto.endDate);
+      delete updateOfferDto.endDate;
+    }
+
+    Object.assign(offer, updateOfferDto);
+    return this.offersRepository.save(offer);
+  }
+
+  async remove(offerId: string, userId: string) {
+    const offer = await this.offersRepository.findOne({
+      where: { id: offerId },
+      relations: ['business', 'comments', 'reviews', 'wishlists'],
+    });
+
+    if (!offer) {
+      throw new NotFoundException('Offer not found');
+    }
+
+    if (offer.business.id !== userId) {
+      throw new NotFoundException('You can only delete your own offers');
+    }
+
+    return this.offersRepository.remove(offer);
+  }
+
   private formatMonthlyData(data: any[]) {
     const result = {};
 
@@ -832,54 +881,5 @@ export class OffersService {
 
     return Object.values(result);
   }
-  async update(offerId: string, userId: string, updateOfferDto: UpdateOfferDto) {
-  const offer = await this.offersRepository.findOne({
-    where: { id: offerId },
-    relations: ['business'],
-  });
-
-  if (!offer) {
-    throw new NotFoundException('Offer not found');
-  }
-
-  if (offer.business.id !== userId) {
-    throw new NotFoundException('You can only update your own offers');
-  }
-
-  if (updateOfferDto.category) {
-    const category = await this.categoryService.findByName(updateOfferDto.category.trim());
-    if (!category) {
-      throw new NotFoundException('Category not found');
-    }
-    offer.category = category;
-    delete updateOfferDto.category;
-  }
-
-  if (updateOfferDto.endDate) {
-    offer.endDate = new Date(updateOfferDto.endDate);
-    delete updateOfferDto.endDate;
-  }
-
-  Object.assign(offer, updateOfferDto);
-  return this.offersRepository.save(offer);
-}
-
-async remove(offerId: string, userId: string) {
-  const offer = await this.offersRepository.findOne({
-    where: { id: offerId },
-    relations: ['business', 'comments', 'reviews', 'wishlists'],
-  });
-
-  if (!offer) {
-    throw new NotFoundException('Offer not found');
-  }
-
-  if (offer.business.id !== userId) {
-    throw new NotFoundException('You can only delete your own offers');
-  }
-
-  return this.offersRepository.remove(offer);
-}
-
 
 }

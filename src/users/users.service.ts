@@ -110,7 +110,7 @@ export class UsersService {
 
 
     async findAll(query: FindUsersQueryDto) {
-        
+
         const { search, status, role, createdFrom, createdTo, page = 1, limit = 10 } = query;
 
         const queryBuilder = this.userRepository
@@ -121,7 +121,7 @@ export class UsersService {
 
         // Search comment text
         if (search) {
-            queryBuilder.andWhere(              
+            queryBuilder.andWhere(
                 '(user.name ILIKE :search OR user.email ILIKE :search OR user.bio ILIKE :search OR user.address ILIKE :search OR user.website ILIKE :search)',
                 {
                     search: `%${search}%`,
@@ -230,18 +230,19 @@ export class UsersService {
             throw new InternalServerErrorException('Failed to update user status');
         }
     }
+
     async remove(userId: string) {
-  const user = await this.userRepository.findOne({
-    where: { id: userId },
-  });
+        const user = await this.userRepository.findOne({
+            where: { id: userId },
+        });
 
-  if (!user) {
-    throw new NotFoundException('User not found');
-  }
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
 
-  user.status = AccountStatus.DELETED;
-  return this.userRepository.save(user);
-}
+        user.status = UserStatus.DELETED;
+        return this.userRepository.save(user);
+    }
 
 
 }
