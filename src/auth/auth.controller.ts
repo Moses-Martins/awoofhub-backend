@@ -56,6 +56,8 @@ export class AuthController {
       message: 'Login successful',
       data: {
         ...instanceToPlain(user),
+        accessToken,
+        refreshToken
       },
     }
   }
@@ -63,8 +65,8 @@ export class AuthController {
   @Get('google/')
   @UseGuards(AuthGuard('google'))
   @ApiOperation({
-  summary: 'Initiate Google OAuth login',
-})
+    summary: 'Initiate Google OAuth login',
+  })
   async googleAuth(@Req() req) {
     return;
   }
@@ -72,8 +74,8 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   @ApiOperation({
-  summary: 'Google OAuth callback endpoint',
-})
+    summary: 'Google OAuth callback endpoint',
+  })
   async googleAuthRedirect(@Req() req: Request & { user: any }, @Res() res: Response) {
 
     const { accessToken, refreshToken } = await this.authService.googleLogin(req.user);
@@ -174,7 +176,13 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    return { message: 'Token refreshed' };
+    return {
+      message: 'Token refreshed',
+      data: {
+        accessToken,
+        refreshToken
+      }
+    };
   }
 
 
@@ -219,13 +227,13 @@ export class AuthController {
   @Post('reset-password')
   @ApiOperation({ summary: 'Reset password using a valid reset token' })
   @ApiResponse({
-  status: 200,
-  description: 'Password reset successful',
-})
-@ApiResponse({
-  status: 400,
-  description: 'Invalid or expired reset token',
-})
+    status: 200,
+    description: 'Password reset successful',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid or expired reset token',
+  })
   async resetPassword(
     @Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto.token, dto.password);

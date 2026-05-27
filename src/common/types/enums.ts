@@ -51,7 +51,7 @@ export enum ReportStatus {
   DISMISSED = "dismissed"
 }
 
-export enum AccountStatus {
+export enum UserStatus {
   ACTIVE = "active",
   SUSPENDED = "suspended",
   BANNED = "banned",

@@ -6,6 +6,7 @@ import {
   Param,
   Delete,
   Patch,
+  Query,
   UseGuards
 } from '@nestjs/common';
 
@@ -25,13 +26,14 @@ import { UserRole } from 'src/common/types/enums';
 
 import { UpdateUserDto } from 'src/users/dto/update-user.dto';
 
+import { FindUsersQueryDto } from './dto/find-user-query.dto';
 import { UsersService } from './users.service';
 
 @ApiTags('Users')
 @ApiBearerAuth()
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Patch('update')
   @UseGuards(AuthGuard, RolesGuard)
@@ -121,8 +123,10 @@ export class UsersController {
     status: 401,
     description: 'Unauthorized',
   })
-  findAll() {
-    return this.usersService.findAll();
+  findAll(
+    @Query() query: FindUsersQueryDto
+  ) {
+    return this.usersService.findAll(query);
   }
   @Delete('me')
 @UseGuards(AuthGuard)
