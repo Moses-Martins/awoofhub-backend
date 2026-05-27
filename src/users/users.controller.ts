@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   Param,
+  Delete,
   Patch,
   UseGuards
 } from '@nestjs/common';
@@ -123,5 +124,15 @@ export class UsersController {
   findAll() {
     return this.usersService.findAll();
   }
+  @Delete('me')
+@UseGuards(AuthGuard)
+@ApiBearerAuth()
+@ApiOperation({ summary: 'Delete authenticated user account' })
+@ApiResponse({ status: 200, description: 'User account deleted successfully' })
+@ApiResponse({ status: 401, description: 'Unauthorized' })
+remove(@CurrentUser() user) {
+  return this.usersService.remove(user.id);
+}
+  
 
 }
