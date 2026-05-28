@@ -14,13 +14,13 @@ export class AuthGuard implements CanActivate {
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
         const token = this.extractTokenFromHeader(request);
-        
+
         if (!token) {
             throw new UnauthorizedException();
         }
 
         try {
-            const payload = await this.jwtService.verifyAsync(token, {secret: this.configService.get<string>('JWT_SECRET')});
+            const payload = await this.jwtService.verifyAsync(token, { secret: this.configService.get<string>('JWT_SECRET') });
             request.user = {
                 id: payload.sub,
                 email: payload.email,
@@ -32,10 +32,21 @@ export class AuthGuard implements CanActivate {
         }
         return true;
     }
-    private extractTokenFromHeader(request: Request): string | undefined {
-        const cookie = request.signedCookies['access_token'];
-        if (!cookie) return undefined;
 
-        return cookie
+    private extractTokenFromHeader(request: Request): string | undefined {
+        const authHeader = request.headers.authorization;
+
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            return authHeader.replace('Bearer ', '');
+        }
+
+        const cookie = request.signedCookies?.['access_token'];
+        if (cookie) {
+            return cookie;
+        }
+
+        return undefined;
     }
+
+
 }

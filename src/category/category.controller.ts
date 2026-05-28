@@ -3,6 +3,8 @@ import {
   Controller,
   Get,
   Param,
+  Patch,
+  Delete,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -24,6 +26,7 @@ import { User } from 'src/users/entities/user.entity';
 
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @ApiTags('Category')
 @Controller('category')
@@ -102,4 +105,25 @@ export class CategoryController {
   findOne(@Param('id') id: string) {
     return this.categoryService.findById(id);
   }
+  @Patch(':id')
+@UseGuards(AuthGuard, RolesGuard)
+@Roles(UserRole.ADMIN)
+@ApiBearerAuth()
+@ApiOperation({ summary: 'Update a category' })
+@ApiParam({ name: 'id', type: String, description: 'Category ID', example: '64f8c2d9a12b3c0012345678' })
+@ApiResponse({ status: 200, description: 'Category updated successfully' })
+update(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
+  return this.categoryService.update(id, updateCategoryDto);
+}
+
+@Delete(':id')
+@UseGuards(AuthGuard, RolesGuard)
+@Roles(UserRole.ADMIN)
+@ApiBearerAuth()
+@ApiOperation({ summary: 'Delete a category' })
+@ApiParam({ name: 'id', type: String, description: 'Category ID', example: '64f8c2d9a12b3c0012345678' })
+@ApiResponse({ status: 200, description: 'Category deleted successfully' })
+remove(@Param('id') id: string) {
+  return this.categoryService.remove(id);
+}
 }

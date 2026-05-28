@@ -5,7 +5,7 @@ import { Alert } from 'src/alert/entities/alert.entity';
 import { PasswordResetToken } from 'src/auth/entities/password-reset-token.entity';
 import { RefreshToken } from 'src/auth/entities/refresh-token.entity';
 import { Comment } from 'src/comments/entities/comment.entity';
-import { AccountStatus, AuthProvider, UserRole } from 'src/common/types/enums';
+import { AuthProvider, UserRole, UserStatus } from 'src/common/types/enums';
 import { Moderation } from 'src/moderation/entities/moderation.entity';
 import { Notification } from 'src/notifications/entities/notification.entity';
 import { Offer } from 'src/offers/entities/offer.entity';
@@ -77,7 +77,7 @@ export class User {
   @Column({ type: 'text', nullable: true })
   address?: string;
 
-  @Column({ type: 'json', nullable: true })
+  @Column({ type: 'text', nullable: true })
   website?: string;
 
   @OneToMany(() => Offer, offer => offer.business)
@@ -116,10 +116,10 @@ export class User {
   @ApiProperty()
   @Column({
     type: 'enum',
-    enum: AccountStatus,
-    default: AccountStatus.ACTIVE,
+    enum: UserStatus,
+    default: UserStatus.ACTIVE,
   })
-  status: AccountStatus;
+  status: UserStatus;
 
   @ApiProperty()
   @CreateDateColumn()
