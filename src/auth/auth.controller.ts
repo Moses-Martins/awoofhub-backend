@@ -1,7 +1,6 @@
 import { Body, Controller, Get, HttpCode, Post, Req, Res, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { instanceToPlain } from 'class-transformer';
 import type { Request, Response } from 'express';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { AuthService } from './auth.service';
@@ -55,7 +54,7 @@ export class AuthController {
     return {
       message: 'Login successful',
       data: {
-        ...instanceToPlain(user),
+        user,
         accessToken,
         refreshToken
       },
