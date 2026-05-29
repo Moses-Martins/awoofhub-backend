@@ -1,8 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -26,6 +28,8 @@ import { UserRole } from 'src/common/types/enums';
 import { User } from 'src/users/entities/user.entity';
 
 import { CreateOfferDto } from './dto/create-offer.dto';
+import { UpdateOfferDto } from './dto/update-offer.dto';
+
 import { OffersService } from './offers.service';
 
 @ApiTags('Offers')
@@ -52,14 +56,8 @@ export class OffersController {
     status: 403,
     description: 'Forbidden',
   })
-  create(
-    @CurrentUser() user: User,
-    @Body() createOfferDto: CreateOfferDto,
-  ) {
-    return this.offersService.create(
-      createOfferDto,
-      user.id,
-    );
+  create(@CurrentUser() user: User, @Body() createOfferDto: CreateOfferDto) {
+    return this.offersService.create(createOfferDto, user.id);
   }
 
   @Get()
@@ -97,7 +95,7 @@ export class OffersController {
     );
   }
 
-  @Get("admin")
+  @Get('admin')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiOperation({
@@ -216,10 +214,7 @@ export class OffersController {
     status: 200,
     description: 'Random offers fetched successfully',
   })
-  getRandom(
-    @Query('page') page: number,
-    @Query('limit') limit: number,
-  ) {
+  getRandom(@Query('page') page: number, @Query('limit') limit: number) {
     return this.offersService.getRandomOffers(page, limit);
   }
 
@@ -241,11 +236,7 @@ export class OffersController {
     @Query('page') page: number,
     @Query('limit') limit: number,
   ) {
-    return this.offersService.findByCategoryId(
-      id,
-      page,
-      limit,
-    );
+    return this.offersService.findByCategoryId(id, page, limit);
   }
 
   @Get('business/dashboard')
@@ -282,5 +273,31 @@ export class OffersController {
   })
   findOfferById(@Param('id') id: string) {
     return this.offersService.findById(id);
+  }
+
+  @Patch(':id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.BUSINESS)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update an offer' })
+  @ApiParam({ name: 'id', type: String, example: '64f8c2d9a12b3c0012345678' })
+  @ApiResponse({ status: 200, description: 'Offer updated successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  update(@CurrentUser() user: User, @Param('id') id: string, @Body() updateOfferDto: UpdateOfferDto) {
+    return this.offersService.update(id, user.id, updateOfferDto);
+  }
+
+  @Delete(':id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.BUSINESS)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete an offer' })
+  @ApiParam({ name: 'id', type: String, example: '64f8c2d9a12b3c0012345678' })
+  @ApiResponse({ status: 200, description: 'Offer deleted successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  remove(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.offersService.remove(id, user.id);
   }
 }

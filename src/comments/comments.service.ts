@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { OffersService } from 'src/offers/offers.service';
 import { UsersService } from 'src/users/users.service';
@@ -16,32 +20,42 @@ export class CommentsService {
     private usersService: UsersService,
     private offersService: OffersService,
     private paginationService: PaginationService,
-  ) { }
+  ) {}
 
-  async create(userId: string, OfferId: string, createCommentDto: CreateCommentDto) {
+  async create(
+    userId: string,
+    OfferId: string,
+    createCommentDto: CreateCommentDto,
+  ) {
     const user = await this.usersService.getUserById(userId);
     if (!user) {
       throw new NotFoundException('User not found');
     }
     if (user.status === UserStatus.DELETED) {
-  throw new ForbiddenException('User not found');
-}
-if (user.status === UserStatus.BLOCKED) {
-  throw new ForbiddenException('Your account has been blocked, you cannot post comments');
-}
-if (user.status === UserStatus.SUSPENDED) {
-  throw new ForbiddenException('Your account has been suspended, you cannot post comments');
-}
+      throw new ForbiddenException('User not found');
+    }
+    if (user.status === UserStatus.BLOCKED) {
+      throw new ForbiddenException(
+        'Your account has been blocked, you cannot post comments',
+      );
+    }
+    if (user.status === UserStatus.SUSPENDED) {
+      throw new ForbiddenException(
+        'Your account has been suspended, you cannot post comments',
+      );
+    }
 
     const offer = await this.offersService.findById(OfferId);
     if (!offer) {
       throw new NotFoundException('Offer not found');
     }
 
-
-    const comment = this.commentsRepository.create({ ...createCommentDto, user: { id: user.id }, offer: { id: offer.id } });
+    const comment = this.commentsRepository.create({
+      ...createCommentDto,
+      user: { id: user.id },
+      offer: { id: offer.id },
+    });
     return this.commentsRepository.save(comment);
-
   }
 
   // Get all comments for a specific offer
@@ -54,15 +68,12 @@ if (user.status === UserStatus.SUSPENDED) {
     const comments = await this.commentsRepository
       .createQueryBuilder('comment')
       .leftJoin('comment.user', 'user')
-      .select([
-        'comment',
-        'user.id', 'user.name', 'user.profileImageUrl',
-      ])
+      .select(['comment', 'user.id', 'user.name', 'user.profileImageUrl'])
       .where('comment.offer = :offerId', { offerId })
       .orderBy('comment.createdAt', 'DESC')
       .getMany();
 
-    return comments
+    return comments;
   }
 
   // Get all comments with pagination and filtering
@@ -88,31 +99,22 @@ if (user.status === UserStatus.SUSPENDED) {
 
     // Search comment text
     if (search) {
-      queryBuilder.andWhere(
-        'comment.comment ILIKE :search',
-        {
-          search: `%${search}%`,
-        },
-      );
+      queryBuilder.andWhere('comment.comment ILIKE :search', {
+        search: `%${search}%`,
+      });
     }
 
     // Date filters
     if (createdFrom) {
-      queryBuilder.andWhere(
-        'comment.createdAt >= :createdFrom',
-        {
-          createdFrom: new Date(createdFrom),
-        },
-      );
+      queryBuilder.andWhere('comment.createdAt >= :createdFrom', {
+        createdFrom: new Date(createdFrom),
+      });
     }
 
     if (createdTo) {
-      queryBuilder.andWhere(
-        'comment.createdAt <= :createdTo',
-        {
-          createdTo: new Date(createdTo),
-        },
-      );
+      queryBuilder.andWhere('comment.createdAt <= :createdTo', {
+        createdTo: new Date(createdTo),
+      });
     }
 
     queryBuilder
@@ -129,11 +131,7 @@ if (user.status === UserStatus.SUSPENDED) {
 
     const total = await countQuery.getCount();
 
-    const meta = this.paginationService.getPaginationMeta(
-      page,
-      limit,
-      total,
-    );
+    const meta = this.paginationService.getPaginationMeta(page, limit, total);
 
     const comments = await queryBuilder.getMany();
 
@@ -148,12 +146,7 @@ if (user.status === UserStatus.SUSPENDED) {
       .createQueryBuilder('comment')
       .leftJoin('comment.user', 'user')
       .leftJoin('comment.offer', 'offer')
-      .addSelect([
-        'user.id',
-        'user.name',
-        'user.email',
-        'offer.id',
-      ])
+      .addSelect(['user.id', 'user.name', 'user.email', 'offer.id'])
       .where('comment.id = :id', { id })
       .getOne();
 
@@ -161,39 +154,42 @@ if (user.status === UserStatus.SUSPENDED) {
       throw new NotFoundException('Comment not found');
     }
 
-    return comment
-
+    return comment;
   }
 
-
-  async removeComment(requesterId: string, commentId: string, isAdmin: boolean = false) {
+  async removeComment(
+    requesterId: string,
+    commentId: string,
+    isAdmin: boolean = false,
+  ) {
     const comment = await this.commentsRepository.findOne({
       where: { id: commentId },
-      relations: ['user']
+      relations: ['user'],
     });
 
     if (!comment) {
-      throw new NotFoundException("Comment not found");
+      throw new NotFoundException('Comment not found');
     }
 
     const isOwner = comment.user.id === requesterId;
 
     if (!isOwner && !isAdmin) {
-      throw new ForbiddenException("You do not have permission to delete this comment");
+      throw new ForbiddenException(
+        'You do not have permission to delete this comment',
+      );
     }
 
     await this.commentsRepository.remove(comment);
-    return { message: "Comment successfully removed" };
+    return { message: 'Comment successfully removed' };
   }
 
   async getCommentStats() {
     const [totalComments] = await Promise.all([
       this.commentsRepository.count(),
-    ])
+    ]);
 
     return {
       totalComments,
     };
   }
-
 }

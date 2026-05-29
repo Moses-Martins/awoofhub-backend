@@ -51,12 +51,7 @@ export enum ReportStatus {
   DISMISSED = "dismissed"
 }
 
-export enum AccountStatus {
-  ACTIVE = "active",
-  SUSPENDED = "suspended",
-  BANNED = "banned",
-  DELETED = "deleted"
-}
+
 
 export enum ModerationActionType {
   WARNING = 'warning',

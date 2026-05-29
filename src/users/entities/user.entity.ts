@@ -5,14 +5,13 @@ import { Alert } from 'src/alert/entities/alert.entity';
 import { PasswordResetToken } from 'src/auth/entities/password-reset-token.entity';
 import { RefreshToken } from 'src/auth/entities/refresh-token.entity';
 import { Comment } from 'src/comments/entities/comment.entity';
-import { AccountStatus, AuthProvider, UserRole } from 'src/common/types/enums';
+import { AuthProvider, UserRole, UserStatus } from 'src/common/types/enums';
 import { Moderation } from 'src/moderation/entities/moderation.entity';
 import { Notification } from 'src/notifications/entities/notification.entity';
 import { Offer } from 'src/offers/entities/offer.entity';
 import { Report } from 'src/reports/entities/report.entity';
 import { Review } from 'src/reviews/entities/review.entity';
 import { Wishlist } from 'src/wishlist/entities/wishlist.entity';
-import { UserStatus } from 'src/common/types/enums';
 
 import {
   BeforeInsert,
@@ -25,10 +24,8 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-
 @Entity('users')
 export class User {
-
   @ApiProperty({ example: '550e8400-e29b-41d4-a716-446655440000' })
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -78,16 +75,16 @@ export class User {
   @Column({ type: 'text', nullable: true })
   address?: string;
 
-  @Column({ type: 'json', nullable: true })
+  @Column({ type: 'text', nullable: true })
   website?: string;
 
-  @OneToMany(() => Offer, offer => offer.business)
+  @OneToMany(() => Offer, (offer) => offer.business)
   offers: Offer[];
 
-  @OneToMany(() => Report, report => report.reporter)
+  @OneToMany(() => Report, (report) => report.reporter)
   reports: Report[];
 
-  @OneToMany(() => Moderation, moderate => moderate.admin)
+  @OneToMany(() => Moderation, (moderate) => moderate.admin)
   moderate: Moderation[];
 
   @OneToMany(() => Alert, (alert) => alert.user)
@@ -96,31 +93,31 @@ export class User {
   @OneToMany(() => Alert, (alert) => alert.business)
   receivedAlerts: Alert[];
 
-  @OneToMany(() => Review, review => review.user)
+  @OneToMany(() => Review, (review) => review.user)
   reviews: Review[];
 
-  @OneToMany(() => Comment, comment => comment.user)
+  @OneToMany(() => Comment, (comment) => comment.user)
   comments: Comment[];
 
-  @OneToMany(() => Notification, notification => notification.user)
+  @OneToMany(() => Notification, (notification) => notification.user)
   notifications: Notification[];
 
   @OneToMany(() => Wishlist, (wishlist) => wishlist.user, { cascade: true })
   wishlist: Wishlist[];
 
   @OneToMany(() => RefreshToken, (refreshToken) => refreshToken.user)
-  refreshTokens: RefreshToken[]
+  refreshTokens: RefreshToken[];
 
   @OneToMany(() => PasswordResetToken, (token) => token.user)
   passwordResetTokens: PasswordResetToken[];
 
-    @ApiProperty({ enum: UserStatus, default: UserStatus.ACTIVE })
-@Column({
-  type: 'enum',
-  enum: UserStatus,
-  default: UserStatus.ACTIVE,
-})
-status: UserStatus;
+  @ApiProperty({ enum: UserStatus, default: UserStatus.ACTIVE })
+  @Column({
+    type: 'enum',
+    enum: UserStatus,
+    default: UserStatus.ACTIVE,
+  })
+  status: UserStatus;
 
   @ApiProperty()
   @CreateDateColumn()

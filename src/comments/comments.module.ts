@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CommonModule } from 'src/common/common.module';
 import { OffersModule } from 'src/offers/offers.module';
 import { UsersModule } from 'src/users/users.module';
 import { CommentsController } from './comments.controller';
 import { CommentsService } from './comments.service';
 import { Comment } from './entities/comment.entity';
-import { PaginationService } from 'src/common/pagination/pagination.service';
 
 
 @Module({
@@ -15,9 +15,10 @@ import { PaginationService } from 'src/common/pagination/pagination.service';
     JwtModule.register({}),
     UsersModule,
     OffersModule,
+    CommonModule,
   ],
   controllers: [CommentsController],
-  providers: [CommentsService, PaginationService],
+  providers: [CommentsService],
   exports: [CommentsService],
 })
 export class CommentsModule {}
