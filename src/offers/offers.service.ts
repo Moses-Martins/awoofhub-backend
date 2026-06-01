@@ -1,9 +1,9 @@
-import { forwardRef, Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, InternalServerErrorException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AlertService } from 'src/alert/alert.service';
 import { CategoryService } from 'src/category/category.service';
 import { PaginationService } from 'src/common/pagination/pagination.service';
-import { NotificationType, OfferStatus } from 'src/common/types/enums';
+import { NotificationType, OfferStatus , UserStatus} from 'src/common/types/enums';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { ReviewsService } from 'src/reviews/reviews.service';
 import { UsersService } from 'src/users/users.service';
@@ -11,6 +11,7 @@ import { MoreThan, Repository } from 'typeorm';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { UpdateOfferDto } from './dto/update-offer.dto';
 import { Offer } from './entities/offer.entity';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class OffersService {
@@ -39,6 +40,7 @@ export class OffersService {
       if (!user) {
         throw new NotFoundException('User not found');
       }
+      this.checkUserStatus(user)
 
       const offer = this.offersRepository.create({ ...rest, category: { id: existing.id }, endDate: new Date(endDate), business: { id: user.id } });
       await this.offersRepository.save(offer);
@@ -881,5 +883,16 @@ export class OffersService {
 
     return Object.values(result);
   }
+  private checkUserStatus(user: User) {
+  if (user.status === UserStatus.DELETED) {
+    throw new ForbiddenException('User not found');
+  }
+  if (user.status === UserStatus.BANNED) {
+    throw new ForbiddenException('Your account has been banned, you cannot create offers');
+  }
+  if (user.status === UserStatus.SUSPENDED) {
+    throw new ForbiddenException('Your account has been suspended, you cannot create offers');
+  }
+}
 
 }

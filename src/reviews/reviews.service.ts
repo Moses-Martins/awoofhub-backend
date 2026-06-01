@@ -1,10 +1,12 @@
-import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { OffersService } from 'src/offers/offers.service';
 import { UsersService } from 'src/users/users.service';
 import { Repository } from 'typeorm';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { Review } from './entities/review.entity';
+import { UserStatus } from 'src/common/types/enums';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class ReviewsService {
@@ -20,6 +22,7 @@ export class ReviewsService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+    this.checkUserStatus(user)
 
     const offer = await this.offersService.findById(offerId);
     if (!offer) {
@@ -97,5 +100,16 @@ export class ReviewsService {
       ratingDistribution
     };
   }
+  private checkUserStatus(user: User) {
+  if (user.status === UserStatus.DELETED) {
+    throw new ForbiddenException('User not found');
+  }
+  if (user.status === UserStatus.BANNED) {
+    throw new ForbiddenException('Your account has been banned, you cannot post reviews');
+  }
+  if (user.status === UserStatus.SUSPENDED) {
+    throw new ForbiddenException('Your account has been suspended, you cannot post reviews');
+  }
+}
 
 }
