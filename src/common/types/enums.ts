@@ -52,10 +52,10 @@ export enum ReportStatus {
 }
 
 export enum UserStatus {
-  ACTIVE = "active",
-  SUSPENDED = "suspended",
-  BANNED = "banned",
-  DELETED = "deleted"
+  ACTIVE = 'active',
+  SUSPENDED = 'suspended',
+  BANNED = 'banned',
+  DELETED = 'deleted',
 }
 
 export enum ModerationActionType {
