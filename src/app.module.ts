@@ -23,6 +23,7 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { StatsModule } from './stats/stats.module';
 import { UsersModule } from './users/users.module';
 import { WishlistModule } from './wishlist/wishlist.module';
+import { ClicksModule } from './clicks/clicks.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { WishlistModule } from './wishlist/wishlist.module';
     StatsModule,
     ReportsModule,
     ModerationModule,
+    ClicksModule,
   ],
   controllers: [AppController],
   providers: [AppService],

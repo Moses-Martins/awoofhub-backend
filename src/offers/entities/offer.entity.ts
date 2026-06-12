@@ -1,4 +1,5 @@
 import { Category } from 'src/category/entities/category.entity';
+import { Click } from 'src/clicks/entities/click.entity';
 import { Comment } from 'src/comments/entities/comment.entity';
 import { OfferStatus } from 'src/common/types/enums';
 import { Review } from 'src/reviews/entities/review.entity';
@@ -65,6 +66,9 @@ export class Offer {
 
     @OneToMany(() => Wishlist, (wishlist) => wishlist.offer, { cascade: true })
     wishlists: Wishlist[];
+
+    @OneToMany(() => Click, click => click.offer)
+    clicks: Click[]
 
     @CreateDateColumn()
     createdAt: Date;

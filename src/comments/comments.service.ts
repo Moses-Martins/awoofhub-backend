@@ -4,14 +4,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { PaginationService } from 'src/common/pagination/pagination.service';
+import { UserStatus } from 'src/common/types/enums';
 import { OffersService } from 'src/offers/offers.service';
+import { User } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
 import { Repository } from 'typeorm';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { Comment } from './entities/comment.entity';
-import { PaginationService } from 'src/common/pagination/pagination.service';
-import { UserStatus } from 'src/common/types/enums';
-import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class CommentsService {
