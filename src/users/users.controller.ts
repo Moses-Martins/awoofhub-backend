@@ -27,6 +27,7 @@ import { UserRole } from 'src/common/types/enums';
 import { UpdateUserDto } from 'src/users/dto/update-user.dto';
 
 import { FindUsersQueryDto } from './dto/find-user-query.dto';
+import { UpdateUsernameDto } from './dto/update-username.dto';
 import { UsersService } from './users.service';
 
 @ApiTags('Users')
@@ -34,6 +35,27 @@ import { UsersService } from './users.service';
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
+
+  @Patch('update/username')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.USER, UserRole.BUSINESS)
+  @ApiOperation({
+    summary: 'Update username',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Username updated successfully',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+  })
+  changeUsername(
+    @CurrentUser() user,
+    @Body() dto: UpdateUsernameDto,
+  ) {
+    return this.usersService.changeUsername(user.id, dto.username);
+  }
 
   @Patch('update')
   @UseGuards(AuthGuard, RolesGuard)
@@ -128,7 +150,7 @@ export class UsersController {
   ) {
     return this.usersService.findAll(query);
   }
-  
+
   @Delete('me')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()

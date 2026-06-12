@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { PaginationService } from 'src/common/pagination/pagination.service';
 import { UserRole, UserStatus } from 'src/common/types/enums';
 import { Repository } from 'typeorm';
-import { CreateUserDto } from './dto/create-user.dto';
 import { FindUsersQueryDto } from './dto/find-user-query.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
@@ -17,7 +16,7 @@ export class UsersService {
         private readonly paginationService: PaginationService,
     ) { }
 
-    async create(user: CreateUserDto) {
+    async create(user: Partial<User>) {
         try {
             const newUser = this.userRepository.create(user);
             await this.userRepository.save(newUser);
@@ -27,6 +26,49 @@ export class UsersService {
         } catch (error) {
             throw new InternalServerErrorException('Failed to create user');
         }
+    }
+
+    async changeUsername(userId: string, newUsername: string) {
+        const user = await this.userRepository.findOne({
+            where: { id: userId },
+        });
+
+        if (!user) throw new NotFoundException('User not found');
+
+        const now = new Date();
+
+        if (user.usernameChangeLockedUntil && now < user.usernameChangeLockedUntil) {
+            const remainingDays = Math.ceil(
+                (user.usernameChangeLockedUntil.getTime() - now.getTime()) /
+                (1000 * 60 * 60 * 24),
+            );
+
+            throw new BadRequestException(
+                `You can change your username again in ${remainingDays} day(s)`,
+            );
+        }
+
+        newUsername = newUsername
+            .toLowerCase()
+            .replace(/[^a-z0-9_]/g, '_')
+            .replace(/_+/g, '_')
+            .replace(/^_+|_+$/g, '');
+
+        const existing = await this.userRepository.findOne({
+            where: { username: newUsername },
+        });
+
+        if (existing && existing.id !== userId) {
+            throw new BadRequestException('Username already taken');
+        }
+
+        user.username = newUsername;
+
+        const lockUntil = new Date();
+        lockUntil.setDate(lockUntil.getDate() + 60);
+        user.usernameChangeLockedUntil = lockUntil;
+
+        return this.userRepository.save(user);
     }
 
     async update(userId: string, dto: UpdateUserDto) {
@@ -51,11 +93,6 @@ export class UsersService {
         } catch (error) {
             throw new InternalServerErrorException("Failed to update user");
         }
-    }
-
-    async createGoogleUser(data: Partial<User>) {
-        const user = this.userRepository.create(data);
-        return this.userRepository.save(user);
     }
 
     async updateEmailVerification(id: string) {
@@ -199,8 +236,38 @@ export class UsersService {
         });
     }
 
+    async getUserByUsername(username: string) {
+        return await this.userRepository.findOne({
+            where: { username },
+        });
+    }
+
     async save(user: User) {
         return this.userRepository.save(user);
+    }
+
+    async generateUniqueUsername(email: string): Promise<string> {
+        const emailPrefix = email.split('@')[0];
+
+        const baseUsername = emailPrefix
+            .toLowerCase()
+            .replace(/[^a-z0-9_]/g, '_')
+            .replace(/_+/g, '_')
+            .replace(/^_+|_+$/g, '');
+
+        let username = baseUsername || 'user';
+        let counter = 1;
+
+        while (
+            await this.userRepository.exists({
+                where: { username },
+            })
+        ) {
+            username = `${baseUsername}_${counter}`;
+            counter++;
+        }
+
+        return username;
     }
 
 
