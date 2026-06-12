@@ -4,6 +4,7 @@ import { MinLength } from 'class-validator';
 import { Alert } from 'src/alert/entities/alert.entity';
 import { PasswordResetToken } from 'src/auth/entities/password-reset-token.entity';
 import { RefreshToken } from 'src/auth/entities/refresh-token.entity';
+import { Click } from 'src/clicks/entities/click.entity';
 import { Comment } from 'src/comments/entities/comment.entity';
 import { AuthProvider, UserRole, UserStatus } from 'src/common/types/enums';
 import { Moderation } from 'src/moderation/entities/moderation.entity';
@@ -100,6 +101,9 @@ export class User {
 
   @OneToMany(() => Comment, comment => comment.user)
   comments: Comment[];
+
+  @OneToMany(() => Click, click => click.user)
+  clicks: Click[];
 
   @OneToMany(() => Notification, notification => notification.user)
   notifications: Notification[];

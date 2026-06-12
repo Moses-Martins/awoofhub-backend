@@ -1,17 +1,17 @@
-import { forwardRef, Inject, Injectable, InternalServerErrorException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, forwardRef, Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AlertService } from 'src/alert/alert.service';
 import { CategoryService } from 'src/category/category.service';
 import { PaginationService } from 'src/common/pagination/pagination.service';
-import { NotificationType, OfferStatus , UserStatus} from 'src/common/types/enums';
+import { NotificationType, OfferStatus, UserStatus } from 'src/common/types/enums';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { ReviewsService } from 'src/reviews/reviews.service';
+import { User } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
 import { MoreThan, Repository } from 'typeorm';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { UpdateOfferDto } from './dto/update-offer.dto';
 import { Offer } from './entities/offer.entity';
-import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class OffersService {
@@ -57,7 +57,6 @@ export class OffersService {
         )
       );
 
-      // Fire them all at once!
       await Promise.all(notificationPromises);
 
       await this.notificationService.create(offer.business.id, "Created Offer", "You just created an offer", NotificationType.OFFER_CREATED, offer.id)
@@ -85,6 +84,7 @@ export class OffersService {
       .leftJoin('offer.reviews', 'review')
       .leftJoin('offer.business', 'business')
       .leftJoin('offer.category', 'category')
+      .leftJoin('offer.clicks', 'click')
       .select([
         'offer',
         'business.id',
@@ -95,7 +95,8 @@ export class OffersService {
         'category.slug'
       ])
       .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
-      .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
+      .addSelect('COALESCE(COUNT(DISTINCT review.id), 0)', 'reviewCount')
+      .addSelect('COALESCE(COUNT(DISTINCT click.id), 0)', 'clickCount')
       .where('offer.status = :status', { status: OfferStatus.APPROVED })
       .andWhere('offer.endDate > :now', { now })
       .groupBy('offer.id')
@@ -163,7 +164,8 @@ export class OffersService {
     const results = entities.map((offer, index) => ({
       ...offer,
       avgRating: Number(raw[index].avgRating),
-      reviewCount: Number(raw[index].reviewCount)
+      reviewCount: Number(raw[index].reviewCount),
+      clickCount: Number(raw[index].clickCount)
     }));
 
     return {
@@ -173,12 +175,17 @@ export class OffersService {
 
   }
 
-  async findAllAdmin(search?: string, category?: string, minRating?: number, createdFrom?: string, createdTo?: string, page = 1, limit = 10) {
+
+  async findAllTrending(search?: string, category?: string, minRating?: number, createdFrom?: string, createdTo?: string, page = 1, limit = 10) {
+    const havingConditions: string[] = [];
+    const params: any = {};
+    const now = new Date();
     const queryBuilder = this.offersRepository
       .createQueryBuilder('offer')
       .leftJoin('offer.reviews', 'review')
       .leftJoin('offer.business', 'business')
       .leftJoin('offer.category', 'category')
+      .leftJoin('offer.clicks', 'click')
       .select([
         'offer',
         'business.id',
@@ -189,7 +196,114 @@ export class OffersService {
         'category.slug'
       ])
       .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
-      .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
+      .addSelect('COALESCE(COUNT(DISTINCT review.id), 0)', 'reviewCount')
+      .addSelect('COALESCE(COUNT(DISTINCT click.id), 0)', 'clickCount')
+      .where('offer.status = :status', { status: OfferStatus.APPROVED })
+      .andWhere('offer.endDate > :now', { now })
+      .groupBy('offer.id')
+      .addGroupBy('business.id')
+      .addGroupBy('category.id');
+
+
+    if (search) {
+      queryBuilder.andWhere(
+        '(offer.title ILIKE :search OR offer.description ILIKE :search)',
+        { search: `%${search}%` }
+      );
+    }
+
+    if (category) {
+      queryBuilder.andWhere('category.slug = :categorySlug', {
+        categorySlug: category
+      });
+    }
+
+    if (createdFrom) {
+      queryBuilder.andWhere('offer.createdAt >= :createdFrom', {
+        createdFrom: new Date(createdFrom)
+      });
+    }
+
+    if (createdTo) {
+      queryBuilder.andWhere('offer.createdAt <= :createdTo', {
+        createdTo: new Date(createdTo)
+      });
+    }
+
+    if (minRating) {
+      havingConditions.push('COALESCE(AVG(review.rating), 0) >= :minRating');
+      params.minRating = minRating;
+    }
+
+    havingConditions.push('COUNT(DISTINCT click.id) >= :minClicks');
+    params.minClicks = 1;
+
+    queryBuilder.having(havingConditions.join(' AND '), params);
+
+    queryBuilder.orderBy('offer.createdAt', 'DESC');
+
+    queryBuilder
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const countQuery = queryBuilder.clone()
+      .skip(undefined)
+      .take(undefined)
+      .orderBy()
+      .select('offer.id');
+
+    const totalResult = await this.offersRepository.manager
+      .createQueryBuilder()
+      .select('COUNT(*)', 'count')
+      .from(`(${countQuery.getQuery()})`, 'sub')
+      .setParameters(countQuery.getParameters())
+      .getRawOne();
+
+    const total = Number(totalResult.count);
+
+    const meta = this.paginationService.getPaginationMeta(page, limit, total);
+
+    const { entities, raw } = await queryBuilder.getRawAndEntities();
+
+    const results = entities.map((offer, index) => ({
+      ...offer,
+      avgRating: Number(raw[index].avgRating),
+      reviewCount: Number(raw[index].reviewCount),
+      clickCount: Number(raw[index].clickCount)
+    }));
+
+    return {
+      data: results,
+      meta
+    };
+
+  }
+
+  async findAllExpiring(search?: string, category?: string, minRating?: number, createdFrom?: string, createdTo?: string, page = 1, limit = 10) {
+    const now = new Date();
+    const threeDaysFromNow = new Date();
+    threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+    const queryBuilder = this.offersRepository
+      .createQueryBuilder('offer')
+      .leftJoin('offer.reviews', 'review')
+      .leftJoin('offer.business', 'business')
+      .leftJoin('offer.category', 'category')
+      .leftJoin('offer.clicks', 'click')
+      .select([
+        'offer',
+        'business.id',
+        'business.name',
+        'business.email',
+        'category.id',
+        'category.name',
+        'category.slug'
+      ])
+      .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
+      .addSelect('COALESCE(COUNT(DISTINCT review.id), 0)', 'reviewCount')
+      .addSelect('COALESCE(COUNT(DISTINCT click.id), 0)', 'clickCount')
+      .where('offer.status = :status', { status: OfferStatus.APPROVED })
+      .andWhere('offer.endDate > :now', { now })
+      .andWhere('offer.endDate <= :threeDaysFromNow', { threeDaysFromNow })
       .groupBy('offer.id')
       .addGroupBy('business.id')
       .addGroupBy('category.id');
@@ -255,7 +369,102 @@ export class OffersService {
     const results = entities.map((offer, index) => ({
       ...offer,
       avgRating: Number(raw[index].avgRating),
-      reviewCount: Number(raw[index].reviewCount)
+      reviewCount: Number(raw[index].reviewCount),
+      clickCount: Number(raw[index].clickCount)
+    }));
+
+    return {
+      data: results,
+      meta
+    };
+  }
+
+  async findAllAdmin(search?: string, category?: string, minRating?: number, createdFrom?: string, createdTo?: string, page = 1, limit = 10) {
+    const queryBuilder = this.offersRepository
+      .createQueryBuilder('offer')
+      .leftJoin('offer.reviews', 'review')
+      .leftJoin('offer.business', 'business')
+      .leftJoin('offer.category', 'category')
+      .leftJoin('offer.clicks', 'click')
+      .select([
+        'offer',
+        'business.id',
+        'business.name',
+        'business.email',
+        'category.id',
+        'category.name',
+        'category.slug'
+      ])
+      .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
+      .addSelect('COALESCE(COUNT(DISTINCT review.id), 0)', 'reviewCount')
+      .addSelect('COALESCE(COUNT(DISTINCT click.id), 0)', 'clickCount')
+      .groupBy('offer.id')
+      .addGroupBy('business.id')
+      .addGroupBy('category.id');
+
+
+    if (search) {
+      queryBuilder.andWhere(
+        '(offer.title ILIKE :search OR offer.description ILIKE :search)',
+        { search: `%${search}%` }
+      );
+    }
+
+    if (category) {
+      queryBuilder.andWhere('category.slug = :categorySlug', {
+        categorySlug: category
+      });
+    }
+
+    if (createdFrom) {
+      queryBuilder.andWhere('offer.createdAt >= :createdFrom', {
+        createdFrom: new Date(createdFrom)
+      });
+    }
+
+    if (createdTo) {
+      queryBuilder.andWhere('offer.createdAt <= :createdTo', {
+        createdTo: new Date(createdTo)
+      });
+    }
+
+    if (minRating) {
+      queryBuilder.having(
+        'COALESCE(AVG(review.rating), 0) >= :minRating',
+        { minRating }
+      );
+    }
+
+    queryBuilder.orderBy('offer.createdAt', 'DESC');
+
+    queryBuilder
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const countQuery = queryBuilder.clone()
+      .skip(undefined)
+      .take(undefined)
+      .orderBy()
+      .select('offer.id');
+
+    const totalResult = await this.offersRepository.manager
+      .createQueryBuilder()
+      .select('COUNT(*)', 'count')
+      .from(`(${countQuery.getQuery()})`, 'sub')
+      .setParameters(countQuery.getParameters())
+      .getRawOne();
+
+    const total = Number(totalResult.count);
+
+    const meta = this.paginationService.getPaginationMeta(page, limit, total);
+
+    const { entities, raw } = await queryBuilder.getRawAndEntities();
+
+    const results = entities.map((offer, index) => ({
+      ...offer,
+      avgRating: Number(raw[index].avgRating),
+      reviewCount: Number(raw[index].reviewCount),
+      clickCount: Number(raw[index].clickCount)
     }));
 
     return {
@@ -303,6 +512,7 @@ export class OffersService {
       .leftJoin('offer.reviews', 'review')
       .leftJoin('offer.business', 'business')
       .leftJoin('offer.category', 'category')
+      .leftJoin('offer.clicks', 'click')
       .addSelect([
         'business.id',
         'business.name',
@@ -315,7 +525,8 @@ export class OffersService {
       .andWhere('offer.status = :status', { status: OfferStatus.APPROVED })
       .andWhere('offer.endDate > :now', { now })
       .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
-      .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
+      .addSelect('COALESCE(COUNT(DISTINCT review.id), 0)', 'reviewCount')
+      .addSelect('COALESCE(COUNT(DISTINCT click.id), 0)', 'clickCount')
       .groupBy('offer.id')
       .addGroupBy('business.id')
       .addGroupBy('category.id')
@@ -330,7 +541,8 @@ export class OffersService {
     const results = entities.map((offer, index) => ({
       ...offer,
       avgRating: Number(raw[index].avgRating),
-      reviewCount: Number(raw[index].reviewCount)
+      reviewCount: Number(raw[index].reviewCount),
+      clickCount: Number(raw[index].clickCount)
     }));
 
     return {
@@ -353,6 +565,7 @@ export class OffersService {
       .leftJoin('offer.reviews', 'review')
       .leftJoin('offer.business', 'business')
       .leftJoin('offer.category', 'category')
+      .leftJoin('offer.clicks', 'click')
       .select([
         'offer',
         'business.id',
@@ -363,7 +576,8 @@ export class OffersService {
         'category.slug'
       ])
       .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
-      .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
+      .addSelect('COALESCE(COUNT(DISTINCT review.id), 0)', 'reviewCount')
+      .addSelect('COALESCE(COUNT(DISTINCT click.id), 0)', 'clickCount')
       .where('offer.status = :status', { status: OfferStatus.APPROVED })
       .andWhere('offer.endDate > :now', { now })
       .groupBy('offer.id')
@@ -432,7 +646,8 @@ export class OffersService {
     const results = entities.map((offer, index) => ({
       ...offer,
       avgRating: Number(raw[index].avgRating),
-      reviewCount: Number(raw[index].reviewCount)
+      reviewCount: Number(raw[index].reviewCount),
+      clickCount: Number(raw[index].clickCount)
     }));
 
     return {
@@ -454,6 +669,7 @@ export class OffersService {
       .leftJoin('offer.reviews', 'review')
       .leftJoin('offer.business', 'business')
       .leftJoin('offer.category', 'category')
+      .leftJoin('offer.clicks', 'click')
       .select([
         'offer',
         'business.id',
@@ -464,7 +680,8 @@ export class OffersService {
         'category.slug'
       ])
       .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
-      .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
+      .addSelect('COALESCE(COUNT(DISTINCT review.id), 0)', 'reviewCount')
+      .addSelect('COALESCE(COUNT(DISTINCT click.id), 0)', 'clickCount')
       .groupBy('offer.id')
       .addGroupBy('business.id')
       .addGroupBy('category.id');
@@ -531,7 +748,8 @@ export class OffersService {
     const results = entities.map((offer, index) => ({
       ...offer,
       avgRating: Number(raw[index].avgRating),
-      reviewCount: Number(raw[index].reviewCount)
+      reviewCount: Number(raw[index].reviewCount),
+      clickCount: Number(raw[index].clickCount)
     }));
 
     return {
@@ -565,6 +783,7 @@ export class OffersService {
       .leftJoin('offer.reviews', 'review')
       .leftJoin('offer.business', 'business')
       .leftJoin('offer.category', 'category')
+      .leftJoin('offer.clicks', 'click')
       .select([
         'offer',
         'business.id', 'business.name', 'business.email',
@@ -572,7 +791,8 @@ export class OffersService {
       ])
       .whereInIds(ids)
       .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
-      .addSelect('COALESCE(COUNT(review.id),0)', 'reviewCount')
+      .addSelect('COALESCE(COUNT(DISTINCT review.id), 0)', 'reviewCount')
+      .addSelect('COALESCE(COUNT(DISTINCT click.id), 0)', 'clickCount')
       .groupBy('offer.id')
       .addGroupBy('business.id')
       .addGroupBy('category.id')
@@ -585,7 +805,8 @@ export class OffersService {
     const results = entities.map((offer, index) => ({
       ...offer,
       avgRating: Number(raw[index].avgRating),
-      reviewCount: Number(raw[index].reviewCount)
+      reviewCount: Number(raw[index].reviewCount),
+      clickCount: Number(raw[index].clickCount)
     }));
 
     return {
@@ -674,6 +895,7 @@ export class OffersService {
 
     const topOffersPromise = this.offersRepository
       .createQueryBuilder('offer')
+      .leftJoin('offer.clicks', 'click')
       .leftJoin('offer.reviews', 'review')
       .leftJoin('offer.category', 'category')
       .leftJoin('offer.business', 'business')
@@ -690,7 +912,8 @@ export class OffersService {
         'category.name',
       ])
       .addSelect('COALESCE(AVG(review.rating), 0)', 'avgRating')
-      .addSelect('COALESCE(COUNT(review.id), 0)', 'reviewCount')
+      .addSelect('COALESCE(COUNT(DISTINCT review.id), 0)', 'reviewCount')
+      .addSelect('COALESCE(COUNT(DISTINCT click.id), 0)', 'clickCount')
       .groupBy('offer.id')
       .addGroupBy('category.id')
       .addGroupBy('category.name')
@@ -771,6 +994,7 @@ export class OffersService {
       },
       avgRating: Number(item.avgRating),
       reviewCount: Number(item.reviewCount),
+      clickCount: Number(item.clickCount)
     }));
 
     const offersByMonth = this.formatMonthlyData(offersByMonthRaw);
@@ -883,16 +1107,17 @@ export class OffersService {
 
     return Object.values(result);
   }
+
   private checkUserStatus(user: User) {
-  if (user.status === UserStatus.DELETED) {
-    throw new ForbiddenException('User not found');
+    if (user.status === UserStatus.DELETED) {
+      throw new ForbiddenException('User not found');
+    }
+    if (user.status === UserStatus.BANNED) {
+      throw new ForbiddenException('Your account has been banned, you cannot create offers');
+    }
+    if (user.status === UserStatus.SUSPENDED) {
+      throw new ForbiddenException('Your account has been suspended, you cannot create offers');
+    }
   }
-  if (user.status === UserStatus.BANNED) {
-    throw new ForbiddenException('Your account has been banned, you cannot create offers');
-  }
-  if (user.status === UserStatus.SUSPENDED) {
-    throw new ForbiddenException('Your account has been suspended, you cannot create offers');
-  }
-}
 
 }

@@ -22,7 +22,7 @@ export class WishlistService {
 
     const offer = await this.offersService.findById(offerId);
     if (!offer) {
-      throw new NotFoundException('Product not found');
+      throw new NotFoundException('Offer not found');
     }
 
     const existingWishlist = await this.wishlistRepository.findOne({

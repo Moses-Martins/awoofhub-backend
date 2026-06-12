@@ -95,6 +95,76 @@ export class OffersController {
     );
   }
 
+  @Get('trending')
+  @ApiOperation({
+    summary: 'Get all trending offers',
+  })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'category', required: false, type: String })
+  @ApiQuery({ name: 'minRating', required: false, type: Number })
+  @ApiQuery({ name: 'createdFrom', required: false, type: String })
+  @ApiQuery({ name: 'createdTo', required: false, type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Offers fetched successfully',
+  })
+  async findAllTrending(
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+    @Query('search') search?: string,
+    @Query('category') category?: string,
+    @Query('minRating') minRating?: number,
+    @Query('createdFrom') createdFrom?: string,
+    @Query('createdTo') createdTo?: string,
+  ) {
+    return this.offersService.findAllTrending(
+      search,
+      category,
+      minRating,
+      createdFrom,
+      createdTo,
+      page,
+      limit,
+    );
+  }
+
+  @Get('expiring')
+  @ApiOperation({
+    summary: 'Get all expiring offers',
+  })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'category', required: false, type: String })
+  @ApiQuery({ name: 'minRating', required: false, type: Number })
+  @ApiQuery({ name: 'createdFrom', required: false, type: String })
+  @ApiQuery({ name: 'createdTo', required: false, type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Offers fetched successfully',
+  })
+  async findAllExpiring(
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+    @Query('search') search?: string,
+    @Query('category') category?: string,
+    @Query('minRating') minRating?: number,
+    @Query('createdFrom') createdFrom?: string,
+    @Query('createdTo') createdTo?: string,
+  ) {
+    return this.offersService.findAllExpiring(
+      search,
+      category,
+      minRating,
+      createdFrom,
+      createdTo,
+      page,
+      limit,
+    );
+  }
+
   @Get('admin')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
