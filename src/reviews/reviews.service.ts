@@ -1,12 +1,12 @@
-import { forwardRef, Inject, Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { UserStatus } from 'src/common/types/enums';
 import { OffersService } from 'src/offers/offers.service';
+import { User } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
 import { Repository } from 'typeorm';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { Review } from './entities/review.entity';
-import { UserStatus } from 'src/common/types/enums';
-import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class ReviewsService {
@@ -100,6 +100,9 @@ export class ReviewsService {
       ratingDistribution
     };
   }
+
+
+  
   private checkUserStatus(user: User) {
   if (user.status === UserStatus.DELETED) {
     throw new ForbiddenException('User not found');

@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserStatus } from 'src/common/types/enums';
 import { OffersService } from 'src/offers/offers.service';
@@ -13,6 +13,7 @@ export class ClicksService {
     @InjectRepository(Click)
     private clicksRepository: Repository<Click>,
     private usersService: UsersService,
+    @Inject(forwardRef(() => OffersService))
     private offersService: OffersService,
   ) { }
 
@@ -44,6 +45,13 @@ export class ClicksService {
 
   }
 
+  async getClickCount(offerId: string): Promise<number> {
+    return await this.clicksRepository.count({
+      where: {
+        offer: { id: offerId }
+      }
+    });
+  }
 
   private checkUserStatus(user: User) {
     if (user.status === UserStatus.DELETED) {

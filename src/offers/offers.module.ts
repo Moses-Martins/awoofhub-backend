@@ -3,6 +3,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AlertModule } from 'src/alert/alert.module';
 import { CategoryModule } from 'src/category/category.module';
+import { ClicksModule } from 'src/clicks/clicks.module';
 import { CommonModule } from 'src/common/common.module';
 import { NotificationsModule } from 'src/notifications/notifications.module';
 import { ReviewsModule } from 'src/reviews/reviews.module';
@@ -20,6 +21,7 @@ import { OffersService } from './offers.service';
     AlertModule,
     NotificationsModule,
     CategoryModule,
+    forwardRef(() => ClicksModule),
     forwardRef(() => ReviewsModule)
   ],
   controllers: [OffersController],

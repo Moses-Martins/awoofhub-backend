@@ -2,6 +2,7 @@ import { ForbiddenException, forwardRef, Inject, Injectable, InternalServerError
 import { InjectRepository } from '@nestjs/typeorm';
 import { AlertService } from 'src/alert/alert.service';
 import { CategoryService } from 'src/category/category.service';
+import { ClicksService } from 'src/clicks/clicks.service';
 import { PaginationService } from 'src/common/pagination/pagination.service';
 import { NotificationType, OfferStatus, UserStatus } from 'src/common/types/enums';
 import { NotificationsService } from 'src/notifications/notifications.service';
@@ -23,6 +24,8 @@ export class OffersService {
     private readonly userService: UsersService,
     @Inject(forwardRef(() => ReviewsService))
     private readonly reviewService: ReviewsService,
+    @Inject(forwardRef(() => ClicksService))
+    private readonly clicksService: ClicksService,
     private readonly alertService: AlertService,
     private readonly categoryService: CategoryService,
   ) { }
@@ -495,10 +498,12 @@ export class OffersService {
     }
 
     const reviews = await this.reviewService.getReviews(id)
+    const clicks = await this.clicksService.getClickCount(id)
 
     return {
       ...offer,
-      ...reviews
+      ...reviews,
+      clicks
     }
   }
 
