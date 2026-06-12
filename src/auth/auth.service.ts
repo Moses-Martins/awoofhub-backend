@@ -31,7 +31,7 @@ export class AuthService {
     private readonly refreshTokenRepository: Repository<RefreshToken>,
     @InjectRepository(PasswordResetToken)
     private readonly passwordResetTokenRepository: Repository<PasswordResetToken>,
-  ) {}
+  ) { }
 
   /**
    * Authenticates a user with email and password.
@@ -107,8 +107,9 @@ export class AuthService {
         ...createUser,
         password: await hashedPassword,
       };
+      const username = await this.userService.generateUniqueUsername(createUser.email);
 
-      const user = await this.userService.create(newUser);
+      const user = await this.userService.create({...newUser, username});
 
       const verificationToken = await this.createToken(
         user,
@@ -146,9 +147,11 @@ export class AuthService {
 
     if (!user) {
       const fullName = `${firstName ?? ''} ${lastName ?? ''}`.trim();
+      const username = await this.userService.generateUniqueUsername(email);
 
-      user = await this.userService.createGoogleUser({
+      user = await this.userService.create({
         email,
+        username,
         name: fullName,
         role: UserRole.USER,
         isEmailVerified: true,

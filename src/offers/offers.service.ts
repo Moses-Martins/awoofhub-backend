@@ -89,7 +89,7 @@ export class OffersService {
         'offer',
         'business.id',
         'business.name',
-        'business.email',
+        'business.username',
         'category.id',
         'category.name',
         'category.slug'
@@ -190,7 +190,7 @@ export class OffersService {
         'offer',
         'business.id',
         'business.name',
-        'business.email',
+        'business.username',
         'category.id',
         'category.name',
         'category.slug'
@@ -293,7 +293,7 @@ export class OffersService {
         'offer',
         'business.id',
         'business.name',
-        'business.email',
+        'business.username',
         'category.id',
         'category.name',
         'category.slug'
@@ -390,7 +390,7 @@ export class OffersService {
         'offer',
         'business.id',
         'business.name',
-        'business.email',
+        'business.username',
         'category.id',
         'category.name',
         'category.slug'
@@ -482,7 +482,7 @@ export class OffersService {
       .addSelect([
         'business.id',
         'business.name',
-        'business.email',
+        'business.username',
         'category.id',
         'category.name',
         'category.slug',
@@ -516,7 +516,7 @@ export class OffersService {
       .addSelect([
         'business.id',
         'business.name',
-        'business.email',
+        'business.username',
         'category.id',
         'category.name',
         'category.slug',
@@ -570,7 +570,7 @@ export class OffersService {
         'offer',
         'business.id',
         'business.name',
-        'business.email',
+        'business.username',
         'category.id',
         'category.name',
         'category.slug'
@@ -674,7 +674,7 @@ export class OffersService {
         'offer',
         'business.id',
         'business.name',
-        'business.email',
+        'business.username',
         'category.id',
         'category.name',
         'category.slug'
@@ -786,7 +786,7 @@ export class OffersService {
       .leftJoin('offer.clicks', 'click')
       .select([
         'offer',
-        'business.id', 'business.name', 'business.email',
+        'business.id', 'business.name', 'business.username',
         'category.id', 'category.name',
       ])
       .whereInIds(ids)

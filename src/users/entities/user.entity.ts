@@ -41,6 +41,10 @@ export class User {
   @Column()
   name: string;
 
+  @ApiProperty({ example: 'john_doe' })
+  @Column({ unique: true })
+  username: string;
+  
   @ApiProperty({ required: false })
   @Exclude({ toPlainOnly: true })
   @MinLength(6)
@@ -124,6 +128,10 @@ export class User {
     default: UserStatus.ACTIVE,
   })
   status: UserStatus;
+
+  @ApiProperty({ example: '2026-08-12T10:00:00.000Z', required: false })
+  @Column({ type: 'timestamp', nullable: true })
+  usernameChangeLockedUntil: Date;
 
   @ApiProperty()
   @CreateDateColumn()
