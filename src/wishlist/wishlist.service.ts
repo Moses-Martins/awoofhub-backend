@@ -53,10 +53,17 @@ export class WishlistService {
       .leftJoin('wishlist.user', 'user')
       .leftJoin('wishlist.offer', 'offer')
       .leftJoin('offer.reviews', 'review')
+      .leftJoin('offer.contributor', 'contributor')
       .select([
         'wishlist',
-        'user.id', 'user.name', 'user.username', 'user.profileImageUrl',
+        'user.id',
+        'user.name',
+        'user.username',
+        'user.profileImageUrl',
         'offer',
+        'contributor.id',
+        'contributor.name',
+        'contributor.username',
       ])
       .addSelect('COALESCE(AVG(review.rating), 0)', 'avgRating')
       .addSelect('COUNT(review.id)', 'reviewCount')
@@ -64,6 +71,7 @@ export class WishlistService {
       .groupBy('wishlist.id')
       .addGroupBy('user.id')
       .addGroupBy('offer.id')
+      .addGroupBy('contributor.id')
       .orderBy('wishlist.id', 'ASC')
       .getRawAndEntities();
 
