@@ -55,7 +55,7 @@ export class WishlistService {
       .leftJoin('offer.reviews', 'review')
       .select([
         'wishlist',
-        'user.id', 'user.name', 'user.profileImageUrl',
+        'user.id', 'user.name', 'user.username', 'user.profileImageUrl',
         'offer',
       ])
       .addSelect('COALESCE(AVG(review.rating), 0)', 'avgRating')
