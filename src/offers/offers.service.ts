@@ -411,7 +411,7 @@ export class OffersService {
   async findAllForAdmin(query: FindOffersQueryDto) {
 
     const { search, dealType, category, minRating, createdFrom, createdTo, page = 1, limit = 10 } = query
-  
+
     const queryBuilder = this.offersRepository
       .createQueryBuilder('offer')
       .leftJoin('offer.reviews', 'review')
@@ -545,7 +545,7 @@ export class OffersService {
   async findAllByUser(userId: string, query: FindOffersQueryDto) {
 
     const { search, dealType, category, minRating, createdFrom, createdTo, page = 1, limit = 10 } = query
-  
+
     const now = new Date();
 
     const user = await this.userService.getUserById(userId);
@@ -768,6 +768,20 @@ export class OffersService {
 
   async getRandomOffers() {
     const now = new Date();
+
+    const idsResult = await this.offersRepository
+      .createQueryBuilder('offer')
+      .select('offer.id', 'id')
+      .where('offer.status = :status', { status: OfferStatus.APPROVED })
+      .andWhere('offer.endDate > :now', { now })
+      .orderBy('RANDOM()')
+      .limit(10)
+      .getRawMany();
+
+    const ids = idsResult.map(r => r.id);
+
+    if (ids.length === 0) return [];
+
     const queryBuilder = this.offersRepository
       .createQueryBuilder('offer')
       .leftJoin('offer.reviews', 'review')
@@ -786,13 +800,10 @@ export class OffersService {
       .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
       .addSelect('COALESCE(COUNT(DISTINCT review.id), 0)', 'reviewCount')
       .addSelect('COALESCE(COUNT(DISTINCT click.id), 0)', 'clickCount')
-      .where('offer.status = :status', { status: OfferStatus.APPROVED })
-      .andWhere('offer.endDate > :now', { now })
+        .where('offer.id IN (:...ids)', { ids })
       .groupBy('offer.id')
       .addGroupBy('contributor.id')
       .addGroupBy('category.id')
-      .orderBy('RANDOM()')
-      .limit(10)
 
     const { entities, raw } = await queryBuilder.getRawAndEntities();
 
