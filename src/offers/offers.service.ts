@@ -11,6 +11,7 @@ import { User } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
 import { MoreThan, Repository } from 'typeorm';
 import { CreateOfferDto } from './dto/create-offer.dto';
+import { FindOffersQueryDto } from './dto/find-offer-query.dto';
 import { UpdateOfferDto } from './dto/update-offer.dto';
 import { Offer } from './entities/offer.entity';
 
@@ -45,10 +46,10 @@ export class OffersService {
       }
       this.checkUserStatus(user)
 
-      const offer = this.offersRepository.create({ ...rest, category: { id: existing.id }, endDate: new Date(endDate), business: { id: user.id } });
+      const offer = this.offersRepository.create({ ...rest, category: { id: existing.id }, endDate: new Date(endDate), contributor: { id: user.id } });
       await this.offersRepository.save(offer);
 
-      const subscribers = await this.alertService.getSubscribersForBusiness(user.id);
+      const subscribers = await this.alertService.getSubscribers(user.id);
 
       const notificationPromises = subscribers.map(sub =>
         this.notificationService.create(
@@ -62,7 +63,7 @@ export class OffersService {
 
       await Promise.all(notificationPromises);
 
-      await this.notificationService.create(offer.business.id, "Created Offer", "You just created an offer", NotificationType.OFFER_CREATED, offer.id)
+      await this.notificationService.create(offer.contributor.id, "Created Offer", "You just created an offer", NotificationType.OFFER_CREATED, offer.id)
 
       return {
         message: 'Offer created successfully',
@@ -80,19 +81,22 @@ export class OffersService {
 
 
 
-  async findAll(search?: string, category?: string, minRating?: number, createdFrom?: string, createdTo?: string, page = 1, limit = 10) {
+  async findAll(query: FindOffersQueryDto) {
+
+    const { search, dealType, category, minRating, createdFrom, createdTo, page = 1, limit = 10 } = query
+
     const now = new Date();
     const queryBuilder = this.offersRepository
       .createQueryBuilder('offer')
       .leftJoin('offer.reviews', 'review')
-      .leftJoin('offer.business', 'business')
+      .leftJoin('offer.contributor', 'contributor')
       .leftJoin('offer.category', 'category')
       .leftJoin('offer.clicks', 'click')
       .select([
         'offer',
-        'business.id',
-        'business.name',
-        'business.username',
+        'contributor.id',
+        'contributor.name',
+        'contributor.username',
         'category.id',
         'category.name',
         'category.slug'
@@ -103,7 +107,7 @@ export class OffersService {
       .where('offer.status = :status', { status: OfferStatus.APPROVED })
       .andWhere('offer.endDate > :now', { now })
       .groupBy('offer.id')
-      .addGroupBy('business.id')
+      .addGroupBy('contributor.id')
       .addGroupBy('category.id');
 
 
@@ -112,6 +116,12 @@ export class OffersService {
         '(offer.title ILIKE :search OR offer.description ILIKE :search)',
         { search: `%${search}%` }
       );
+    }
+
+    if (dealType) {
+      queryBuilder.andWhere('offer.dealType = :dealType', {
+        dealType,
+      });
     }
 
     if (category) {
@@ -179,21 +189,23 @@ export class OffersService {
   }
 
 
-  async findAllTrending(search?: string, category?: string, minRating?: number, createdFrom?: string, createdTo?: string, page = 1, limit = 10) {
+  async findAllTrending(query: FindOffersQueryDto) {
+
+    const { search, dealType, category, minRating, createdFrom, createdTo, page = 1, limit = 10 } = query
     const havingConditions: string[] = [];
     const params: any = {};
     const now = new Date();
     const queryBuilder = this.offersRepository
       .createQueryBuilder('offer')
       .leftJoin('offer.reviews', 'review')
-      .leftJoin('offer.business', 'business')
+      .leftJoin('offer.contributor', 'contributor')
       .leftJoin('offer.category', 'category')
       .leftJoin('offer.clicks', 'click')
       .select([
         'offer',
-        'business.id',
-        'business.name',
-        'business.username',
+        'contributor.id',
+        'contributor.name',
+        'contributor.username',
         'category.id',
         'category.name',
         'category.slug'
@@ -204,7 +216,7 @@ export class OffersService {
       .where('offer.status = :status', { status: OfferStatus.APPROVED })
       .andWhere('offer.endDate > :now', { now })
       .groupBy('offer.id')
-      .addGroupBy('business.id')
+      .addGroupBy('contributor.id')
       .addGroupBy('category.id');
 
 
@@ -213,6 +225,12 @@ export class OffersService {
         '(offer.title ILIKE :search OR offer.description ILIKE :search)',
         { search: `%${search}%` }
       );
+    }
+
+    if (dealType) {
+      queryBuilder.andWhere('offer.dealType = :dealType', {
+        dealType,
+      });
     }
 
     if (category) {
@@ -282,21 +300,23 @@ export class OffersService {
 
   }
 
-  async findAllExpiring(search?: string, category?: string, minRating?: number, createdFrom?: string, createdTo?: string, page = 1, limit = 10) {
+  async findAllExpiring(query: FindOffersQueryDto) {
+
+    const { search, dealType, category, minRating, createdFrom, createdTo, page = 1, limit = 10 } = query
     const now = new Date();
     const threeDaysFromNow = new Date();
     threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
     const queryBuilder = this.offersRepository
       .createQueryBuilder('offer')
       .leftJoin('offer.reviews', 'review')
-      .leftJoin('offer.business', 'business')
+      .leftJoin('offer.contributor', 'contributor')
       .leftJoin('offer.category', 'category')
       .leftJoin('offer.clicks', 'click')
       .select([
         'offer',
-        'business.id',
-        'business.name',
-        'business.username',
+        'contributor.id',
+        'contributor.name',
+        'contributor.username',
         'category.id',
         'category.name',
         'category.slug'
@@ -308,7 +328,7 @@ export class OffersService {
       .andWhere('offer.endDate > :now', { now })
       .andWhere('offer.endDate <= :threeDaysFromNow', { threeDaysFromNow })
       .groupBy('offer.id')
-      .addGroupBy('business.id')
+      .addGroupBy('contributor.id')
       .addGroupBy('category.id');
 
 
@@ -317,6 +337,12 @@ export class OffersService {
         '(offer.title ILIKE :search OR offer.description ILIKE :search)',
         { search: `%${search}%` }
       );
+    }
+
+    if (dealType) {
+      queryBuilder.andWhere('offer.dealType = :dealType', {
+        dealType,
+      });
     }
 
     if (category) {
@@ -382,18 +408,21 @@ export class OffersService {
     };
   }
 
-  async findAllAdmin(search?: string, category?: string, minRating?: number, createdFrom?: string, createdTo?: string, page = 1, limit = 10) {
+  async findAllForAdmin(query: FindOffersQueryDto) {
+
+    const { search, dealType, category, minRating, createdFrom, createdTo, page = 1, limit = 10 } = query
+  
     const queryBuilder = this.offersRepository
       .createQueryBuilder('offer')
       .leftJoin('offer.reviews', 'review')
-      .leftJoin('offer.business', 'business')
+      .leftJoin('offer.contributor', 'contributor')
       .leftJoin('offer.category', 'category')
       .leftJoin('offer.clicks', 'click')
       .select([
         'offer',
-        'business.id',
-        'business.name',
-        'business.username',
+        'contributor.id',
+        'contributor.name',
+        'contributor.username',
         'category.id',
         'category.name',
         'category.slug'
@@ -402,7 +431,7 @@ export class OffersService {
       .addSelect('COALESCE(COUNT(DISTINCT review.id), 0)', 'reviewCount')
       .addSelect('COALESCE(COUNT(DISTINCT click.id), 0)', 'clickCount')
       .groupBy('offer.id')
-      .addGroupBy('business.id')
+      .addGroupBy('contributor.id')
       .addGroupBy('category.id');
 
 
@@ -411,6 +440,12 @@ export class OffersService {
         '(offer.title ILIKE :search OR offer.description ILIKE :search)',
         { search: `%${search}%` }
       );
+    }
+
+    if (dealType) {
+      queryBuilder.andWhere('offer.dealType = :dealType', {
+        dealType,
+      });
     }
 
     if (category) {
@@ -480,12 +515,12 @@ export class OffersService {
   async findById(id: string) {
     const offer = await this.offersRepository
       .createQueryBuilder('offer')
-      .leftJoin('offer.business', 'business')
+      .leftJoin('offer.contributor', 'contributor')
       .leftJoin('offer.category', 'category')
       .addSelect([
-        'business.id',
-        'business.name',
-        'business.username',
+        'contributor.id',
+        'contributor.name',
+        'contributor.username',
         'category.id',
         'category.name',
         'category.slug',
@@ -507,57 +542,10 @@ export class OffersService {
     }
   }
 
+  async findAllByUser(userId: string, query: FindOffersQueryDto) {
 
-  async findByCategoryId(id: string, page = 1, limit = 10) {
-    const now = new Date();
-    const category = await this.categoryService.findById(id)
-
-    const queryBuilder = this.offersRepository
-      .createQueryBuilder('offer')
-      .leftJoin('offer.reviews', 'review')
-      .leftJoin('offer.business', 'business')
-      .leftJoin('offer.category', 'category')
-      .leftJoin('offer.clicks', 'click')
-      .addSelect([
-        'business.id',
-        'business.name',
-        'business.username',
-        'category.id',
-        'category.name',
-        'category.slug',
-      ])
-      .where('category.id = :id', { id: category.id })
-      .andWhere('offer.status = :status', { status: OfferStatus.APPROVED })
-      .andWhere('offer.endDate > :now', { now })
-      .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
-      .addSelect('COALESCE(COUNT(DISTINCT review.id), 0)', 'reviewCount')
-      .addSelect('COALESCE(COUNT(DISTINCT click.id), 0)', 'clickCount')
-      .groupBy('offer.id')
-      .addGroupBy('business.id')
-      .addGroupBy('category.id')
-      .skip((page - 1) * limit)
-      .take(limit)
-
-    const total = await queryBuilder.clone().getCount();
-    const meta = this.paginationService.getPaginationMeta(page, limit, total);
-
-    const { entities, raw } = await queryBuilder.getRawAndEntities();
-
-    const results = entities.map((offer, index) => ({
-      ...offer,
-      avgRating: Number(raw[index].avgRating),
-      reviewCount: Number(raw[index].reviewCount),
-      clickCount: Number(raw[index].clickCount)
-    }));
-
-    return {
-      data: results,
-      meta
-    };
-  }
-
-
-  async findAllByUser(userId: string, search?: string, category?: string, minRating?: number, createdFrom?: string, createdTo?: string, page = 1, limit = 10) {
+    const { search, dealType, category, minRating, createdFrom, createdTo, page = 1, limit = 10 } = query
+  
     const now = new Date();
 
     const user = await this.userService.getUserById(userId);
@@ -568,14 +556,14 @@ export class OffersService {
     const queryBuilder = this.offersRepository
       .createQueryBuilder('offer')
       .leftJoin('offer.reviews', 'review')
-      .leftJoin('offer.business', 'business')
+      .leftJoin('offer.contributor', 'contributor')
       .leftJoin('offer.category', 'category')
       .leftJoin('offer.clicks', 'click')
       .select([
         'offer',
-        'business.id',
-        'business.name',
-        'business.username',
+        'contributor.id',
+        'contributor.name',
+        'contributor.username',
         'category.id',
         'category.name',
         'category.slug'
@@ -586,16 +574,22 @@ export class OffersService {
       .where('offer.status = :status', { status: OfferStatus.APPROVED })
       .andWhere('offer.endDate > :now', { now })
       .groupBy('offer.id')
-      .addGroupBy('business.id')
+      .addGroupBy('contributor.id')
       .addGroupBy('category.id');
 
-    queryBuilder.andWhere('business.id = :id', { id: user.id })
+    queryBuilder.andWhere('contributor.id = :id', { id: user.id })
 
     if (search) {
       queryBuilder.andWhere(
         '(offer.title ILIKE :search OR offer.description ILIKE :search)',
         { search: `%${search}%` }
       );
+    }
+
+    if (dealType) {
+      queryBuilder.andWhere('offer.dealType = :dealType', {
+        dealType,
+      });
     }
 
     if (category) {
@@ -662,7 +656,9 @@ export class OffersService {
 
   }
 
-  async findAllByBusiness(userId: string, search?: string, category?: string, minRating?: number, createdFrom?: string, createdTo?: string, page = 1, limit = 10) {
+  async findMyOffers(userId: string, query: FindOffersQueryDto) {
+
+    const { search, dealType, category, minRating, createdFrom, createdTo, page = 1, limit = 10 } = query
 
     const user = await this.userService.getUserById(userId);
     if (!user) {
@@ -672,14 +668,14 @@ export class OffersService {
     const queryBuilder = this.offersRepository
       .createQueryBuilder('offer')
       .leftJoin('offer.reviews', 'review')
-      .leftJoin('offer.business', 'business')
+      .leftJoin('offer.contributor', 'contributor')
       .leftJoin('offer.category', 'category')
       .leftJoin('offer.clicks', 'click')
       .select([
         'offer',
-        'business.id',
-        'business.name',
-        'business.username',
+        'contributor.id',
+        'contributor.name',
+        'contributor.username',
         'category.id',
         'category.name',
         'category.slug'
@@ -688,16 +684,22 @@ export class OffersService {
       .addSelect('COALESCE(COUNT(DISTINCT review.id), 0)', 'reviewCount')
       .addSelect('COALESCE(COUNT(DISTINCT click.id), 0)', 'clickCount')
       .groupBy('offer.id')
-      .addGroupBy('business.id')
+      .addGroupBy('contributor.id')
       .addGroupBy('category.id');
 
-    queryBuilder.andWhere('business.id = :id', { id: user.id })
+    queryBuilder.andWhere('contributor.id = :id', { id: user.id })
 
     if (search) {
       queryBuilder.andWhere(
         '(offer.title ILIKE :search OR offer.description ILIKE :search)',
         { search: `%${search}%` }
       );
+    }
+
+    if (dealType) {
+      queryBuilder.andWhere('offer.dealType = :dealType', {
+        dealType,
+      });
     }
 
     if (category) {
@@ -764,46 +766,33 @@ export class OffersService {
 
   }
 
-  async getRandomOffers(page = 1, limit = 10) {
-
-    const randomIds = await this.offersRepository
-      .createQueryBuilder('offer')
-      .select('offer.id')
-      .orderBy('RANDOM()')
-      .skip((page - 1) * limit)
-      .take(limit)
-      .getRawMany();
-
-    const ids = randomIds.map(r => r.offer_id);
-
-    if (!ids.length) {
-      return {
-        data: [],
-        meta: this.paginationService.getPaginationMeta(page, limit, 0),
-      };
-    }
-
+  async getRandomOffers() {
+    const now = new Date();
     const queryBuilder = this.offersRepository
       .createQueryBuilder('offer')
       .leftJoin('offer.reviews', 'review')
-      .leftJoin('offer.business', 'business')
+      .leftJoin('offer.contributor', 'contributor')
       .leftJoin('offer.category', 'category')
       .leftJoin('offer.clicks', 'click')
       .select([
         'offer',
-        'business.id', 'business.name', 'business.username',
-        'category.id', 'category.name',
+        'contributor.id',
+        'contributor.name',
+        'contributor.username',
+        'category.id',
+        'category.name',
+        'category.slug'
       ])
-      .whereInIds(ids)
       .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
       .addSelect('COALESCE(COUNT(DISTINCT review.id), 0)', 'reviewCount')
       .addSelect('COALESCE(COUNT(DISTINCT click.id), 0)', 'clickCount')
+      .where('offer.status = :status', { status: OfferStatus.APPROVED })
+      .andWhere('offer.endDate > :now', { now })
       .groupBy('offer.id')
-      .addGroupBy('business.id')
+      .addGroupBy('contributor.id')
       .addGroupBy('category.id')
-
-    const total = await this.offersRepository.count();
-    const meta = this.paginationService.getPaginationMeta(page, limit, total);
+      .orderBy('RANDOM()')
+      .limit(10)
 
     const { entities, raw } = await queryBuilder.getRawAndEntities();
 
@@ -814,10 +803,8 @@ export class OffersService {
       clickCount: Number(raw[index].clickCount)
     }));
 
-    return {
-      data: results,
-      meta
-    };
+    return results
+
   }
 
   async getOfferStats() {
@@ -862,172 +849,6 @@ export class OffersService {
     };
   }
 
-  async getBusinessDashboard(businessId: string) {
-    const now = new Date();
-
-    const totalAdsPromise = this.offersRepository.count({
-      where: { business: { id: businessId } },
-    });
-
-    const pendingAdsPromise = this.offersRepository.count({
-      where: {
-        business: { id: businessId },
-        status: OfferStatus.PENDING,
-      },
-    });
-
-    const activeAdsPromise = this.offersRepository.count({
-      where: {
-        business: { id: businessId },
-        status: OfferStatus.APPROVED,
-        endDate: MoreThan(now),
-      },
-    });
-
-    const rejectedAdsPromise = this.offersRepository.count({
-      where: {
-        business: { id: businessId },
-        status: OfferStatus.REJECTED,
-      },
-    });
-
-    const expiredAdsPromise = this.offersRepository
-      .createQueryBuilder('offer')
-      .where('offer.businessId = :businessId', { businessId })
-      .andWhere('offer.endDate < :now', { now })
-      .getCount();
-
-
-    const topOffersPromise = this.offersRepository
-      .createQueryBuilder('offer')
-      .leftJoin('offer.clicks', 'click')
-      .leftJoin('offer.reviews', 'review')
-      .leftJoin('offer.category', 'category')
-      .leftJoin('offer.business', 'business')
-      .where('offer.businessId = :businessId', { businessId })
-      .select([
-        'offer.id',
-        'offer.title',
-        'offer.description',
-        'offer.imageUrl',
-        'offer.endDate',
-        'offer.value',
-        'offer.status',
-        'offer.createdAt',
-        'category.name',
-      ])
-      .addSelect('COALESCE(AVG(review.rating), 0)', 'avgRating')
-      .addSelect('COALESCE(COUNT(DISTINCT review.id), 0)', 'reviewCount')
-      .addSelect('COALESCE(COUNT(DISTINCT click.id), 0)', 'clickCount')
-      .groupBy('offer.id')
-      .addGroupBy('category.id')
-      .addGroupBy('category.name')
-      .addGroupBy('category.slug')
-      .addGroupBy('business.id')
-      .addGroupBy('business.name')
-      .orderBy('"avgRating"', 'DESC')
-      .limit(3)
-      .getRawMany();
-
-
-    const categoryPiePromise = this.offersRepository
-      .createQueryBuilder('offer')
-      .leftJoin('offer.category', 'category')
-      .where('offer.businessId = :businessId', { businessId })
-      .select('category.name', 'name')
-      .addSelect('COUNT(offer.id)', 'value')
-      .groupBy('category.name')
-      .getRawMany();
-
-
-    const offersByMonthPromise = this.offersRepository
-      .createQueryBuilder('offer')
-      .leftJoin('offer.category', 'category')
-      .where('offer.businessId = :businessId', { businessId })
-      .select("TO_CHAR(offer.createdAt, 'YYYY-MM')", 'month')
-      .addSelect('category.name', 'category')
-      .addSelect('COUNT(offer.id)', 'count')
-      .groupBy('month')
-      .addGroupBy('category.name')
-      .orderBy('month', 'ASC')
-      .getRawMany();
-
-    const expiringOffersPromise = this.offersRepository
-      .createQueryBuilder('offer')
-      .where('offer.businessId = :businessId', { businessId })
-      .select(`
-      SUM(CASE WHEN offer.endDate BETWEEN NOW() AND NOW() + INTERVAL '3 days' THEN 1 ELSE 0 END) as "1-3 days",
-      SUM(CASE WHEN offer.endDate BETWEEN NOW() + INTERVAL '4 days' AND NOW() + INTERVAL '7 days' THEN 1 ELSE 0 END) as "4-7 days",
-      SUM(CASE WHEN offer.endDate > NOW() + INTERVAL '7 days' THEN 1 ELSE 0 END) as "7+ days"
-    `)
-      .getRawOne();
-
-
-    const [
-      totalAds,
-      activeAds,
-      pendingAds,
-      rejectedAds,
-      expiredAds,
-      topOffersData,
-      categoryPie,
-      offersByMonthRaw,
-      expiringOffers,
-    ] = await Promise.all([
-      totalAdsPromise,
-      activeAdsPromise,
-      pendingAdsPromise,
-      rejectedAdsPromise,
-      expiredAdsPromise,
-      topOffersPromise,
-      categoryPiePromise,
-      offersByMonthPromise,
-      expiringOffersPromise,
-    ]);
-
-    const topOffers = topOffersData.map((item) => ({
-      id: item.offer_id,
-      title: item.offer_title,
-      description: item.offer_description,
-      imageUrl: item.offer_imageUrl,
-      value: item.offer_value,
-      status: item.offer_status,
-      createdAt: item.offer_createdAt,
-      endDate: item.offer_endDate,
-      category: {
-        name: item.category_name,
-      },
-      avgRating: Number(item.avgRating),
-      reviewCount: Number(item.reviewCount),
-      clickCount: Number(item.clickCount)
-    }));
-
-    const offersByMonth = this.formatMonthlyData(offersByMonthRaw);
-
-    return {
-      stats: {
-        totalAds,
-        activeAds,
-        pendingAds,
-        rejectedAds,
-        expiredAds,
-      },
-      topOffers,
-      charts: {
-        categoryPie: categoryPie.map(item => ({
-          name: item.name,
-          value: Number(item.value),
-        })),
-        offersByMonth,
-        expiringOffers: {
-          "1-3 days": Number(expiringOffers['1-3 days']),
-          "4-7 days": Number(expiringOffers['4-7 days']),
-          "7+ days": Number(expiringOffers['7+ days']),
-        },
-      },
-    };
-  }
-
   async updateStatus(offerId: string, status: OfferStatus) {
     try {
       const offer = await this.offersRepository.findOne({
@@ -1053,14 +874,14 @@ export class OffersService {
   async update(offerId: string, userId: string, updateOfferDto: UpdateOfferDto) {
     const offer = await this.offersRepository.findOne({
       where: { id: offerId },
-      relations: ['business'],
+      relations: ['contributor'],
     });
 
     if (!offer) {
       throw new NotFoundException('Offer not found');
     }
 
-    if (offer.business.id !== userId) {
+    if (offer.contributor.id !== userId) {
       throw new NotFoundException('You can only update your own offers');
     }
 
@@ -1085,32 +906,18 @@ export class OffersService {
   async remove(offerId: string, userId: string) {
     const offer = await this.offersRepository.findOne({
       where: { id: offerId },
-      relations: ['business', 'comments', 'reviews', 'wishlists'],
+      relations: ['contributor', 'comments', 'reviews', 'wishlists'],
     });
 
     if (!offer) {
       throw new NotFoundException('Offer not found');
     }
 
-    if (offer.business.id !== userId) {
+    if (offer.contributor.id !== userId) {
       throw new NotFoundException('You can only delete your own offers');
     }
 
     return this.offersRepository.remove(offer);
-  }
-
-  private formatMonthlyData(data: any[]) {
-    const result = {};
-
-    data.forEach(item => {
-      if (!result[item.month]) {
-        result[item.month] = { month: item.month };
-      }
-
-      result[item.month][item.category] = Number(item.count);
-    });
-
-    return Object.values(result);
   }
 
   private checkUserStatus(user: User) {

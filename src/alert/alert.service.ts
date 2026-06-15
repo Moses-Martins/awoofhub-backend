@@ -12,65 +12,60 @@ export class AlertService {
     private userService: UsersService,
   ) { }
 
-  async setAlert(userId: string, businessId: string) {
-    if (userId === businessId) {
+  async setAlert(userId: string, contributorId: string) {
+    if (userId === contributorId) {
       throw new BadRequestException('You cannot set Alert to yourself');
     }
 
-    const [user, business] = await Promise.all([
+    const [user, contributor] = await Promise.all([
       this.userService.getUserById(userId),
-      this.userService.getUserById(businessId)
+      this.userService.getUserById(contributorId)
     ]);
 
     if (!user) throw new NotFoundException('User not found');
-    if (!business) throw new NotFoundException('Business not found');
-
-
-    if (business.role !== 'business') {
-      throw new BadRequestException('Alerts can only be set for business accounts');
-    }
+    if (!contributor) throw new NotFoundException('Contributor not found');
 
     const existing = await this.alertRepo.findOne({
-      where: { user: { id: userId }, business: { id: businessId } }
+      where: { user: { id: userId }, contributor: { id: contributorId } }
     });
 
-    if (existing) throw new ConflictException('Already subscribed to this business');
+    if (existing) throw new ConflictException('Already subscribed to this contributor');
 
     const subscription = this.alertRepo.create({
       user: { id: userId },
-      business: { id: businessId }
+      contributor: { id: contributorId }
     });
 
     return await this.alertRepo.save(subscription);
   }
 
-  async removeAlert(userId: string, businessId: string) {
+  async removeAlert(userId: string, contributorId: string) {
 
      const result = await this.alertRepo.delete({
-          business: { id: businessId },
+          contributor: { id: contributorId },
           user: { id: userId }
         });
     
         if (result.affected === 0) {
-          throw new NotFoundException("Alert not set for business");
+          throw new NotFoundException("Alert not set for contributor");
         }
     
         return {}
 
   }
 
-  async getBusinessAlert(userId: string, businessId: string) {
+  async getContributorAlert(userId: string, contributorId: string) {
     const result = await this.alertRepo.findOne({
-      where: { user: { id: userId }, business: { id: businessId } }
+      where: { user: { id: userId }, contributor: { id: contributorId } }
     });
 
     return result
 
   }
 
-  async getSubscribersForBusiness(businessId: string) {
+  async getSubscribers(contributorId: string) {
     const subs = await this.alertRepo.find({
-      where: { business: { id: businessId } },
+      where: { contributor: { id: contributorId } },
       relations: ['user'],
     });
 

@@ -1,5 +1,6 @@
 import {
   IsDateString,
+  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -9,6 +10,7 @@ import {
   ApiProperty,
   ApiPropertyOptional,
 } from '@nestjs/swagger';
+import { DealType } from 'src/common/types/enums';
 
 export class CreateOfferDto {
 
@@ -37,6 +39,14 @@ export class CreateOfferDto {
   category: string;
 
   @ApiProperty({
+    example: 'cashback',
+    description: 'Offer type',
+  })
+  @IsNotEmpty()
+  @IsEnum(DealType)
+  dealType: DealType;
+
+  @ApiProperty({
     example: 'https://cdn.awoofhub.ng/offers/offer-image.jpg',
     description: 'Offer image URL',
   })
@@ -53,14 +63,6 @@ export class CreateOfferDto {
   location: string;
 
   @ApiProperty({
-    example: 'Offer valid while stock lasts',
-    description: 'Terms and conditions for the offer',
-  })
-  @IsNotEmpty()
-  @IsString()
-  termsAndConditions: string;
-
-  @ApiProperty({
     example: '₦50,000',
     description: 'Offer value or pricing information',
   })
@@ -74,7 +76,15 @@ export class CreateOfferDto {
   })
   @IsNotEmpty()
   @IsString()
-  dealUrl: string;
+  externalLink: string;
+
+  @ApiProperty({
+    example: 'Uber',
+    description: 'Brand Name',
+  })
+  @IsNotEmpty()
+  @IsString()
+  brandName: string;
 
   @ApiPropertyOptional({
     example: 'SAVE50',

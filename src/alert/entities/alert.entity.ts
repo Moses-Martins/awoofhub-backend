@@ -11,7 +11,7 @@ export class Alert {
     user: User;
 
     @ManyToOne(() => User, (user) => user.receivedAlerts)
-    business: User;
+    contributor: User;
 
     @CreateDateColumn()
     createdAt: Date;

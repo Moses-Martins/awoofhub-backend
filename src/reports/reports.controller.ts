@@ -3,8 +3,8 @@ import {
   Controller,
   Get,
   Param,
-  Query,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 
@@ -12,20 +12,18 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiParam,
-  ApiResponse,
   ApiQuery,
+  ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { Roles } from 'src/common/decorators/roles.decorator';
 
-import { ReportStatus, TargetType, UserRole } from 'src/common/types/enums';
+import { ReportStatus, TargetType } from 'src/common/types/enums';
 import { User } from 'src/users/entities/user.entity';
 
 import { CreateReportDto } from './dto/create-report.dto';
-import { UpdateReportStatusDto } from './dto/update-report-status.dto';
 
 import { ReportsService } from './reports.service';
 
@@ -55,24 +53,6 @@ export class ReportsController {
     return this.reportsService.create(
       createReportDto,
       user.id,
-    );
-  }
-
-  @Post(':id/status')
-  @UseGuards(AuthGuard)
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Update report moderation status', })
-  @ApiParam({ name: 'id', type: String, description: 'Report ID', example: '64f8c2d9a12b3c0012345678', })
-  @ApiResponse({ status: 200, description: 'Report status updated successfully', })
-  @ApiResponse({ status: 401, description: 'Unauthorized', })
-  @ApiResponse({ status: 403, description: 'Forbidden', })
-  updateStatus(
-    @Param('id') id: string,
-    @Body() updateReportStatusDto: UpdateReportStatusDto,
-  ) {
-    return this.reportsService.updateStatus(
-      id,
-      updateReportStatusDto.status,
     );
   }
 
