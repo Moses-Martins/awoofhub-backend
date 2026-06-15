@@ -41,15 +41,6 @@ export class CategoryService {
 
   }
 
-  async findAllByBusiness(id: string): Promise<Category[]> {
-    return await this.categoriesRepository
-      .createQueryBuilder('category')
-      .innerJoin('category.offers', 'offer')
-      .where('offer.business = :id', { id })
-      .distinct(true)
-      .getMany();
-  }
-
   async findById(id: string): Promise<Category> {
     const category = await this.categoriesRepository.findOne({
       where: { id }
@@ -80,25 +71,26 @@ export class CategoryService {
 
     return category;
   }
-  async update(id: string, updateCategoryDto: UpdateCategoryDto) {
-  const category = await this.findById(id);
 
-  if (updateCategoryDto.name) {
-    const name = updateCategoryDto.name.trim();
-    const existing = await this.categoriesRepository.findOne({ where: { name } });
-    if (existing && existing.id !== id) {
-      throw new ConflictException(`Category '${name}' already exists`);
+  async update(id: string, updateCategoryDto: UpdateCategoryDto) {
+    const category = await this.findById(id);
+
+    if (updateCategoryDto.name) {
+      const name = updateCategoryDto.name.trim();
+      const existing = await this.categoriesRepository.findOne({ where: { name } });
+      if (existing && existing.id !== id) {
+        throw new ConflictException(`Category '${name}' already exists`);
+      }
+      category.name = name;
     }
-    category.name = name;
+
+    return this.categoriesRepository.save(category);
   }
 
-  return this.categoriesRepository.save(category);
-}
-
-async remove(id: string) {
-  const category = await this.findById(id);
-  return this.categoriesRepository.remove(category);
-}
+  async remove(id: string) {
+    const category = await this.findById(id);
+    return this.categoriesRepository.remove(category);
+  }
 
 
 }

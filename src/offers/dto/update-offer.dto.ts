@@ -1,5 +1,6 @@
 import { PartialType } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { DealType } from 'src/common/types/enums';
 import { CreateOfferDto } from './create-offer.dto';
 
 
@@ -18,6 +19,10 @@ export class UpdateOfferDto extends PartialType(CreateOfferDto) {
     category?: string;
 
     @IsOptional()
+    @IsEnum(DealType)
+    dealType?: DealType;
+
+    @IsOptional()
     @IsString()
     imageUrl?: string;
 
@@ -27,25 +32,19 @@ export class UpdateOfferDto extends PartialType(CreateOfferDto) {
 
     @IsOptional()
     @IsString()
-    termsAndConditions?: string;
-
-    @IsOptional()
-    @IsString()
     value?: string;
 
     @IsOptional()
     @IsString()
-    dealUrl?: string;
+    externalLink?: string;
+
+    @IsOptional()
+    @IsString()
+    brandName?: string;
 
     @IsOptional()
     @IsString()
     couponCode?: string;
 
 }
-
-
-
-
-
-
 

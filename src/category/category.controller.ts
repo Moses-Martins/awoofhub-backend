@@ -1,10 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
-  Delete,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -18,11 +18,9 @@ import {
 } from '@nestjs/swagger';
 
 import { AuthGuard } from 'src/auth/guards/auth.guard';
-import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { UserRole } from 'src/common/types/enums';
-import { User } from 'src/users/entities/user.entity';
 
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -31,9 +29,11 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 @ApiTags('Category')
 @Controller('category')
 export class CategoryController {
-  constructor(private readonly categoryService: CategoryService) {}
+  constructor(private readonly categoryService: CategoryService) { }
 
   @Post()
+  @UseGuards(AuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN)
   @ApiOperation({
     summary: 'Create a new category',
   })
@@ -61,29 +61,6 @@ export class CategoryController {
     return this.categoryService.findAll();
   }
 
-  @Get('business')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(UserRole.BUSINESS)
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Get categories belonging to authenticated business',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Business categories fetched successfully',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Unauthorized',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Forbidden',
-  })
-  findAllBusiness(@CurrentUser() user: User) {
-    return this.categoryService.findAllByBusiness(user.id);
-  }
-
   @Get(':id')
   @ApiOperation({
     summary: 'Get category by ID',
@@ -106,24 +83,24 @@ export class CategoryController {
     return this.categoryService.findById(id);
   }
   @Patch(':id')
-@UseGuards(AuthGuard, RolesGuard)
-@Roles(UserRole.ADMIN)
-@ApiBearerAuth()
-@ApiOperation({ summary: 'Update a category' })
-@ApiParam({ name: 'id', type: String, description: 'Category ID', example: '64f8c2d9a12b3c0012345678' })
-@ApiResponse({ status: 200, description: 'Category updated successfully' })
-update(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
-  return this.categoryService.update(id, updateCategoryDto);
-}
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update a category' })
+  @ApiParam({ name: 'id', type: String, description: 'Category ID', example: '64f8c2d9a12b3c0012345678' })
+  @ApiResponse({ status: 200, description: 'Category updated successfully' })
+  update(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
+    return this.categoryService.update(id, updateCategoryDto);
+  }
 
-@Delete(':id')
-@UseGuards(AuthGuard, RolesGuard)
-@Roles(UserRole.ADMIN)
-@ApiBearerAuth()
-@ApiOperation({ summary: 'Delete a category' })
-@ApiParam({ name: 'id', type: String, description: 'Category ID', example: '64f8c2d9a12b3c0012345678' })
-@ApiResponse({ status: 200, description: 'Category deleted successfully' })
-remove(@Param('id') id: string) {
-  return this.categoryService.remove(id);
-}
+  @Delete(':id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete a category' })
+  @ApiParam({ name: 'id', type: String, description: 'Category ID', example: '64f8c2d9a12b3c0012345678' })
+  @ApiResponse({ status: 200, description: 'Category deleted successfully' })
+  remove(@Param('id') id: string) {
+    return this.categoryService.remove(id);
+  }
 }
