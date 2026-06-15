@@ -85,7 +85,7 @@ export class User {
   @Column({ type: 'text', nullable: true })
   website?: string;
 
-  @OneToMany(() => Offer, offer => offer.business)
+  @OneToMany(() => Offer, offer => offer.contributor)
   offers: Offer[];
 
   @OneToMany(() => Report, report => report.reporter)
@@ -97,7 +97,7 @@ export class User {
   @OneToMany(() => Alert, (alert) => alert.user)
   createdAlerts: Alert[];
 
-  @OneToMany(() => Alert, (alert) => alert.business)
+  @OneToMany(() => Alert, (alert) => alert.contributor)
   receivedAlerts: Alert[];
 
   @OneToMany(() => Review, review => review.user)

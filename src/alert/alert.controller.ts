@@ -14,17 +14,17 @@ import { AlertService } from './alert.service';
 export class AlertController {
   constructor(private readonly alertService: AlertService) { }
 
-  @Post(':businessId')
+  @Post(':contributorId')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.USER)
   @ApiOperation({
-    summary: 'Set alert for a business',
-    description: 'Allows a user to subscribe to alerts for a business',
+    summary: 'Set alert to a contributor',
+    description: 'Allows a user to subscribe to alerts for a contributor',
   })
   @ApiParam({
-    name: 'businessId',
+    name: 'contributorId',
     type: String,
-    description: 'ID of the business',
+    description: 'ID of the contributor',
     example: '64f8c2d9a12b3c0012345678',
   })
   @ApiResponse({
@@ -37,22 +37,22 @@ export class AlertController {
   })
   setAlert(
     @CurrentUser() user: User,
-    @Param('businessId') businessId: string,
+    @Param('contributorId') contributorId: string,
   ) {
-    return this.alertService.setAlert(user.id, businessId);
+    return this.alertService.setAlert(user.id, contributorId);
   }
 
-  @Delete(':businessId')
+  @Delete(':contributorId')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.USER)
   @ApiOperation({
-    summary: 'Remove business alert',
-    description: 'Allows a user to unsubscribe from business alerts',
+    summary: 'Remove contributor alert',
+    description: 'Allows a user to unsubscribe from contributor alerts',
   })
   @ApiParam({
-    name: 'businessId',
+    name: 'contributorId',
     type: String,
-    description: 'ID of the business',
+    description: 'ID of the contributor',
     example: '64f8c2d9a12b3c0012345678',
   })
   @ApiResponse({
@@ -65,35 +65,35 @@ export class AlertController {
   })
   removeAlert(
     @CurrentUser() user: User,
-    @Param('businessId') businessId: string,
+    @Param('contributorId') contributorId: string,
   ) {
-    return this.alertService.removeAlert(user.id, businessId);
+    return this.alertService.removeAlert(user.id, contributorId);
   }
 
-  @Get(':businessId')
+  @Get(':contributorId')
   @UseGuards(AuthGuard, RolesGuard)
   @ApiOperation({
-    summary: 'Get business alert status',
-    description: 'Checks whether a user has an active alert for a business',
+    summary: 'Get contributor alert status',
+    description: 'Checks whether a user has an active alert for a contributor',
   })
   @ApiParam({
-    name: 'businessId',
+    name: 'contributorId',
     type: String,
-    description: 'ID of the business',
+    description: 'ID of the contributor',
     example: '64f8c2d9a12b3c0012345678',
   })
   @ApiResponse({
     status: 200,
-    description: 'Business alert fetched successfully',
+    description: 'Contributor alert fetched successfully',
   })
   @ApiResponse({
     status: 401,
     description: 'Unauthorized',
   })
-  getBusinessAlert(
+  getContributorAlert(
     @CurrentUser() user: User,
-    @Param('businessId') businessId: string,
+    @Param('contributorId') contributorId: string,
   ) {
-    return this.alertService.getBusinessAlert(user.id, businessId);
+    return this.alertService.getContributorAlert(user.id, contributorId);
   }
 }

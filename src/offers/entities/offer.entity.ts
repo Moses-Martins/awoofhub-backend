@@ -1,7 +1,7 @@
 import { Category } from 'src/category/entities/category.entity';
 import { Click } from 'src/clicks/entities/click.entity';
 import { Comment } from 'src/comments/entities/comment.entity';
-import { OfferStatus } from 'src/common/types/enums';
+import { DealType, OfferStatus } from 'src/common/types/enums';
 import { Review } from 'src/reviews/entities/review.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Wishlist } from 'src/wishlist/entities/wishlist.entity';
@@ -27,11 +27,11 @@ export class Offer {
     @Column('text')
     description: string;
 
-    @Column({ nullable: true })
-    imageUrl?: string;
+    @Column('text')
+    imageUrl: string;
 
-    @ManyToOne(() => User, (business) => business.offers, { onDelete: 'CASCADE' })
-    business: User;
+    @ManyToOne(() => User, (user) => user.offers, { onDelete: 'CASCADE' })
+    contributor: User;
 
     @ManyToOne(() => Category, category => category.offers)
     category: Category;
@@ -40,16 +40,19 @@ export class Offer {
     location: string;
 
     @Column('text')
-    termsAndConditions: string;
-
-    @Column('text')
     value: string;
 
     @Column('text')
-    dealUrl: string;
+    externalLink: string;
+
+    @Column('text')
+    brandName: string;
 
     @Column({ nullable: true })
     couponCode?: string;
+
+    @Column({ type: 'enum', enum: DealType })
+    dealType: DealType;
 
     @Column({
         type: 'enum',

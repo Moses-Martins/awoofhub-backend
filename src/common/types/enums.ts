@@ -10,6 +10,16 @@ export enum OfferStatus {
   REJECTED = 'rejected',
 }
 
+export enum DealType {
+  CASHBACK = 'cashback',
+  FREEBIE = 'freebie',
+  DISCOUNT = 'discount',
+  BOGO = 'bogo',
+  PROMO_CODE = 'promo_code',
+  FREE_TRIAL = 'free_trial',
+  FREE_DELIVERY = 'free_delivery',
+}
+
 export enum TokenPurpose {
   EMAIL_VERIFICATION = 'email_verification',
   EMAIL_CHANGE = 'email_change',
