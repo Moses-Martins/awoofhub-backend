@@ -140,15 +140,9 @@ export class UsersService {
     }
 
     async getUserById(id: string) {
-        const users = await this.userRepository.findOne({
+        return await this.userRepository.findOne({
             where: { id },
         });
-
-        if (!users) {
-            throw new NotFoundException('User not found');
-        }
-        return users;
-
     }
 
 
@@ -205,7 +199,7 @@ export class UsersService {
                 },
             );
         }
-        
+
         queryBuilder
             .orderBy('user.createdAt', 'DESC')
             .skip((page - 1) * limit)
@@ -236,26 +230,16 @@ export class UsersService {
 
 
     async getUserByEmail(email: string) {
-        const users = await this.userRepository.findOne({
+        return await this.userRepository.findOne({
             where: { email: email.trim().toLowerCase() },
         });
 
-        if (!users) {
-            throw new NotFoundException('User not found');
-        }
-        return users;
     }
 
     async getUserByUsername(username: string) {
-        const users = await this.userRepository.findOne({
+        return await this.userRepository.findOne({
             where: { username },
         });
-
-        if (!users) {
-            throw new NotFoundException('User not found');
-        }
-
-        return users;
     }
 
     async save(user: User) {
