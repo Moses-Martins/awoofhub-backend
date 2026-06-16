@@ -542,13 +542,13 @@ export class OffersService {
     }
   }
 
-  async findAllByUser(userId: string, query: FindOffersQueryDto) {
+  async findAllByUsername(username: string, query: FindOffersQueryDto) {
 
     const { search, dealType, category, minRating, createdFrom, createdTo, page = 1, limit = 10 } = query
 
     const now = new Date();
 
-    const user = await this.userService.getUserById(userId);
+    const user = await this.userService.getUserByUsername(username);
     if (!user) {
       throw new NotFoundException('User not found');
     }
