@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -151,25 +152,25 @@ export class OffersController {
     return this.offersService.findAllForAdmin(query);
   }
 
-  @Get('user/:id')
+  @Get('username/:username')
   @ApiOperation({
-    summary: 'Get offers by user ID',
+    summary: 'Get offers by username',
   })
   @ApiParam({
-    name: 'id',
+    name: 'username',
     type: String,
-    example: '64f8c2d9a12b3c0012345678',
+    example: '@johndoe',
   })
   @ApiResponse({
     status: 200,
     description: 'User offers fetched successfully',
   })
-  async findAllByUser(
-    @Param('id') id: string,
+  async findAllByUsername(
+    @Param('username') username: string,
     @Query() query: FindOffersQueryDto
   ) {
-    return this.offersService.findAllByUser(
-      id,
+    return this.offersService.findAllByUsername(
+      username,
       query,
     );
   }
@@ -229,7 +230,7 @@ export class OffersController {
     status: 404,
     description: 'Offer not found',
   })
-  findOfferById(@Param('id') id: string) {
+  findOfferById(@Param('id', ParseUUIDPipe) id: string) {
     return this.offersService.findById(id);
   }
 

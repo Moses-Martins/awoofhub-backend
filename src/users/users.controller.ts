@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   Param,
+  ParseUUIDPipe,
   Patch,
   Query,
   UseGuards
@@ -98,6 +99,34 @@ export class UsersController {
     return this.usersService.getUserById(user.id);
   }
 
+  @Get('username/:username')
+  @HttpCode(200)
+  @UseGuards(AuthGuard)
+  @ApiOperation({
+    summary: 'Get user by Username',
+  })
+  @ApiParam({
+    name: 'username',
+    type: String,
+    description: 'Username',
+    example: '64f8c2d9a12b3c0012345678',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User fetched successfully',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+  })
+  getUserByUsername(@Param('username') username: string) {
+    return this.usersService.getUserByUsername(username);
+  }
+
   @Get(':id')
   @HttpCode(200)
   @UseGuards(AuthGuard)
@@ -122,7 +151,7 @@ export class UsersController {
     status: 401,
     description: 'Unauthorized',
   })
-  findOne(@Param('id') id: string) {
+  getUserById(@Param('id', ParseUUIDPipe) id: string) {
     return this.usersService.getUserById(id);
   }
 

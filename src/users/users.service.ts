@@ -140,9 +140,15 @@ export class UsersService {
     }
 
     async getUserById(id: string) {
-        return await this.userRepository.findOne({
+        const users = await this.userRepository.findOne({
             where: { id },
         });
+
+        if (!users) {
+            throw new NotFoundException('User not found');
+        }
+        return users;
+
     }
 
 
@@ -159,7 +165,7 @@ export class UsersService {
         // Search comment text
         if (search) {
             queryBuilder.andWhere(
-                '(user.name ILIKE :search OR user.email ILIKE :search OR user.bio ILIKE :search OR user.address ILIKE :search OR user.website ILIKE :search)',
+                '(user.name ILIKE :search OR user.email ILIKE :search OR user.bio ILIKE :search OR user.address ILIKE :search OR user.username ILIKE :search)',
                 {
                     search: `%${search}%`,
                 },
@@ -199,13 +205,12 @@ export class UsersService {
                 },
             );
         }
-
+        
         queryBuilder
             .orderBy('user.createdAt', 'DESC')
             .skip((page - 1) * limit)
             .take(limit);
 
-        // Get total count without pagination
         const countQuery = queryBuilder
             .clone()
             .skip(undefined)
@@ -231,15 +236,26 @@ export class UsersService {
 
 
     async getUserByEmail(email: string) {
-        return await this.userRepository.findOne({
+        const users = await this.userRepository.findOne({
             where: { email: email.trim().toLowerCase() },
         });
+
+        if (!users) {
+            throw new NotFoundException('User not found');
+        }
+        return users;
     }
 
     async getUserByUsername(username: string) {
-        return await this.userRepository.findOne({
+        const users = await this.userRepository.findOne({
             where: { username },
         });
+
+        if (!users) {
+            throw new NotFoundException('User not found');
+        }
+
+        return users;
     }
 
     async save(user: User) {
