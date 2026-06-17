@@ -186,7 +186,8 @@ export class StatsService {
     return this.clicksRepository
       .createQueryBuilder('click')
       .leftJoin('click.offer', 'offer')
-      .where('offer.userId = :userId', { userId })
+      .leftJoin('offer.contributor', 'contributor')
+      .where('contributor.id = :userId', { userId })
       .getCount();
   }
 
