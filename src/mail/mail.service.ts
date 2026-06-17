@@ -1,48 +1,40 @@
-import { ISendMailOptions, MailerService } from '@nestjs-modules/mailer';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Resend } from 'resend';
 
 @Injectable()
 export class MailService {
-
   private readonly logger = new Logger(MailService.name);
+  private readonly resend: Resend;
 
-  constructor(
-    private readonly mailerService: MailerService,
-    private readonly configService: ConfigService,
-  ) { }
+  constructor(private readonly configService: ConfigService) {
+    this.resend = new Resend(this.configService.get('RESEND_API_KEY'));
+  }
 
   async sendEmail(params: {
     to: string;
     subject: string;
-    template: string;
-    context: ISendMailOptions['context'];
+    html: string;
   }) {
     try {
-      const sendMailParams = {
+      const response = await this.resend.emails.send({
+        from: this.configService.getOrThrow<string>('EMAIL_FROM'),
         to: params.to,
         subject: params.subject,
-        template: params.template,
-        context: {
-          FRONTEND_URL: this.configService.get('FRONTEND_URL') || 'http://localhost:3000',
-          ...params.context
-        },
-      };
-      const response = await this.mailerService.sendMail(sendMailParams);
+        html: params.html,
+      });
+
       this.logger.log(
-        `Email sent successfully to recipients with the following parameters : ${JSON.stringify(
-          sendMailParams,
-        )}`,
+        `Email sent successfully to ${params.to}`,
         response,
       );
+
+      return response;
     } catch (error) {
       this.logger.error(
-        `Error while sending mail with the following parameters : ${JSON.stringify(
-          params,
-        )}`,
+        `Error while sending email to ${params.to}`,
         error,
       );
     }
   }
-
 }
