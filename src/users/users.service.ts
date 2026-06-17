@@ -227,7 +227,7 @@ export class UsersService {
 
         const [numOfDealPosted, offerClicks] = await Promise.all([
             this.statsService.getUserOfferCount(user.id),
-            this.statsService.getOfferClickCount(user.id),
+            this.statsService.getUserOfferClicksCount(user.id),
         ]);
 
         const profile = plainToInstance(User, {
