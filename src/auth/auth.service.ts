@@ -11,6 +11,7 @@ import crypto from 'crypto';
 import { ChatService } from 'src/chat/chat.service';
 import { AuthProvider, TokenPurpose, UserRole, UserStatus } from 'src/common/types/enums';
 import { MailService } from 'src/mail/mail.service';
+import { TemplateService } from 'src/mail/templates.service';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { User } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
@@ -25,6 +26,7 @@ export class AuthService {
     private jwtService: JwtService,
     private mailService: MailService,
     private chatService: ChatService,
+    private templateService: TemplateService,
     private dataSource: DataSource,
     private readonly userService: UsersService,
     @InjectRepository(RefreshToken)
@@ -109,21 +111,20 @@ export class AuthService {
       };
       const username = await this.userService.generateUniqueUsername(createUser.email);
 
-      const user = await this.userService.create({...newUser, username});
+      const user = await this.userService.create({ ...newUser, username });
 
       const verificationToken = await this.createToken(
         user,
         TokenPurpose.EMAIL_VERIFICATION,
       );
 
-      this.mailService.sendEmail({
+      await this.mailService.sendEmail({
         to: user.email,
-        subject: `Welcome, ${user.name}! Please confirm your email`,
-        template: 'signup-mail',
-        context: {
+        subject: 'Verify your email',
+        html: this.templateService.render('signup-mail', {
           name: user.name,
           token: verificationToken,
-        },
+        }),
       });
 
       return { message: 'Please check your email for verification link' };
@@ -209,12 +210,11 @@ export class AuthService {
 
     await this.mailService.sendEmail({
       to: user.email,
-      subject: `Resend: Verify your email`,
-      template: 'signup-mail',
-      context: {
+      subject: 'Resend: Verify your email',
+      html: this.templateService.render('signup-mail', {
         name: user.name,
         token: verificationToken,
-      },
+      }),
     });
 
     return {
@@ -336,12 +336,11 @@ export class AuthService {
 
       await this.mailService.sendEmail({
         to: user.email,
-        subject: `Reset password`,
-        template: 'password-reset-mail',
-        context: {
+        subject: 'Reset password',
+        html: this.templateService.render('reset-password', {
           name: user.name,
           token: resetToken,
-        },
+        }),
       });
     }
 

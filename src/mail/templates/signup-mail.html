@@ -1,10 +1,10 @@
-doctype html
-html(lang="en")
-  head
-    meta(charset="UTF-8")
-    meta(name="viewport" content="width=device-width, initial-scale=1.0")
-    title Verify Your Email - AwoofHub
-    style.
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email - AwoofHub</title>
+    <style>
       @import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap");
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { background-color: #f4f4f4; font-family: "Montserrat", Arial, sans-serif; }
@@ -27,44 +27,49 @@ html(lang="en")
         .email-body { padding: 24px 20px !important; }
         .header h1 { font-size: 22px !important; }
       }
-
-  body
-    table.wrapper(width="100%" cellpadding="0" cellspacing="0")
-      tr
-        td(align="center")
-          table.email-container(cellpadding="0" cellspacing="0")
-            // Header
-            tr
-              td.header
-                h1 Verify your email to finish signing up!
-
-            // Body
-            tr
-              td.email-body
-                h2 Hi #{name},
-                p
-                  | Welcome to 
-                  span.highlight AwoofHub!
-                p.last Please confirm your email address to complete your sign up and start discovering great deals.
-
-                // CTA Button
-                - const verificationUrl = `${FRONTEND_URL}/verify-email?token=${token}`
-                table(width="100%" cellpadding="0" cellspacing="0")
-                  tr
-                    td.btn-cell
-                      p.verify-text Click the button to verify:
-                      a.email-button(href=verificationUrl) Verify Email Address
-
-                // Ignore Notice
-                p.ignore If you did not create this account, you can safely ignore this message.
-
-                // Appreciation
-                p.appreciation
-                  | Thanks for joining us,
-                  br
-                  span(style="font-weight: 700; color: #0c0c0c") The AwoofHub Team.
-
-            // Footer
-            tr
-              td.footer
-                img(src="https://pub-24c34059b34943d1a950bfdb90169a52.r2.dev/media/LogoWhite.png" alt="AwoofHub Logo" width="150")
+    </style>
+  </head>
+  <body>
+    <table class="wrapper" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td align="center">
+          <table class="email-container" cellpadding="0" cellspacing="0">
+            <tr>
+              <td class="header">
+                <h1>Verify your email to finish signing up!</h1>
+              </td>
+            </tr>
+            <tr>
+              <td class="email-body">
+                <h2>Hi {{name}},</h2>
+                <p>Welcome to <span class="highlight">AwoofHub!</span></p>
+                <p class="last">Please confirm your email address to complete your sign up and start discovering great deals.</p>
+                
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td class="btn-cell">
+                      <p class="verify-text">Click the button to verify:</p>
+                      <a class="email-button" href="{{FRONTEND_URL}}/verify-email?token={{token}}">Verify Email Address</a>
+                    </td>
+                  </tr>
+                </table>
+                
+                <p class="ignore">If you did not create this account, you can safely ignore this message.</p>
+                
+                <p class="appreciation">
+                  Thanks for joining us,<br>
+                  <span style="font-weight: 700; color: #0c0c0c">The AwoofHub Team.</span>
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td class="footer">
+                <img src="https://pub-24c34059b34943d1a950bfdb90169a52.r2.dev/media/LogoWhite.png" alt="AwoofHub Logo" width="150">
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
