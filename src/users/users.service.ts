@@ -225,15 +225,15 @@ export class UsersService {
             throw new NotFoundException('User not found');
         }
 
-        const [offerCount, clickCount] = await Promise.all([
+        const [numOfDealPosted, offerClicks] = await Promise.all([
             this.statsService.getUserOfferCount(user.id),
             this.statsService.getOfferClickCount(user.id),
         ]);
 
         const profile = plainToInstance(User, {
             ...user,
-            offerCount,
-            clickCount,
+            numOfDealPosted,
+            offerClicks,
         });
 
         return profile;
