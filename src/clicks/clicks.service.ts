@@ -1,4 +1,4 @@
-import { ForbiddenException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserStatus } from 'src/common/types/enums';
 import { OffersService } from 'src/offers/offers.service';
@@ -13,7 +13,6 @@ export class ClicksService {
     @InjectRepository(Click)
     private clicksRepository: Repository<Click>,
     private usersService: UsersService,
-    @Inject(forwardRef(() => OffersService))
     private offersService: OffersService,
   ) { }
 

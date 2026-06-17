@@ -1,4 +1,4 @@
-import { ForbiddenException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserStatus } from 'src/common/types/enums';
 import { OffersService } from 'src/offers/offers.service';
@@ -14,7 +14,6 @@ export class ReviewsService {
     @InjectRepository(Review)
     private reviewsRepository: Repository<Review>,
     private usersService: UsersService,
-    @Inject(forwardRef(() => OffersService))
     private offersService: OffersService,
   ) { }
   async upsertReview(userId: string, offerId: string, createReviewDto: CreateReviewDto): Promise<Review> {

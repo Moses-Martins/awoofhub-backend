@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommentsService } from 'src/comments/comments.service';
+import { PaginationService } from 'src/common/pagination/pagination.service';
 import { ReportStatus, TargetType } from 'src/common/types/enums';
 import { OffersService } from 'src/offers/offers.service';
 import { UsersService } from 'src/users/users.service';
 import { Repository } from 'typeorm';
 import { CreateReportDto } from './dto/create-report.dto';
 import { Report } from './entities/report.entity';
-import { PaginationService } from 'src/common/pagination/pagination.service';
 
 @Injectable()
 export class ReportsService {
@@ -159,39 +159,6 @@ export class ReportsService {
 
     return await this.reportRepo.save(report);
 
-  }
-
-  async getReportStats() {
-    const [
-      totalReports,
-      pendingReports,
-      activeReports,
-      expiredReports,
-    ] = await Promise.all([
-      this.reportRepo.count(),
-      this.reportRepo.count({
-        where: {
-          status: ReportStatus.PENDING,
-        },
-      }),
-      this.reportRepo.count({
-        where: {
-          status: ReportStatus.RESOLVED,
-        },
-      }),
-      this.reportRepo.count({
-        where: {
-          status: ReportStatus.DISMISSED,
-        },
-      }),
-    ]);
-
-    return {
-      totalReports,
-      pendingReports,
-      activeReports,
-      expiredReports,
-    };
   }
 
   private async resolveTarget(type: TargetType, id: string) {

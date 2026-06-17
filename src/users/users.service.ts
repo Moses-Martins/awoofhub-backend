@@ -1,7 +1,9 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { plainToInstance } from 'class-transformer';
 import { PaginationService } from 'src/common/pagination/pagination.service';
 import { UserRole, UserStatus } from 'src/common/types/enums';
+import { StatsService } from 'src/stats/stats.service';
 import { Repository } from 'typeorm';
 import { FindUsersQueryDto } from './dto/find-user-query.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -14,6 +16,7 @@ export class UsersService {
         @InjectRepository(User)
         private readonly userRepository: Repository<User>,
         private readonly paginationService: PaginationService,
+        private readonly statsService: StatsService,
     ) { }
 
     async create(user: Partial<User>) {
@@ -115,30 +118,6 @@ export class UsersService {
         }
     }
 
-    async getUserStats() {
-        const [totalActive, businessActive, suspended, banned] = await Promise.all([
-            this.userRepository.count({
-                where: { status: UserStatus.ACTIVE }
-            }),
-            this.userRepository.count({
-                where: { role: UserRole.BUSINESS, status: UserStatus.ACTIVE }
-            }),
-            this.userRepository.count({
-                where: { status: UserStatus.SUSPENDED }
-            }),
-            this.userRepository.count({
-                where: { status: UserStatus.BANNED }
-            }),
-        ]);
-
-        return {
-            totalActive,
-            businessActive,
-            suspended,
-            banned
-        };
-    }
-
     async getUserById(id: string) {
         return await this.userRepository.findOne({
             where: { id },
@@ -237,9 +216,27 @@ export class UsersService {
     }
 
     async getUserByUsername(username: string) {
-        return await this.userRepository.findOne({
+
+        const user = await this.userRepository.findOne({
             where: { username },
         });
+
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        const [offerCount, clickCount] = await Promise.all([
+            this.statsService.getUserOfferCount(user.id),
+            this.statsService.getOfferClickCount(user.id),
+        ]);
+
+        const profile = plainToInstance(User, {
+            ...user,
+            offerCount,
+            clickCount,
+        });
+
+        return profile;
     }
 
     async save(user: User) {
