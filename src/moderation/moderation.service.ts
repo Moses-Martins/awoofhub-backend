@@ -1,4 +1,4 @@
-import { BadRequestException, forwardRef, Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommentsService } from 'src/comments/comments.service';
@@ -19,7 +19,6 @@ export class ModerationService {
     private readonly userService: UsersService,
     private readonly offerService: OffersService,
     private readonly commentService: CommentsService,
-    @Inject(forwardRef(() => ReportsService))
     private readonly reportService: ReportsService,
   ) { }
 

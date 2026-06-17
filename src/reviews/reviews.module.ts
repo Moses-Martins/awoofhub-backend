@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { OffersModule } from 'src/offers/offers.module';
@@ -12,7 +12,7 @@ import { ReviewsService } from './reviews.service';
     TypeOrmModule.forFeature([Review]),
     JwtModule.register({}),
     UsersModule,
-    forwardRef(() => OffersModule)
+    OffersModule
   ],
   controllers: [ReviewsController],
   providers: [ReviewsService],

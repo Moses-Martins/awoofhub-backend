@@ -1,15 +1,14 @@
-import { ForbiddenException, forwardRef, Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AlertService } from 'src/alert/alert.service';
 import { CategoryService } from 'src/category/category.service';
-import { ClicksService } from 'src/clicks/clicks.service';
 import { PaginationService } from 'src/common/pagination/pagination.service';
 import { NotificationType, OfferStatus, UserStatus } from 'src/common/types/enums';
 import { NotificationsService } from 'src/notifications/notifications.service';
-import { ReviewsService } from 'src/reviews/reviews.service';
+import { StatsService } from 'src/stats/stats.service';
 import { User } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
-import { MoreThan, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { FindOffersQueryDto } from './dto/find-offer-query.dto';
 import { UpdateOfferDto } from './dto/update-offer.dto';
@@ -23,10 +22,7 @@ export class OffersService {
     private readonly paginationService: PaginationService,
     private readonly notificationService: NotificationsService,
     private readonly userService: UsersService,
-    @Inject(forwardRef(() => ReviewsService))
-    private readonly reviewService: ReviewsService,
-    @Inject(forwardRef(() => ClicksService))
-    private readonly clicksService: ClicksService,
+    private readonly statsService: StatsService,
     private readonly alertService: AlertService,
     private readonly categoryService: CategoryService,
   ) { }
@@ -532,8 +528,8 @@ export class OffersService {
       throw new NotFoundException('Offer not found');
     }
 
-    const reviews = await this.reviewService.getReviews(id)
-    const clicks = await this.clicksService.getClickCount(id)
+    const reviews = await this.statsService.getReviews(id)
+    const clicks = await this.statsService.getOfferClickCount(id)
 
     return {
       ...offer,
@@ -549,9 +545,7 @@ export class OffersService {
     const now = new Date();
 
     const user = await this.userService.getUserByUsername(username);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+   
 
     const queryBuilder = this.offersRepository
       .createQueryBuilder('offer')
@@ -816,48 +810,6 @@ export class OffersService {
 
     return results
 
-  }
-
-  async getOfferStats() {
-    const now = new Date();
-
-    const [
-      totalOffers,
-      pendingOffers,
-      activeOffers,
-      rejectedOffers,
-      expiredOffers,
-    ] = await Promise.all([
-      this.offersRepository.count(),
-      this.offersRepository.count({
-        where: {
-          status: OfferStatus.PENDING,
-        },
-      }),
-      this.offersRepository.count({
-        where: {
-          status: OfferStatus.APPROVED,
-          endDate: MoreThan(now),
-        },
-      }),
-      this.offersRepository.count({
-        where: {
-          status: OfferStatus.REJECTED,
-        },
-      }),
-      this.offersRepository
-        .createQueryBuilder('offer')
-        .where('offer.endDate < :now', { now })
-        .getCount(),
-    ]);
-
-    return {
-      totalOffers,
-      pendingOffers,
-      activeOffers,
-      rejectedOffers,
-      expiredOffers,
-    };
   }
 
   async updateStatus(offerId: string, status: OfferStatus) {

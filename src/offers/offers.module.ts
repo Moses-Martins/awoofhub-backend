@@ -1,12 +1,11 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AlertModule } from 'src/alert/alert.module';
 import { CategoryModule } from 'src/category/category.module';
-import { ClicksModule } from 'src/clicks/clicks.module';
 import { CommonModule } from 'src/common/common.module';
 import { NotificationsModule } from 'src/notifications/notifications.module';
-import { ReviewsModule } from 'src/reviews/reviews.module';
+import { StatsModule } from 'src/stats/stats.module';
 import { UsersModule } from 'src/users/users.module';
 import { Offer } from './entities/offer.entity';
 import { OffersController } from './offers.controller';
@@ -19,10 +18,9 @@ import { OffersService } from './offers.service';
     CommonModule,
     UsersModule,
     AlertModule,
+    StatsModule,
     NotificationsModule,
     CategoryModule,
-    forwardRef(() => ClicksModule),
-    forwardRef(() => ReviewsModule)
   ],
   controllers: [OffersController],
   providers: [OffersService],

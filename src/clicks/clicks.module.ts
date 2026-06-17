@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { OffersModule } from 'src/offers/offers.module';
@@ -12,7 +12,7 @@ import { Click } from './entities/click.entity';
       TypeOrmModule.forFeature([Click]),
       JwtModule.register({}),
       UsersModule,
-      forwardRef(() => OffersModule),
+      OffersModule
     ],
   controllers: [ClicksController],
   providers: [ClicksService],

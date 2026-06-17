@@ -172,15 +172,6 @@ export class CommentsService {
     return { message: 'Comment successfully removed' };
   }
 
-  async getCommentStats() {
-    const [totalComments] = await Promise.all([
-      this.commentsRepository.count(),
-    ]);
-
-    return {
-      totalComments,
-    };
-  }
   private checkUserStatus(user: User) {
     if (user.status === UserStatus.DELETED) {
       throw new ForbiddenException('User not found');

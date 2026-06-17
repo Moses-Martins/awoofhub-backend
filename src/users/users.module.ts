@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from 'src/common/common.module';
+import { StatsModule } from 'src/stats/stats.module';
 import { User } from './entities/user.entity';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
@@ -11,6 +12,7 @@ import { UsersService } from './users.service';
     TypeOrmModule.forFeature([User]),
     JwtModule.register({}),
     CommonModule,
+    StatsModule,
   ],
   controllers: [UsersController],
   providers: [UsersService],
