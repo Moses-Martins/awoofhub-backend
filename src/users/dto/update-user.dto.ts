@@ -1,19 +1,18 @@
 import { Transform } from 'class-transformer';
 
 import {
-  IsEnum,
   IsOptional,
   IsString,
   IsUrl,
   Length,
-  ValidateIf,
+  Matches,
+  ValidateIf
 } from 'class-validator';
 
 import {
   ApiPropertyOptional,
 } from '@nestjs/swagger';
 
-import { UserRole } from 'src/common/types/enums';
 
 export class UpdateUserDto {
 
@@ -25,15 +24,6 @@ export class UpdateUserDto {
   @IsString()
   @Length(1, 50)
   name?: string;
-
-  @ApiPropertyOptional({
-    enum: UserRole,
-    example: UserRole.USER,
-    description: 'Updated user role',
-  })
-  @IsOptional()
-  @IsEnum(UserRole)
-  role?: UserRole;
 
   @ApiPropertyOptional({
     example: 'https://cdn.awoofhub.ng/profile.jpg',
@@ -58,6 +48,19 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   address?: string;
+
+  @ApiPropertyOptional({
+    example: 'john_doe',
+    description: 'New username (3–20 chars, lowercase letters, numbers, underscores)',
+    nullable: true,
+  })
+  @IsString()
+  @Length(3, 20)
+  @Matches(/^[a-z0-9]+(?:_[a-z0-9]+)*$/, {
+    message:
+      'Username can only contain lowercase letters, numbers, and single underscores between words',
+  })
+  username?: string;
 
   @ApiPropertyOptional({
     example: 'https://portfolio.example.com',

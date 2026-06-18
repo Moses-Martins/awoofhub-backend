@@ -31,72 +31,86 @@ export class UsersService {
         }
     }
 
-    async changeUsername(userId: string, newUsername: string) {
+    async checkUsername(username: string) {
+
+        username = username.trim().toLowerCase();
+
+        const exists = await this.userRepository.exists({
+            where: { username },
+        });
+
+        if (exists) {
+            const suffix = Math.random().toString(36).substring(2, 4);
+            return {
+                available: false,
+                suggestion: await this.generateUniqueUsername(username),
+        
+            };
+        }
+
+        return {
+            available: true,
+            suggestions: null,
+        };
+    }
+
+    async update(userId: string, dto: UpdateUserDto) {
+
         const user = await this.userRepository.findOne({
             where: { id: userId },
         });
 
-        if (!user) throw new NotFoundException('User not found');
-
-        const now = new Date();
-
-        if (user.usernameChangeLockedUntil && now < user.usernameChangeLockedUntil) {
-            const remainingDays = Math.ceil(
-                (user.usernameChangeLockedUntil.getTime() - now.getTime()) /
-                (1000 * 60 * 60 * 24),
-            );
-
-            throw new BadRequestException(
-                `You can change your username again in ${remainingDays} day(s)`,
-            );
+        if (!user) {
+            throw new NotFoundException('User not found');
         }
 
-        newUsername = newUsername
-            .toLowerCase()
-            .replace(/[^a-z0-9_]/g, '_')
-            .replace(/_+/g, '_')
-            .replace(/^_+|_+$/g, '');
+        if (dto.username && dto.username !== user.username) {
+            const now = new Date();
 
-        const existing = await this.userRepository.findOne({
-            where: { username: newUsername },
-        });
+            if (
+                user.usernameChangeLockedUntil &&
+                now < user.usernameChangeLockedUntil
+            ) {
+                const remainingDays = Math.ceil(
+                    (user.usernameChangeLockedUntil.getTime() -
+                        now.getTime()) /
+                    (1000 * 60 * 60 * 24),
+                );
 
-        if (existing && existing.id !== userId) {
-            throw new BadRequestException('Username already taken');
+                throw new BadRequestException(
+                    `You can change your username again in ${remainingDays} day(s)`,
+                );
+            }
+
+            const newUsername = dto.username
+                .toLowerCase()
+                .replace(/[^a-z0-9_]/g, '_')
+                .replace(/_+/g, '_')
+                .replace(/^_+|_+$/g, '');
+
+            const exists = await this.userRepository.exists({
+                where: { username: newUsername },
+            });
+
+            if (exists) {
+                throw new BadRequestException(
+                    'Username already taken',
+                );
+            }
+
+            dto.username = newUsername;
+
+            const lockUntil = new Date();
+            lockUntil.setDate(lockUntil.getDate() + 60);
+
+            user.usernameChangeLockedUntil = lockUntil;
         }
 
-        user.username = newUsername;
-
-        const lockUntil = new Date();
-        lockUntil.setDate(lockUntil.getDate() + 60);
-        user.usernameChangeLockedUntil = lockUntil;
+        Object.assign(user, dto);
 
         return this.userRepository.save(user);
     }
 
-    async update(userId: string, dto: UpdateUserDto) {
-        try {
-            if (dto.role === UserRole.ADMIN) {
-                throw new BadRequestException('Cannot assign admin role');
-            }
-
-            const user = await this.userRepository.findOne({
-                where: { id: userId },
-            });
-
-
-            if (!user) {
-                throw new NotFoundException("User not found");
-            }
-
-            Object.assign(user, dto);
-
-            return await this.userRepository.save(user);
-
-        } catch (error) {
-            throw new InternalServerErrorException("Failed to update user");
-        }
-    }
 
     async updateEmailVerification(id: string) {
         try {
