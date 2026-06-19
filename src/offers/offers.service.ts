@@ -93,6 +93,7 @@ export class OffersService {
         'contributor.id',
         'contributor.name',
         'contributor.username',
+        'contributor.createdAt',
         'category.id',
         'category.name',
         'category.slug'
@@ -202,6 +203,7 @@ export class OffersService {
         'contributor.id',
         'contributor.name',
         'contributor.username',
+        'contributor.createdAt',
         'category.id',
         'category.name',
         'category.slug'
@@ -313,6 +315,7 @@ export class OffersService {
         'contributor.id',
         'contributor.name',
         'contributor.username',
+        'contributor.createdAt',
         'category.id',
         'category.name',
         'category.slug'
@@ -419,6 +422,7 @@ export class OffersService {
         'contributor.id',
         'contributor.name',
         'contributor.username',
+        'contributor.createdAt',
         'category.id',
         'category.name',
         'category.slug'
@@ -559,6 +563,7 @@ export class OffersService {
         'contributor.id',
         'contributor.name',
         'contributor.username',
+        'contributor.createdAt',
         'category.id',
         'category.name',
         'category.slug'
@@ -671,6 +676,7 @@ export class OffersService {
         'contributor.id',
         'contributor.name',
         'contributor.username',
+        'contributor.createdAt',
         'category.id',
         'category.name',
         'category.slug'
@@ -788,6 +794,7 @@ export class OffersService {
         'contributor.id',
         'contributor.name',
         'contributor.username',
+        'contributor.createdAt',
         'category.id',
         'category.name',
         'category.slug'
