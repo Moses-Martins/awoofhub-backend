@@ -517,6 +517,7 @@ export class OffersService {
         'contributor.id',
         'contributor.name',
         'contributor.username',
+        'contributor.createdAt',
         'category.id',
         'category.name',
         'category.slug',
@@ -545,7 +546,7 @@ export class OffersService {
     const now = new Date();
 
     const user = await this.userService.getUserByUsername(username);
-   
+
 
     const queryBuilder = this.offersRepository
       .createQueryBuilder('offer')
@@ -794,21 +795,34 @@ export class OffersService {
       .addSelect('COALESCE(AVG(review.rating),0)', 'avgRating')
       .addSelect('COALESCE(COUNT(DISTINCT review.id), 0)', 'reviewCount')
       .addSelect('COALESCE(COUNT(DISTINCT click.id), 0)', 'clickCount')
-        .where('offer.id IN (:...ids)', { ids })
+      .where('offer.id IN (:...ids)', { ids })
       .groupBy('offer.id')
       .addGroupBy('contributor.id')
       .addGroupBy('category.id')
 
     const { entities, raw } = await queryBuilder.getRawAndEntities();
 
-    const results = entities.map((offer, index) => ({
-      ...offer,
-      avgRating: Number(raw[index].avgRating),
-      reviewCount: Number(raw[index].reviewCount),
-      clickCount: Number(raw[index].clickCount)
-    }));
+    const rawMap = new Map(
+      raw.map(r => [r.offer_id, r])
+    );
 
-    return results
+    const results = ids
+      .map(id => {
+        const entity = entities.find(e => e.id === id);
+        if (!entity) return null;
+
+        const rawData = raw.find(r => r.offer_id === id || r.id === id);
+
+        return {
+          ...entity,
+          avgRating: rawData ? Number(rawData.avgRating) : 0,
+          reviewCount: rawData ? Number(rawData.reviewCount) : 0,
+          clickCount: rawData ? Number(rawData.clickCount) : 0
+        };
+      })
+      .filter(Boolean);
+
+    return results;
 
   }
 
