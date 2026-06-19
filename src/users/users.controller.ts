@@ -52,7 +52,7 @@ export class UsersController {
     description: 'Unauthorized',
   })
   checkUsername(
-    @Body() dto: CheckUsernameDto,
+    @Query() dto: CheckUsernameDto,
   ) {
     return this.usersService.checkUsername(dto.username);
   }
