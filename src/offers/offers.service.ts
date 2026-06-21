@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AlertService } from 'src/alert/alert.service';
 import { CategoryService } from 'src/category/category.service';
 import { PaginationService } from 'src/common/pagination/pagination.service';
-import { NotificationType, OfferStatus, UserStatus } from 'src/common/types/enums';
+import { MyOffersTab, NotificationType, OfferStatus, UserStatus } from 'src/common/types/enums';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { StatsService } from 'src/stats/stats.service';
 import { User } from 'src/users/entities/user.entity';
@@ -93,6 +93,7 @@ export class OffersService {
         'contributor.id',
         'contributor.name',
         'contributor.username',
+        'contributor.createdAt',
         'category.id',
         'category.name',
         'category.slug'
@@ -202,6 +203,7 @@ export class OffersService {
         'contributor.id',
         'contributor.name',
         'contributor.username',
+        'contributor.createdAt',
         'category.id',
         'category.name',
         'category.slug'
@@ -313,6 +315,7 @@ export class OffersService {
         'contributor.id',
         'contributor.name',
         'contributor.username',
+        'contributor.createdAt',
         'category.id',
         'category.name',
         'category.slug'
@@ -419,6 +422,7 @@ export class OffersService {
         'contributor.id',
         'contributor.name',
         'contributor.username',
+        'contributor.createdAt',
         'category.id',
         'category.name',
         'category.slug'
@@ -559,6 +563,7 @@ export class OffersService {
         'contributor.id',
         'contributor.name',
         'contributor.username',
+        'contributor.createdAt',
         'category.id',
         'category.name',
         'category.slug'
@@ -653,7 +658,9 @@ export class OffersService {
 
   async findMyOffers(userId: string, query: FindOffersQueryDto) {
 
-    const { search, dealType, category, minRating, createdFrom, createdTo, page = 1, limit = 10 } = query
+    const { tab = MyOffersTab.ALL, page = 1, limit = 10 } = query
+
+    const now = new Date();
 
     const user = await this.userService.getUserById(userId);
     if (!user) {
@@ -671,6 +678,7 @@ export class OffersService {
         'contributor.id',
         'contributor.name',
         'contributor.username',
+        'contributor.createdAt',
         'category.id',
         'category.name',
         'category.slug'
@@ -684,42 +692,38 @@ export class OffersService {
 
     queryBuilder.andWhere('contributor.id = :id', { id: user.id })
 
-    if (search) {
-      queryBuilder.andWhere(
-        '(offer.title ILIKE :search OR offer.description ILIKE :search)',
-        { search: `%${search}%` }
-      );
-    }
+    switch (tab) {
+      case MyOffersTab.PENDING:
+        queryBuilder.andWhere('offer.status = :status', {
+          status: OfferStatus.PENDING,
+        });
+        break;
 
-    if (dealType) {
-      queryBuilder.andWhere('offer.dealType = :dealType', {
-        dealType,
-      });
-    }
+      case MyOffersTab.APPROVED:
+        queryBuilder
+          .andWhere('offer.status = :status', {
+            status: OfferStatus.APPROVED,
+          })
+          .andWhere('offer.endDate > :now', { now });
+        break;
 
-    if (category) {
-      queryBuilder.andWhere('category.slug = :categorySlug', {
-        categorySlug: category
-      });
-    }
+      case MyOffersTab.REJECTED:
+        queryBuilder.andWhere('offer.status = :status', {
+          status: OfferStatus.REJECTED,
+        });
+        break;
 
-    if (createdFrom) {
-      queryBuilder.andWhere('offer.createdAt >= :createdFrom', {
-        createdFrom: new Date(createdFrom)
-      });
-    }
+      case MyOffersTab.EXPIRED:
+        queryBuilder
+          .andWhere('offer.status = :status', {
+            status: OfferStatus.APPROVED,
+          })
+          .andWhere('offer.endDate <= :now', { now });
+        break;
 
-    if (createdTo) {
-      queryBuilder.andWhere('offer.createdAt <= :createdTo', {
-        createdTo: new Date(createdTo)
-      });
-    }
-
-    if (minRating) {
-      queryBuilder.having(
-        'COALESCE(AVG(review.rating), 0) >= :minRating',
-        { minRating }
-      );
+      case MyOffersTab.ALL:
+      default:
+        break;
     }
 
     queryBuilder.orderBy('offer.createdAt', 'DESC');
@@ -761,6 +765,46 @@ export class OffersService {
 
   }
 
+  async getMyOfferTabsCount(userId: string) {
+    const now = new Date();
+
+    const user = await this.userService.getUserById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const qb = this.offersRepository
+      .createQueryBuilder('offer')
+      .where('offer.contributorId = :userId', { userId });
+
+    const result = await qb
+      .select([
+        `COUNT(*) FILTER (WHERE offer.status = 'pending') AS pending`,
+        `COUNT(*) FILTER (WHERE offer.status = 'rejected') AS rejected`,
+        `COUNT(*) FILTER (WHERE offer.status = 'suspended') AS suspended`,
+        `COUNT(*) FILTER (
+        WHERE offer.status = 'approved'
+        AND offer.endDate > :now
+      ) AS approved`,
+        `COUNT(*) FILTER (
+        WHERE offer.status = 'approved'
+        AND offer.endDate <= :now
+      ) AS expired`,
+        `COUNT(*) AS all`
+      ])
+      .setParameter('now', now)
+      .getRawOne();
+
+    return {
+      all: Number(result.all),
+      pending: Number(result.pending),
+      approved: Number(result.approved),
+      suspended: Number(result.suspended),
+      rejected: Number(result.rejected),
+      expired: Number(result.expired),
+    };
+  }
+
   async getRandomOffers() {
     const now = new Date();
 
@@ -788,6 +832,7 @@ export class OffersService {
         'contributor.id',
         'contributor.name',
         'contributor.username',
+        'contributor.createdAt',
         'category.id',
         'category.name',
         'category.slug'

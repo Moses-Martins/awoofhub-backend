@@ -144,7 +144,7 @@ export class ModerationService {
   private async handleOfferModeration(targetId: string, action: ModerationActionType) {
     switch (action) {
       case ModerationActionType.SUSPEND:
-        return this.offerService.updateStatus(targetId, OfferStatus.PENDING);
+        return this.offerService.updateStatus(targetId, OfferStatus.SUSPENDED);
       case ModerationActionType.BLOCK:
         return this.offerService.updateStatus(targetId, OfferStatus.REJECTED);
       case ModerationActionType.ACTIVATE:

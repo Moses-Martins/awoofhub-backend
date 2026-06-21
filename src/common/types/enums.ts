@@ -8,6 +8,7 @@ export enum OfferStatus {
   PENDING = 'pending',
   APPROVED = 'approved',
   REJECTED = 'rejected',
+  SUSPENDED = 'suspended',
 }
 
 export enum DealType {
@@ -36,6 +37,14 @@ export enum NotificationType {
   PASSWORD_CHANGED = "PASSWORD_CHANGED",
   OFFER_APPROVED = "OFFER_APPROVED",
   OFFER_REJECTED = "OFFER_REJECTED",
+}
+
+export enum MyOffersTab {
+  ALL = 'all',
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+  EXPIRED = 'expired',
 }
 
 export enum ReportType {

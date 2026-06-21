@@ -200,6 +200,21 @@ export class OffersController {
     );
   }
 
+  @Get('mine/tabs-count')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.USER)
+  @ApiOperation({
+    summary: 'Get my offer tabs count',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'tabs count fetched successfully',
+  })
+  async getMyOfferTabsCount(@CurrentUser() user: User) {
+    return this.offersService.getMyOfferTabsCount(user.id);
+  }
+
+
   @Get('random')
   @ApiOperation({
     summary: 'Get random offers',
