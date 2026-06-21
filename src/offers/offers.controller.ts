@@ -24,7 +24,7 @@ import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { RolesGuard } from 'src/common/guards/roles.guard';
-import { UserRole } from 'src/common/types/enums';
+import { MyOffersTab, UserRole } from 'src/common/types/enums';
 
 import { User } from 'src/users/entities/user.entity';
 
@@ -181,11 +181,7 @@ export class OffersController {
   @ApiOperation({
     summary: 'Get my posted offers',
   })
-  @ApiParam({
-    name: 'id',
-    type: String,
-    example: '64f8c2d9a12b3c0012345678',
-  })
+  @ApiQuery({ name: 'tab', required: false, enum: MyOffersTab })
   @ApiResponse({
     status: 200,
     description: 'offers fetched successfully',
