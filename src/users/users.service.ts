@@ -42,8 +42,7 @@ export class UsersService {
         if (exists) {
             return {
                 available: false,
-                suggestion: await this.generateUniqueUsername(username),
-        
+                suggestion: await this.generateUniqueUsername(username)
             };
         }
 

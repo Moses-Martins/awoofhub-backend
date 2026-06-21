@@ -39,6 +39,14 @@ export enum NotificationType {
   OFFER_REJECTED = "OFFER_REJECTED",
 }
 
+export enum MyOffersTab {
+  ALL = 'all',
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+  EXPIRED = 'expired',
+}
+
 export enum ReportType {
   SPAM = 'spam',
   SCAM = 'scam',

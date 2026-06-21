@@ -1,13 +1,13 @@
 import { Type } from 'class-transformer';
 import {
-    IsEnum,
-    IsInt,
-    IsNumber,
-    IsOptional,
-    IsString,
-    Min,
+  IsEnum,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min
 } from 'class-validator';
-import { DealType } from 'src/common/types/enums';
+import { DealType, MyOffersTab } from 'src/common/types/enums';
 
 export class FindOffersQueryDto {
   @IsOptional()
@@ -47,4 +47,9 @@ export class FindOffersQueryDto {
   @IsOptional()
   @IsString()
   createdTo?: string;
+
+  @IsOptional()
+  @IsEnum(MyOffersTab)
+  tab?: MyOffersTab = MyOffersTab.ALL;
+
 }
