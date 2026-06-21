@@ -40,7 +40,6 @@ export class UsersService {
         });
 
         if (exists) {
-            const suffix = Math.random().toString(36).substring(2, 4);
             return {
                 available: false,
                 suggestion: await this.generateUniqueUsername(username),

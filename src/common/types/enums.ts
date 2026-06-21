@@ -8,6 +8,7 @@ export enum OfferStatus {
   PENDING = 'pending',
   APPROVED = 'approved',
   REJECTED = 'rejected',
+  SUSPENDED = 'suspended',
 }
 
 export enum DealType {
