@@ -713,6 +713,12 @@ export class OffersService {
         });
         break;
 
+      case MyOffersTab.SUSPENDED:
+        queryBuilder.andWhere('offer.status = :status', {
+          status: OfferStatus.SUSPENDED,
+        });
+        break;
+
       case MyOffersTab.EXPIRED:
         queryBuilder
           .andWhere('offer.status = :status', {

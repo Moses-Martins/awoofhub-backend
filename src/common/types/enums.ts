@@ -43,6 +43,7 @@ export enum MyOffersTab {
   ALL = 'all',
   PENDING = 'pending',
   APPROVED = 'approved',
+  SUSPENDED = 'suspended',
   REJECTED = 'rejected',
   EXPIRED = 'expired',
 }
