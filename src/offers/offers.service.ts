@@ -521,6 +521,7 @@ export class OffersService {
         'contributor.id',
         'contributor.name',
         'contributor.username',
+        'contributor.profileImageUrl',
         'contributor.createdAt',
         'category.id',
         'category.name',
@@ -534,12 +535,12 @@ export class OffersService {
     }
 
     const reviews = await this.statsService.getReviews(id)
-    const clicks = await this.statsService.getOfferClickCount(id)
+    const clickCount = await this.statsService.getOfferClickCount(id)
 
     return {
       ...offer,
       ...reviews,
-      clicks
+      clickCount
     }
   }
 
