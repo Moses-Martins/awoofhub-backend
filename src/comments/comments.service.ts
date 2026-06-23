@@ -57,7 +57,7 @@ export class CommentsService {
     const comments = await this.commentsRepository
       .createQueryBuilder('comment')
       .leftJoin('comment.user', 'user')
-      .select(['comment', 'user.id', 'user.name', 'user.profileImageUrl'])
+      .select(['comment', 'user.id', 'user.name', 'user.username', 'user.profileImageUrl'])
       .where('comment.offer = :offerId', { offerId })
       .orderBy('comment.createdAt', 'DESC')
       .getMany();
@@ -81,6 +81,7 @@ export class CommentsService {
         'comment',
         'user.id',
         'user.name',
+        'user.username',
         'user.profileImageUrl',
         'offer.id',
         'offer.title',
@@ -135,7 +136,7 @@ export class CommentsService {
       .createQueryBuilder('comment')
       .leftJoin('comment.user', 'user')
       .leftJoin('comment.offer', 'offer')
-      .addSelect(['user.id', 'user.name', 'user.email', 'offer.id'])
+      .addSelect(['user.id', 'user.name', 'user.email', 'user.username', 'offer.id'])
       .where('comment.id = :id', { id })
       .getOne();
 
@@ -171,6 +172,7 @@ export class CommentsService {
     await this.commentsRepository.remove(comment);
     return { message: 'Comment successfully removed' };
   }
+
 
   private checkUserStatus(user: User) {
     if (user.status === UserStatus.DELETED) {
