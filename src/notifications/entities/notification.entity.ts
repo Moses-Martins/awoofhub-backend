@@ -1,4 +1,4 @@
-import { NotificationType } from "src/common/types/enums";
+import { NotificationEntityType, NotificationType } from "src/common/types/enums";
 import { User } from "src/users/entities/user.entity";
 import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
@@ -21,6 +21,12 @@ export class Notification {
 
     @Column()
     message: string;
+
+    @Column({
+        type: 'enum',
+        enum: NotificationEntityType,
+    })
+    entityType: NotificationEntityType;
 
     @Column()
     entityId: string;

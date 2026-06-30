@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AlertService } from 'src/alert/alert.service';
 import { CategoryService } from 'src/category/category.service';
 import { PaginationService } from 'src/common/pagination/pagination.service';
-import { MyOffersTab, NotificationType, OfferStatus, UserStatus } from 'src/common/types/enums';
+import { MyOffersTab, NotificationEntityType, NotificationType, OfferStatus, UserStatus } from 'src/common/types/enums';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { StatsService } from 'src/stats/stats.service';
 import { User } from 'src/users/entities/user.entity';
@@ -48,18 +48,26 @@ export class OffersService {
       const subscribers = await this.alertService.getSubscribers(user.id);
 
       const notificationPromises = subscribers.map(sub =>
-        this.notificationService.create(
-          sub.id,
-          'New Offer',
-          `${user.name} posted a new offer`,
-          NotificationType.OFFER_CREATED,
-          offer.id,
-        )
+        this.notificationService.create({
+          userId: sub.id,
+          title: 'New Offer',
+          message: `${user.name} posted a new offer`,
+          type: NotificationType.OFFER_ALERT,
+          entityType: NotificationEntityType.OFFER,
+          entityId: offer.id,
+        })
       );
 
       await Promise.all(notificationPromises);
 
-      await this.notificationService.create(offer.contributor.id, "Created Offer", "You just created an offer", NotificationType.OFFER_CREATED, offer.id)
+      await this.notificationService.create({
+        userId: offer.contributor.id,
+        title: "Pending",
+        message: "Your submission is currently being reviewed by our moderation team. This typically takes 2–6 hours. We'll notify you once a decision is made.",
+        type: NotificationType.OFFER_PENDING,
+        entityType: NotificationEntityType.OFFER,
+        entityId: offer.id,
+      })
 
       return {
         message: 'Offer created successfully',

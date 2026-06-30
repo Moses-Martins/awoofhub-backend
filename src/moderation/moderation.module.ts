@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommentsModule } from 'src/comments/comments.module';
+import { NotificationsModule } from 'src/notifications/notifications.module';
 import { OffersModule } from 'src/offers/offers.module';
 import { ReportsModule } from 'src/reports/reports.module';
 import { UsersModule } from 'src/users/users.module';
@@ -16,6 +17,7 @@ import { ModerationService } from './moderation.service';
     OffersModule,
     UsersModule,
     CommentsModule,
+    NotificationsModule,
     ReportsModule,
   ],
   controllers: [ModerationController],
