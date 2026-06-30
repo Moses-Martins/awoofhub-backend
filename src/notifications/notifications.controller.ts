@@ -27,7 +27,7 @@ import { NotificationsService } from './notifications.service';
 export class NotificationsController {
   constructor(
     private readonly notificationsService: NotificationsService,
-  ) {}
+  ) { }
 
   @Get()
   @UseGuards(AuthGuard)
@@ -102,5 +102,19 @@ export class NotificationsController {
       id,
       user.id,
     );
+  }
+
+
+  @Patch('read-all')
+  @UseGuards(AuthGuard)
+  @ApiOperation({
+    summary: 'Mark all notifications as read',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'All notifications marked as read successfully',
+  })
+  markAllRead(@CurrentUser() user) {
+    return this.notificationsService.markAllAsRead(user.id);
   }
 }

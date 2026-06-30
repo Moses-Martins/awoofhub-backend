@@ -1,23 +1,34 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaginationService } from 'src/common/pagination/pagination.service';
-import { NotificationType } from 'src/common/types/enums';
+import { CreateNotificationArgs } from 'src/common/types/notification';
+import { Offer } from 'src/offers/entities/offer.entity';
+import { User } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Notification } from './entities/notification.entity';
+
+interface RegistryConfig {
+  repo: Repository<any>;
+  select: Record<string, boolean>;
+}
 
 @Injectable()
 export class NotificationsService {
   constructor(
     @InjectRepository(Notification)
     private notificationRepo: Repository<Notification>,
+    @InjectRepository(User)
+    private userRepo: Repository<User>,
+    @InjectRepository(Offer)
+    private offerRepo: Repository<Offer>,
     private userService: UsersService,
     private readonly paginationService: PaginationService,
   ) { }
 
-  async create(userId: string, title: string, message: string, type: NotificationType, entityId: string) {
+  async create({userId, title, message, type, entityType, entityId}: CreateNotificationArgs) {
 
-    const notification = this.notificationRepo.create({ user: { id: userId }, title, message, type, entityId });
+    const notification = this.notificationRepo.create({ user: { id: userId }, title, message, type, entityType, entityId });
 
     await this.notificationRepo.save(notification);
 
@@ -64,10 +75,13 @@ export class NotificationsService {
       .take(limit)
       .getManyAndCount();
 
+
+    const data = await this.enrich(notifications);
+
     const meta = this.paginationService.getPaginationMeta(page, limit, total);
 
     return {
-      data: notifications,
+      data,
       meta,
     };
   }
@@ -86,6 +100,64 @@ export class NotificationsService {
 
     return {
       message: 'Notification marked as read',
+    };
+  }
+
+  async markAllAsRead(userId: string) {
+    const result = await this.notificationRepo.update(
+      { user: { id: userId }, isRead: false },
+      { isRead: true },
+    );
+
+    return {
+      message: 'All notifications marked as read',
+      updatedCount: result.affected ?? 0,
+    };
+  }
+
+
+  async enrich(notifications: Notification[]) {
+    const groups: Record<string, string[]> = {};
+    for (const n of notifications) {
+      if (n.entityType && n.entityId) {
+        groups[n.entityType] ??= [];
+        groups[n.entityType].push(n.entityId);
+      }
+    }
+
+    const resourceMaps: Record<string, Map<string, any>> = {};
+
+    await Promise.all(
+      Object.entries(groups).map(async ([entityType, ids]) => {
+        const target = this.repoRegistry[entityType];
+        if (!target) return;
+
+        const entities = await target.repo.find({
+          where: { id: In([...new Set(ids)]) },
+          select: target.select,
+        });
+
+        resourceMaps[entityType] = new Map(entities.map((e) => [e.id, e]));
+      }),
+    );
+
+    return notifications.map((n) => ({
+      ...n,
+      payload: resourceMaps[n.entityType]?.get(n.entityId) ?? null,
+    }));
+  }
+
+  private get repoRegistry(): Record<string, RegistryConfig> {
+    return {
+      offer: {
+        repo: this.offerRepo,
+        select: { id: true, title: true, imageUrl: true },
+      },
+
+      user: {
+        repo: this.userRepo,
+        select: { id: true, name: true, email: true, username: true },
+      },
     };
   }
 }

@@ -32,11 +32,19 @@ export enum AuthProvider {
 }
 
 export enum NotificationType {
-  PROFILE_UPDATED = "PROFILE_UPDATED",
-  OFFER_CREATED = "OFFER_CREATED",
-  PASSWORD_CHANGED = "PASSWORD_CHANGED",
-  OFFER_APPROVED = "OFFER_APPROVED",
-  OFFER_REJECTED = "OFFER_REJECTED",
+  USER_SUSPENDED = "user_suspended",
+  OFFER_PENDING = "offer_pending",
+  OFFER_ALERT = "offer_alert",
+  OFFER_APPROVED = "offer_approved",
+  OFFER_REJECTED = "offer_rejected",
+  OFFER_SUSPENDED = "offer_suspended",
+  OFFER_EXPIRING = "offer_expiring",
+  OFFER_EXPIRED = "offer_expired",
+}
+
+export enum NotificationEntityType {
+  OFFER = 'offer',
+  USER = 'user',
 }
 
 export enum MyOffersTab {
