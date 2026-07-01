@@ -1,4 +1,5 @@
 import { ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AlertService } from 'src/alert/alert.service';
 import { CategoryService } from 'src/category/category.service';
@@ -8,7 +9,7 @@ import { NotificationsService } from 'src/notifications/notifications.service';
 import { StatsService } from 'src/stats/stats.service';
 import { User } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { FindOffersQueryDto } from './dto/find-offer-query.dto';
 import { UpdateOfferDto } from './dto/update-offer.dto';
@@ -75,7 +76,7 @@ export class OffersService {
       };
     } catch (error) {
 
-      if (error instanceof NotFoundException) {
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) {
         throw error;
       }
 
@@ -885,6 +886,64 @@ export class OffersService {
     return results;
 
   }
+
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleExpiredOffers() {
+    const expiredOffers = await this.offersRepository.find({
+      where: {
+        status: OfferStatus.APPROVED,
+        endDate: Between(
+          new Date(Date.now() + 55_000),
+          new Date(Date.now() + 65_000),
+        ),
+      },
+      relations: {
+        contributor: true,
+      },
+    });
+
+    for (const offer of expiredOffers) {
+      await this.notificationService.create({
+        userId: offer.contributor.id,
+        title: "Expired",
+        message: `Your deal "${offer.title}" has expired and is no longer visible to shoppers.`,
+        type: NotificationType.OFFER_EXPIRED,
+        entityType: NotificationEntityType.OFFER,
+        entityId: offer.id,
+      });
+    }
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleExpiringOffers() {
+    const threeDays = 3 * 24 * 60 * 60 * 1000;
+
+    const expiringOffers = await this.offersRepository.find({
+      where: {
+        status: OfferStatus.APPROVED,
+        endDate: Between(
+          new Date(Date.now() + threeDays),
+          new Date(Date.now() + threeDays + 60_000), // 1-minute window
+        ),
+      },
+      relations: {
+        contributor: true,
+      },
+    });
+
+    for (const offer of expiringOffers) {
+      await this.notificationService.create({
+        userId: offer.contributor.id,
+        title: "Deal Expiring Soon",
+        message: `Your deal "${offer.title}" will expire in 3 days. Renew it now to keep it live and visible to shoppers.`,
+        type: NotificationType.OFFER_EXPIRING,
+        entityType: NotificationEntityType.OFFER,
+        entityId: offer.id,
+      });
+    }
+  }
+
 
   async updateStatus(offerId: string, status: OfferStatus) {
     try {
