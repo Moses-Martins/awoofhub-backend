@@ -19,6 +19,7 @@ export enum DealType {
   PROMO_CODE = 'promo_code',
   FREE_TRIAL = 'free_trial',
   FREE_DELIVERY = 'free_delivery',
+  PRICE_DROP = 'price_drop',
 }
 
 export enum TokenPurpose {
